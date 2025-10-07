@@ -148,7 +148,7 @@ function CampaignFormModal({ isOpen, onClose, onSave, editingCampaign }: { isOpe
         const payload = { title: form.title, description: form.description, location: form.location, date: form.date, time: form.time, photo_url: photoUrl };
         const { error } = editingCampaign
             ? await supabase.from("blood_campaigns").update(payload).eq("id", editingCampaign.id)
-            : await supabase.from("blood_campaigns").insert([{ ...payload, status: "Upcoming" }]);
+            : await supabase.from("blood_campaigns").insert([payload]);
 
         if (error) {
             Swal.fire("Error", `Failed to save campaign: ${error.message}`, "error");
@@ -194,20 +194,92 @@ function CampaignFormModal({ isOpen, onClose, onSave, editingCampaign }: { isOpe
     );
 }
 
+
+// ADD THIS NEW MODAL COMPONENT
+function CampaignReportModal({ campaign, onClose }: { campaign: any | null, onClose: () => void }) {
+    const [stats, setStats] = useState<{ total: number, byType: Record<string, number> } | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!campaign) return;
+        
+        const fetchStats = async () => {
+            setLoading(true);
+            const { data, error, count } = await supabase
+                .from('blood_inventory')
+                .select('type', { count: 'exact' })
+                .eq('campaign_id', campaign.id);
+            
+            if (error) {
+                console.error(error);
+                Swal.fire('Error', 'Could not fetch campaign donation data.', 'error');
+            } else {
+                const byType = data.reduce((acc, { type }) => {
+                    acc[type] = (acc[type] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>);
+                setStats({ total: count || 0, byType });
+            }
+            setLoading(false);
+        };
+
+        fetchStats();
+    }, [campaign]);
+
+    if (!campaign) return null;
+
+    return (
+        <Dialog open={true} onClose={onClose} className="relative z-50">
+            <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+                <Dialog.Panel className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg p-8">
+                    <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon /></button>
+                    <h2 className="text-2xl font-bold text-gray-800">{campaign.title}</h2>
+                    <p className="text-sm text-gray-500 mb-6">Donation Report</p>
+                    
+                    {loading ? (
+                        <p className="py-8 text-center text-gray-500">Loading report...</p>
+                    ) : stats && stats.total > 0 ? (
+                        <div>
+                            <p className="text-5xl font-bold text-red-600">{stats.total}</p>
+                            <p className="font-semibold text-gray-600 mb-4">Total Donations Collected</p>
+                            <div className="border-t pt-4 mt-4">
+                                <h4 className="font-semibold mb-2">Breakdown by Blood Type:</h4>
+                                <ul className="space-y-1 max-h-48 overflow-y-auto pr-2">
+                                    {Object.entries(stats.byType).map(([type, count]) => (
+                                        <li key={type} className="flex justify-between items-center bg-gray-50 p-2 rounded-md">
+                                            <span className="font-semibold text-red-700">{type}</span>
+                                            <span className="font-bold">{count} bag(s)</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="py-8 text-center text-gray-500">No donations have been recorded for this campaign yet.</p>
+                    )}
+                </Dialog.Panel>
+            </div>
+        </Dialog>
+    );
+}
+
 //========================================================//
 // 4. MAIN PAGE COMPONENT                                 //
 //========================================================//
 export default function ManageCampaigns() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
+  const openReportModal = (c: any) => { setSelectedCampaign(c); };
+  const closeReportModal = () => { setSelectedCampaign(null); };
   const fetchCampaigns = async () => {
     setLoading(true);
     const { data, error } = await supabase.from("blood_campaigns").select("*").order("date", { ascending: false });
@@ -237,9 +309,53 @@ export default function ManageCampaigns() {
   const openEditModal = (c: any) => { setEditingId(c.id); setIsModalOpen(true); };
   const closeModal = () => { setIsModalOpen(false); setEditingId(null); };
 
-  const updateStatus = async (id: string, status: string) => { /* ... (logic unchanged) ... */ };
-  const deleteCampaign = async (id: string) => { /* ... (logic unchanged) ... */ };
+
+  const deleteCampaign = async (id: string) => {
+    const { isConfirmed } = await Swal.fire({
+        title: "Are you sure?",
+        text: "This will permanently delete the campaign and cannot be undone.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Yes, delete it!",
+    });
+
+    if (isConfirmed) {
+        const { error } = await supabase.from("blood_campaigns").delete().eq("id", id);
+        if (error) {
+            Swal.fire("Error", error.message, "error");
+        } else {
+            Swal.fire("Deleted!", "The campaign has been deleted.", "success");
+            fetchCampaigns();
+        }
+    }
+};
   
+  const cancelCampaign = async (id: string) => {
+    const { isConfirmed } = await Swal.fire({
+        title: 'Are you sure?',
+        text: "This will mark the campaign as 'Cancelled'.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#f59e0b', // A yellow/amber color
+        confirmButtonText: 'Yes, cancel it',
+    });
+
+    if (isConfirmed) {
+        const { error } = await supabase
+            .from('blood_campaigns')
+            .update({ status: 'Cancelled' })
+            .eq('id', id);
+
+        if (error) {
+            Swal.fire('Error', `Could not cancel the campaign: ${error.message}`, 'error');
+        } else {
+            Swal.fire('Cancelled!', 'The campaign has been marked as cancelled.', 'success');
+            fetchCampaigns(); // Refresh the list to show the new status
+        }
+    }
+};
+
   const filteredCampaigns = campaigns.filter(c =>
       c.title.toLowerCase().includes(search.toLowerCase()) ||
       c.location.toLowerCase().includes(search.toLowerCase()) ||
@@ -247,6 +363,27 @@ export default function ManageCampaigns() {
   );
 
   const editingCampaign = editingId ? campaigns.find(c => c.id === editingId) : null;
+    const getCampaignStatus = (campaign: any): string => {
+        // If manually cancelled, it stays Cancelled
+        if (campaign.status === "Cancelled") {
+            return "Cancelled";
+        }
+
+        const today = new Date();
+        const campaignDate = new Date(campaign.date);
+
+        // Set times to midnight to compare dates only
+        today.setHours(0, 0, 0, 0);
+        campaignDate.setHours(0, 0, 0, 0);
+
+        if (campaignDate < today) {
+            return "Completed";
+        }
+        if (campaignDate.getTime() === today.getTime()) {
+            return "Ongoing";
+        }
+        return "Upcoming";
+    };
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
@@ -274,19 +411,18 @@ export default function ManageCampaigns() {
                         <div className="p-4 flex flex-col flex-grow">
                             <div className="flex justify-between items-start mb-2">
                                 <h3 className="font-bold text-lg text-gray-800">{c.title}</h3>
-                                <StatusBadge status={c.status} />
+                                <StatusBadge status={getCampaignStatus(c)} />
                             </div>
                             <p className="text-sm text-gray-500">{c.location} • {c.date} • {c.time}</p>
                             <p className="text-gray-600 text-sm mt-2 flex-grow">{c.description}</p>
                             {userRole === "redcross" && (
                                 <div className="border-t mt-4 pt-4">
                                     <div className="flex items-center justify-between">
-                                        <select value={c.status} onChange={(e) => updateStatus(c.id, e.target.value)} className="border px-2 py-1 text-xs rounded-md focus:outline-none focus:ring-1 focus:ring-red-400">
-                                            <option value="Upcoming">Upcoming</option><option value="Ongoing">Ongoing</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option>
-                                        </select>
                                         <div className="flex space-x-2">
-                                            <button onClick={() => openEditModal(c)} className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md"><EditIcon/></button>
-                                            <button onClick={() => deleteCampaign(c.id)} className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><DeleteIcon/></button>
+                                            <button onClick={() => openReportModal(c)} title="View Report" className="p-1.5 text-green-600 hover:bg-green-100 rounded-md"><ReportIcon/></button>
+                                            <button onClick={() => openEditModal(c)} title="Edit Campaign" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md"><EditIcon/></button>
+                                            <button onClick={() => cancelCampaign(c.id)} title="Cancel Campaign" className="p-1.5 text-yellow-600 hover:bg-yellow-100 rounded-md"><XIcon /></button>
+                                            <button onClick={() => deleteCampaign(c.id)} title="Delete Campaign" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><DeleteIcon/></button>
                                         </div>
                                     </div>
                                 </div>
@@ -298,6 +434,7 @@ export default function ManageCampaigns() {
             )}
         </main>
         {isModalOpen && <CampaignFormModal isOpen={isModalOpen} onClose={closeModal} onSave={saveCampaign} editingCampaign={editingCampaign} />}
+        {selectedCampaign && <CampaignReportModal campaign={selectedCampaign} onClose={closeReportModal} />}
       </div>
     </div>
   );

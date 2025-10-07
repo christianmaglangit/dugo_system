@@ -24,6 +24,7 @@ interface Campaign {
   location: string;
   description: string;
   photo_url: string | null;
+  status: string;
 }
 
 interface ChatMessage {
@@ -142,6 +143,39 @@ const BottomNav = ({ onOpenAppointmentModal }: { onOpenAppointmentModal: () => v
             })}
         </nav>
     );
+};
+
+const getCampaignStatus = (campaign: Campaign): string => {
+    // This assumes your campaign object has a 'status' field from the database
+    if (campaign.status === "Cancelled") {
+        return "Cancelled";
+    }
+
+    const today = new Date();
+    const campaignDate = new Date(campaign.date);
+
+    // Set times to midnight to compare only the date part
+    today.setHours(0, 0, 0, 0);
+    campaignDate.setHours(0, 0, 0, 0);
+
+    if (campaignDate < today) {
+        return "Completed";
+    }
+    if (campaignDate.getTime() === today.getTime()) {
+        return "Ongoing";
+    }
+    return "Upcoming";
+};
+
+const StatusBadge = ({ status }: { status: string }) => {
+    const statusMap: Record<string, string> = {
+        Upcoming: "bg-blue-100 text-blue-800",
+        Ongoing: "bg-green-100 text-green-800",
+        Completed: "bg-gray-100 text-gray-800",
+        Cancelled: "bg-red-100 text-red-800",
+    };
+    const color = statusMap[status] || "bg-gray-100 text-gray-800";
+    return <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${color}`}>{status}</span>;
 };
 
 //========================================================//
@@ -411,17 +445,21 @@ const CampaignListItem = ({ campaign }: { campaign: Campaign }) => {
                     className="rounded-xl object-cover w-full md:w-48 h-48 md:h-auto"
                 />
             )}
-            <div className="flex flex-col justify-between">
+            <div className="flex flex-col justify-between flex-1">
                 <div>
-                    <p className="font-bold text-xl text-red-700">{campaign.title}</p>
-                    <p className="text-sm text-gray-600 mt-2">{campaign.description}</p>
+                    {/* ADD THE STATUS BADGE HERE */}
+                    <div className="flex justify-between items-start mb-2">
+                        <p className="font-bold text-xl text-red-700 pr-4">{campaign.title}</p>
+                        <StatusBadge status={getCampaignStatus(campaign)} />
+                    </div>
+                 <p className="text-sm text-gray-600">{campaign.description}</p>
                 </div>
                 <div className="border-t my-4"></div>
-                <div className="space-y-2 text-sm text-gray-700">
-                    <p className="flex items-center gap-2"><CalendarIconSvg /> <span>{new Date(campaign.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} | {campaign.time}</span></p>
-                    <p className="flex items-center gap-2"><LocationMarkerIcon /> <span>{campaign.location}</span></p>
+                    <div className="space-y-2 text-sm text-gray-700">
+                        <p className="flex items-center gap-2"><CalendarIconSvg /> <span>{new Date(campaign.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} | {campaign.time}</span></p>
+                        <p className="flex items-center gap-2"><LocationMarkerIcon /> <span>{campaign.location}</span></p>
+                    </div>
                 </div>
-            </div>
         </Card>
     );
 };

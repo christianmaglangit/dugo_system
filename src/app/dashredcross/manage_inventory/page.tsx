@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, FC, ReactNode } from "react";
+import { useState, useEffect,} from "react";
 import Swal from "sweetalert2";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { QRCodeCanvas } from "qrcode.react";
 
 //========================================================//
@@ -114,7 +113,7 @@ const InputField = ({ label, children, ...props }: any) => (
     </div>
 );
 
-function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, search, setSearch }: any) {
+function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, campaigns, search, setSearch }: any) { // Add 'campaigns' here
     if (!isOpen) return null;
     const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
     const components = ["RBC", "Plasma", "Platelets", "WBCs"];
@@ -144,6 +143,17 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, sea
                                 </div>
                             )}
                         </div>
+                            <InputField label="Source Campaign (Optional)" name="campaign_id">
+                                <select 
+                                    value={form.campaign_id || ""} 
+                                    onChange={(e) => setForm({ ...form, campaign_id: e.target.value })} 
+                                    className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                    <option value="">Walk-in / Not from a campaign</option>
+                                    {campaigns.map((c: any) => (
+                                        <option key={c.id} value={c.id}>{c.title}</option>
+                                    ))}
+                                </select>
+                            </InputField>
                         <div className="grid grid-cols-2 gap-4">
                             <InputField label="Blood Type" name="type">
                                 <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -164,7 +174,15 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, sea
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <InputField label="Date Received" name="date_received"><input type="date" value={form.date_received} onChange={(e) => setForm({ ...form, date_received: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
-                            <InputField label="Date Expired" name="date_expired"><input type="date" value={form.date_expired} onChange={(e) => setForm({ ...form, date_expired: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                            <InputField label="Date Expired" name="date_expired">
+                                <input 
+                                    type="date" 
+                                    value={form.date_expired} 
+                                    readOnly 
+                                    disabled 
+                                    className="bg-gray-200 border border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"
+                                />
+                            </InputField>
                         </div>
                         <div className="flex justify-end gap-3 pt-4">
                             <button onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
@@ -206,7 +224,7 @@ function QrModal({ qrData, onClose, onPrint }: { qrData: string, onClose: () => 
 export default function ManageInventory() {
   const [bloodStocks, setBloodStocks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ user_id: "", type: "", component: "", units: "", volume_ml: "", date_received: "", date_expired: "" });
+  const [form, setForm] = useState({ user_id: "", type: "", component: "", units: "", volume_ml: "", date_received: "", date_expired: "" , campaign_id: ""});
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [qrModalOpen, setQrModalOpen] = useState(false);
@@ -253,12 +271,12 @@ export default function ManageInventory() {
         addedByUserId = profile.user_id;
     }
     const qrPayload = `Blood Bag ID: ${bloodBagId}\nDonor ID: ${form.user_id}\nBlood Type: ${form.type}\nComponent: ${form.component}\nUnits: ${form.units}\nVolume: ${form.volume_ml}ml\nDate Received: ${form.date_received}\nExpiration: ${form.date_expired}\nLocation: Red Cross`;
-    const { data: newStock, error: stockError } = await supabase.from("blood_inventory").insert([{ blood_bag_id: bloodBagId, user_id: form.user_id, type: form.type, component: form.component, units: parseInt(form.units), volume_ml: parseInt(form.volume_ml), date_received: form.date_received, expiration_date: form.date_expired, qr_data: qrPayload, added_by: addedByUserId, status: "Available" }]).select().single();
+    const { data: newStock, error: stockError } = await supabase.from("blood_inventory").insert([{ blood_bag_id: bloodBagId, user_id: form.user_id, type: form.type, component: form.component, units: parseInt(form.units), volume_ml: parseInt(form.volume_ml), date_received: form.date_received, expiration_date: form.date_expired, qr_data: qrPayload, added_by: addedByUserId, status: "Available", campaign_id: form.campaign_id || null }]).select().single();
     if (stockError) { Swal.fire("Error", stockError.message, "error"); return; }
     await supabase.from("blood_journey").insert([{ user_id: form.user_id, donation_id: newStock.id, stage: 1, location: "Red Cross" }]);
     setSelectedQr(qrPayload);
     setQrModalOpen(true);
-    setForm({ user_id: "", type: "", component: "", units: "", volume_ml: "", date_received: "", date_expired: "" });
+    setForm({ user_id: "",campaign_id: "", type: "", component: "", units: "", volume_ml: "", date_received: "", date_expired: "" });
     setSearch("");
     setAddModalOpen(false);
     fetchInventory(currentUser);
@@ -284,6 +302,56 @@ export default function ManageInventory() {
     };
     fetchDonors();
   }, []);
+
+  useEffect(() => {
+    // Check if both component and date_received have been selected
+    if (form.component && form.date_received) {
+        const startDate = new Date(form.date_received);
+        const expirationDate = new Date(startDate);
+
+        // Add the correct duration based on the selected component
+        switch (form.component) {
+            case 'RBC':
+                expirationDate.setDate(startDate.getDate() + 42);
+                break;
+            case 'Plasma':
+                expirationDate.setFullYear(startDate.getFullYear() + 1);
+                break;
+            case 'Platelets':
+                expirationDate.setDate(startDate.getDate() + 7);
+                break;
+            case 'WBCs':
+                expirationDate.setDate(startDate.getDate() + 1);
+                break;
+            default:
+                return; // Do nothing if component is not recognized
+        }
+
+        // Format the date to "YYYY-MM-DD" for the input field
+        const formattedDate = expirationDate.toISOString().split('T')[0];
+
+        // Update the form state with the new expiration date
+        setForm((prevForm: any) => ({
+            ...prevForm,
+            date_expired: formattedDate
+        }));
+    }
+}, [form.component, form.date_received, setForm]); // This effect runs when these values change
+
+const [campaigns, setCampaigns] = useState<any[]>([]); // Add this line
+
+useEffect(() => {
+    const fetchDonorsAndCampaigns = async () => {
+      // This part for donors already exists
+      const { data: donorData, error: donorError } = await supabase.from("users").select("user_id, name, email").eq("role", "Donor");
+      if (donorError) { console.error(donorError); } else { setDonors(donorData || []); }
+
+      // ADD THIS PART TO FETCH CAMPAIGNS
+      const { data: campaignData, error: campaignError } = await supabase.from("blood_campaigns").select("id, title").order('date', { ascending: false });
+      if (campaignError) { console.error(campaignError); } else { setCampaigns(campaignData || []); }
+    };
+    fetchDonorsAndCampaigns();
+}, []);
 
   const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
   const components = ["RBC", "Plasma", "Platelets", "WBCs"];
@@ -355,7 +423,7 @@ export default function ManageInventory() {
         </main>
       </div>
       {qrModalOpen && <QrModal qrData={selectedQr} onClose={closeQrModal} onPrint={printQr} />}
-      {addModalOpen && <AddInventoryModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)}  onSave={addInventory} form={form} setForm={setForm} donors={donors} search={search} setSearch={setSearch} />}
+      {addModalOpen && <AddInventoryModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)}  onSave={addInventory} form={form} setForm={setForm} donors={donors} search={search} setSearch={setSearch} campaigns={campaigns}/>}
     </div>
   );
 }

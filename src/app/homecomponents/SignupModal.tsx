@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FC, ReactNode } from "react";
+import { useState, } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
@@ -130,7 +130,7 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
         {/* Left Pane (Branding) */}
         <div className="hidden md:flex flex-col justify-center p-12 bg-red-600 text-white">
             <h2 className="text-3xl font-bold">Become a Lifesaver</h2>
-            <p className="mt-4 text-red-100">Join our community of heroes dedicated to saving lives. By creating an account, you're taking the first step in making a monumental impact.</p>
+            <p className="mt-4 text-red-100">Join our community of heroes dedicated to saving lives. By creating an account, you&apos;re taking the first step in making a monumental impact.</p>
         </div>
 
         {/* Right Pane (Form) */}
@@ -140,7 +140,7 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
           </button>
           
           <h2 className="text-2xl font-bold text-gray-800 mb-1">Create Your Account</h2>
-          <p className="text-gray-500 mb-6">Let's get you started on your donation journey.</p>
+          <p className="text-gray-500 mb-6">Let&apos;s get you started on your donation journey.</p>
           
           <form onSubmit={handleSignup} className="space-y-4">
             <InputField name="name" label="Full Name" placeholder="Juan Dela Cruz" value={form.name} onChange={handleChange} />
@@ -158,7 +158,7 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
             <InputField name="address" label="Address" placeholder="Iligan City, etc." value={form.address} onChange={handleChange} />
             
             <InputField name="bloodType" label="Blood Type" value={form.bloodType} onChange={handleChange}>
-                <option value="">Select Blood Type</option><option value="Unknown">Don’t know yet</option>
+                <option value="">Select Blood Type</option><option value="Unknown">Don&apos;t know yet</option>
                 <option value="A+">A+</option><option value="A-">A-</option>
                 <option value="B+">B+</option><option value="B-">B-</option>
                 <option value="O+">O+</option><option value="O-">O-</option>

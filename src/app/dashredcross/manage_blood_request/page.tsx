@@ -30,7 +30,7 @@ const NoteIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-
 //========================================================//
 // 2. TYPES & CHILD COMPONENTS                            //
 //========================================================//
-type BloodRequest = { id: string; user_id?: string; hospital_name: string; blood_type: string; blood_component: string; units: number; status: "Pending" | "Approved" | "Rejected" | "Fulfilled"; requested_at?: string | null; updated_at?: string | null; notes?: string | null; request_form_file?: string | null; indigency_file?: string | null; senior_id_file?: string | null; referral_note_file?: string | null; proof_url?: string | null; };
+type BloodRequest = { id: string; user_id?: string; hospital_name: string; users: { name: string } | null; blood_type: string; blood_component: string; units: number; status: "Pending" | "Approved" | "Rejected" | "Fulfilled"; requested_at?: string | null; updated_at?: string | null; notes?: string | null; request_form_file?: string | null; indigency_file?: string | null; senior_id_file?: string | null; referral_note_file?: string | null; proof_url?: string | null; };
 
 function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const pathname = usePathname();
@@ -260,23 +260,71 @@ export default function BloodRequestsPage() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const updateStatus = async (id: string, status: BloodRequest["status"], file?: File) => {
-    try {
-      let proof_url: string | null = null;
-      if (status === "Fulfilled" && file) {
-        const filePath = `public/${id}-${Date.now()}.${file.name.split(".").pop()}`;
-        const { error: uploadError } = await supabase.storage.from("blood_requests").upload(filePath, file);
-        if (uploadError) throw uploadError;
-        proof_url = supabase.storage.from("blood_requests").getPublicUrl(filePath).data.publicUrl;
-      }
-      const { error } = await supabase.from("blood_requests").update({ status, proof_url }).eq("id", id);
-      if (error) throw error;
-      setRequests(prev => prev.map(r => r.id === id ? { ...r, status, proof_url: proof_url || r.proof_url } : r));
-      Swal.fire("Success", `Request ${status}`, "success");
-    } catch (err: any) {
-      Swal.fire("Error", err.message, "error");
+ const updateStatus = async (request: BloodRequest, newStatus: BloodRequest["status"], file?: File) => {
+    let notificationMessage = "";
+
+    // --- PROMPT FOR MESSAGE ON APPROVE OR REJECT ---
+    if (newStatus === "Approved") {
+        const { value: message, isConfirmed } = await Swal.fire({
+            title: 'Approve Request',
+            input: 'textarea',
+            inputLabel: 'Message for the user',
+            inputPlaceholder: 'e.g., Your request is approved. You can claim the blood unit at the Red Cross office from Monday to Friday, 8am-5pm. Please bring a valid ID.',
+            showCancelButton: true,
+            confirmButtonText: 'Approve & Send Message',
+            confirmButtonColor: '#2563eb' // Blue color
+        });
+
+        if (!isConfirmed) return; // User cancelled
+        notificationMessage = `Your blood request has been approved! ${message}`;
+        
+    } else if (newStatus === "Rejected") {
+        const { value: reason, isConfirmed } = await Swal.fire({
+            title: 'Reject Request',
+            input: 'textarea',
+            inputLabel: 'Reason for rejection',
+            inputPlaceholder: 'Please provide a clear reason for rejecting this request...',
+            showCancelButton: true,
+            confirmButtonText: 'Reject & Send Message',
+            confirmButtonColor: '#d33', // Red color
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'You must provide a reason for rejection!'
+                }
+            }
+        });
+        
+        if (!isConfirmed) return; // User cancelled
+        notificationMessage = `We're sorry, your blood request has been rejected. Reason: ${reason}`;
     }
-  };
+    // --- END OF PROMPT LOGIC ---
+
+    try {
+        let proof_url: string | null = null;
+        if (newStatus === "Fulfilled" && file) {
+            const filePath = `public/${request.id}-${Date.now()}.${file.name.split(".").pop()}`;
+            const { error: uploadError } = await supabase.storage.from("blood_requests").upload(filePath, file);
+            if (uploadError) throw uploadError;
+            proof_url = supabase.storage.from("blood_requests").getPublicUrl(filePath).data.publicUrl;
+        }
+
+        // 1. Update the request status
+        const { error: updateError } = await supabase.from("blood_requests").update({ status: newStatus, proof_url }).eq("id", request.id);
+        if (updateError) throw updateError;
+        
+        // 2. Send notification if there is a message
+        if (notificationMessage && request.user_id) {
+            await sendNotification(request.user_id, request.id, notificationMessage);
+        }
+
+        // 3. Update the UI
+        setRequests(prev => prev.map(r => r.id === request.id ? { ...r, status: newStatus, proof_url: proof_url || r.proof_url } : r));
+        Swal.fire("Success", `Request has been ${newStatus} and a notification was sent.`, "success");
+
+    } catch (err: any) {
+        Swal.fire("Error", err.message, "error");
+    }
+};
 
   const addRequest = async (payload: any) => {
     try {
@@ -290,26 +338,67 @@ export default function BloodRequestsPage() {
     }
   };
 
-  const handleFulfill = (id: string) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".jpg,.jpeg,.png,.pdf";
-    input.onchange = () => { if(input.files?.[0]) updateStatus(id, "Fulfilled", input.files[0]); };
-    input.click();
-  };
 
-  const deleteRequest = async (id: string) => {
-    const result = await Swal.fire({title: "Are you sure?", text: "This will permanently delete the request.", icon: "warning", showCancelButton: true, confirmButtonText: "Yes, delete it!"});
-    if(!result.isConfirmed) return;
-    try {
-      const { error } = await supabase.from("blood_requests").delete().eq("id", id);
-      if (error) throw error;
-      Swal.fire("Deleted!", "Blood request has been deleted.", "success");
-      setRequests(prev => prev.filter((r) => r.id !== id));
-    } catch (err: any) {
-      Swal.fire("Error", err.message, "error");
+  // REPLACE your old sendNotification function with this one
+const sendNotification = async (customUserId: string, requestId: string, message: string) => {
+    if (!customUserId || !message) {
+        console.error("Custom User ID or message is missing.");
+        return;
     }
-  };
+
+    try {
+        // 1. LOOKUP: Find the user's real auth ID (uuid) using their custom text ID.
+        //    This assumes your 'users' table has 'id' (the uuid) and 'user_id' (the text like D-...).
+        const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('id') // Select the real uuid 'id' column
+            .eq('user_id', customUserId) // Match it using the custom text 'user_id'
+            .single();
+
+        if (userError || !userData) {
+            throw new Error(`Could not find a user with the ID: ${customUserId}`);
+        }
+        
+        // 2. INSERT: Use the correct uuid we just found.
+        const { error: notificationError } = await supabase
+            .from('notifications')
+            .insert({ 
+                user_id: userData.id, // Use the fetched real uuid
+                message: message,
+                request_id: requestId 
+            });
+        
+        if (notificationError) throw notificationError;
+        
+    } catch (error: any) {
+        console.error("Error sending notification:", error);
+        // Re-throw the error so the function that called this can show a Swal alert
+        throw error;
+    }
+};
+
+  // ADD THIS NEW FUNCTION
+const notifyUser = async (request: BloodRequest) => {
+    const { value: message } = await Swal.fire({
+      title: `Send a Message`,
+      text: `Send a general update to ${request.users?.name || request.hospital_name}.`,
+      input: 'textarea',
+      inputPlaceholder: 'Type your message here...',
+      showCancelButton: true,
+      confirmButtonText: 'Send Message',
+      confirmButtonColor: '#DC2626'
+    });
+
+    if (message && request.user_id) {
+      try {
+        // Now using our central notification function
+        await sendNotification(request.user_id, request.id, `Regarding your request: ${message}`);
+        Swal.fire('Sent!', 'The message has been sent to the user.', 'success');
+      } catch (err: any) {
+        Swal.fire('Error', 'Could not send the message.', 'error');
+      }
+    }
+};
 
   const filteredRequests = requests.filter((r) =>
     (r.user_id?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
@@ -325,8 +414,7 @@ export default function BloodRequestsPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard title="Pending Requests" value={requests.filter(r => r.status === 'Pending').length} icon={<RequestIcon/>} color="bg-yellow-500" />
                 <StatCard title="Approved Requests" value={requests.filter(r => r.status === 'Approved').length} icon={<CheckIcon/>} color="bg-blue-500" />
-                <StatCard title="Fulfilled Today" value={requests.filter(r => r.status === 'Fulfilled' && new Date(r.updated_at!).toDateString() === new Date().toDateString()).length} icon={<InventoryIcon/>} color="bg-green-500" />
-                <StatCard title="Total Requests" value={requests.length} icon={<UsersIcon/>} color="bg-gray-500" />
+                <StatCard title="Rejected Requests" value={requests.filter(r => r.status === 'Rejected').length} icon={<CancelIcon/>} color="bg-red-500" />                <StatCard title="Total Requests" value={requests.length} icon={<UsersIcon/>} color="bg-gray-500" />
             </div>
 
             <Card>
@@ -341,34 +429,69 @@ export default function BloodRequestsPage() {
                     </div>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm min-w-[1200px]">
+                    <table className="w-full text-sm"> 
                         <thead className="bg-gray-50">
                             <tr className="text-left text-gray-500 uppercase text-xs font-semibold">
-                                <th className="p-4">Hospital</th><th className="p-4">Blood Needed</th><th className="p-4 text-center">Units</th><th className="p-4">Requested At</th><th className="p-4 text-center">Status</th><th className="p-4 text-center">Files</th><th className="p-4 text-center">Actions</th>
+                                <th className="p-4">Name & User ID</th>
+                                <th className="p-4 text-center">Blood Type</th>
+                                <th className="p-4 text-center">Component</th>
+                                <th className="p-4 text-center">Units</th>
+                                {/* BAG-ONG COLUMN PARA SA REQUEST TYPE */}
+                                <th className="p-4 text-center">Request Type</th> 
+                                {/* KATONG Requested At gi-ilisdan lang ang p-4 sa p-3 */}
+                                <th className="p-4">Requested At</th>
+                                <th className="p-4 text-center">Status</th>
+                                <th className="p-4 text-center">Files</th>
+                                <th className="p-4 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                            {loading ? (<tr><td colSpan={7} className="text-center p-8 text-gray-500">Loading...</td></tr>) :
-                            filteredRequests.length === 0 ? (<tr><td colSpan={7} className="text-center p-8 text-gray-500">No requests found.</td></tr>) :
+                            {loading ? (<tr><td colSpan={9} className="text-center p-8 text-gray-500">Loading...</td></tr>) :
+                            filteredRequests.length === 0 ? (<tr><td colSpan={9} className="text-center p-8 text-gray-500">No requests found.</td></tr>) :
                             (filteredRequests.map((r) => (
                                 <tr key={r.id} className="hover:bg-gray-50">
                                     <td className="p-4"><div className="font-semibold text-gray-800">{r.hospital_name}</div><div className="text-gray-500 font-mono text-xs">{r.user_id || 'N/A'}</div></td>
-                                    <td className="p-4"><div className="font-bold text-red-600">{r.blood_type}</div><div className="text-gray-500 text-xs">{r.blood_component}</div></td>
+                                    {/* START: ADD THESE TWO CELLS */}
+                                    <td className="p-4 text-center">
+                                        <div className="font-bold text-red-600">{r.blood_type}</div>
+                                    </td>
+                                    <td className="p-4 text-center">
+                                        <div className="text-gray-500 text-xs">{r.blood_component}</div>
+                                    </td>
+                                    {/* END: ADD THESE TWO CELLS */}
                                     <td className="p-4 text-center font-semibold">{r.units}</td>
+                                    <td className="p-4 text-center">
+                                        {r.indigency_file ? (
+                                            <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700">INDIGENCY</span>
+                                        ) : (
+                                            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">STANDARD</span>
+                                        )}
+                                    </td>
                                     <td className="p-4 text-gray-600">{new Date(r.requested_at!).toLocaleString()}</td>
                                     <td className="p-4 text-center"><StatusBadge status={r.status} /></td>
                                     <td className="p-4 text-center">
                                         <div className="flex justify-center items-center gap-1">
+                                            {/* Request Form (Required) */}
                                             {r.request_form_file && <a href={r.request_form_file} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md" title="Request Form"><LinkIcon /></a>}
+
+                                            {/* Indigency Certificate (Optional) */}
+                                            {r.indigency_file && <a href={r.indigency_file} target="_blank" rel="noopener noreferrer" className="p-1.5 text-purple-600 hover:bg-purple-100 rounded-md" title="Indigency Certificate"><LinkIcon /></a>}
+
+                                            {/* Senior Citizen ID (Optional) */}
+                                            {r.senior_id_file && <a href={r.senior_id_file} target="_blank" rel="noopener noreferrer" className="p-1.5 text-orange-600 hover:bg-orange-100 rounded-md" title="Senior Citizen ID"><LinkIcon /></a>}
+                                            
+                                            {/* Referral Note (Optional) */}
+                                            {r.referral_note_file && <a href={r.referral_note_file} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-600 hover:bg-gray-200 rounded-md" title="Referral Note"><LinkIcon /></a>}
+
+                                            {/* Proof of Fulfillment (Added after approval) */}
                                             {r.proof_url && <a href={r.proof_url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-green-600 hover:bg-green-100 rounded-md" title="Proof of Fulfillment"><LinkIcon /></a>}
                                         </div>
                                     </td>
                                     <td className="p-4 text-center">
                                         <div className="flex justify-center items-center gap-1">
-                                            {r.status === "Pending" && <button onClick={() => updateStatus(r.id, "Approved")} title="Approve" className="p-1.5 text-green-600 hover:bg-green-100 rounded-md"><CheckIcon /></button>}
-                                            {r.status === "Pending" && <button onClick={() => updateStatus(r.id, "Rejected")} title="Reject" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><CancelIcon /></button>}
-                                            {r.status === "Approved" && <button onClick={() => handleFulfill(r.id)} title="Mark as Fulfilled" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md"><InventoryIcon /></button>}
-                                            <button onClick={() => deleteRequest(r.id)} title="Delete" className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-md"><DeleteIcon /></button>
+                                            {r.status === "Pending" && <button onClick={() => updateStatus(r, "Approved")} title="Approve" className="p-1.5 text-green-600 hover:bg-green-100 rounded-md"><CheckIcon /></button>}
+                                            {r.status === "Pending" && <button onClick={() => updateStatus(r, "Rejected")} title="Reject" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><CancelIcon /></button>}
+                                            <button onClick={() => notifyUser(r)} title="Notify User" className="p-1.5 text-blue-500 hover:bg-blue-200 rounded-md"><NoteIcon /></button>
                                         </div>
                                     </td>
                                 </tr>
