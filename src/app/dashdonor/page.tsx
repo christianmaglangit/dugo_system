@@ -161,7 +161,7 @@ const UpcomingAppointmentCard = ({ appointment }: { appointment: any | null }) =
 
 
 const YourImpact = ({ livesSaved, bloodType, lastDonation, appointment }: { livesSaved: number, bloodType: string, lastDonation: string | null, appointment: any | null }) => (
-    <div className="md:col-span-2 grid grid-cols-2 gap-6">
+    <div className="md:col-span-2 grid gap-6">
         <Card className="p-5 flex items-center gap-4">
             <div className="p-3 bg-red-100 rounded-lg text-red-600"><HeartIcon /></div>
             <div><p className="text-gray-500 text-sm">Lives Saved</p><p className="font-bold text-xl text-gray-800">{livesSaved}</p></div>

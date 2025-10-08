@@ -1,7 +1,10 @@
-import type { NextConfig } from "next";
+// next.config.js
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+    output: 'export', // <--- This is necessary for Capacitor
     images: {
+        unoptimized: true, // Recommended for static/Capacitor builds
         remotePatterns: [
             {
                 protocol: 'https',

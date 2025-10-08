@@ -143,7 +143,7 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
           <p className="text-gray-500 mb-6">Let&apos;s get you started on your donation journey.</p>
           
           <form onSubmit={handleSignup} className="space-y-4">
-            <InputField name="name" label="Full Name" placeholder="Juan Dela Cruz" value={form.name} onChange={handleChange} />
+            <InputField name="name" label="Full Name" placeholder="Juan Dela Cruz" value={form.name} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"  />
             
             <div className="grid grid-cols-2 gap-4">
                 <InputField name="age" label="Age" type="number" placeholder="e.g., 25" value={form.age} onChange={handleChange} />
@@ -154,8 +154,8 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
                 </InputField>
             </div>
 
-            <InputField name="contact" label="Contact Number" placeholder="0917..." value={form.contact} onChange={handleChange} />
-            <InputField name="address" label="Address" placeholder="Iligan City, etc." value={form.address} onChange={handleChange} />
+            <InputField name="contact" label="Contact Number" placeholder="0917..." value={form.contact} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
+            <InputField name="address" label="Address" placeholder="Iligan City, etc." value={form.address} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
             
             <InputField name="bloodType" label="Blood Type" value={form.bloodType} onChange={handleChange}>
                 <option value="">Select Blood Type</option><option value="Unknown">Don&apos;t know yet</option>
@@ -166,9 +166,9 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
             </InputField>
             
             <div className="border-t pt-4 space-y-4">
-                <InputField name="email" label="Email" type="email" placeholder="you@example.com" value={form.email} onChange={handleChange} />
-                <InputField name="password" label="Password" type="password" placeholder="••••••••" value={form.password} onChange={handleChange} />
-                <InputField name="confirmPassword" label="Confirm Password" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={handleChange} />
+                <InputField name="email" label="Email" type="email" placeholder="you@example.com" value={form.email} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
+                <InputField name="password" label="Password" type="password" placeholder="••••••••" value={form.password} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
+                <InputField name="confirmPassword" label="Confirm Password" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
             </div>
 
             <button type="submit" disabled={loading} className={`w-full py-3 mt-4 rounded-lg text-white font-semibold transition ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}>

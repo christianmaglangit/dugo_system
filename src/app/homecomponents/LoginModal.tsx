@@ -94,12 +94,12 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup }
                 placeholder="you@example.com" 
                 value={form.email} 
                 onChange={handleChange} 
+                className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" 
             />
             
             <div>
               <div className="flex justify-between items-baseline">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-1">Password</label>
-                <a href="#" className="text-sm font-medium text-red-600 hover:underline">Forgot Password?</a>
               </div>
               <input 
                 id="password" 
@@ -109,7 +109,7 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup }
                 value={form.password} 
                 onChange={handleChange} 
                 required 
-                className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" 
+                className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" 
               />
             </div>
             
