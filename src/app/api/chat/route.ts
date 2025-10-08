@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// This is the API key for the DeepSeek service
 const API_KEY = process.env.DEEPSEEK_API_KEY || "";
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
 
-// This is the format your frontend sends
 interface GeminiChatMessage {
     role: "user" | "model";
     parts: { text: string }[];
 }
-
-// This is the format the DeepSeek API expects
 interface DeepSeekChatMessage {
     role: "system" | "user" | "assistant";
     content: string;
@@ -28,7 +24,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Chat history is empty." }, { status: 400 });
     }
 
-    // This is Haima's personality and instructions
     const systemPrompt: DeepSeekChatMessage = {
         role: "system",
         content: `Haima is a friendly, knowledgeable, and compassionate virtual assistant for DUGO 
@@ -67,13 +62,11 @@ export async function POST(req: NextRequest) {
     };
 
     
-    // Convert the message history from your frontend's format to DeepSeek's format
     const mappedMessages: DeepSeekChatMessage[] = history.map(msg => ({
         role: msg.role === 'model' ? 'assistant' : 'user',
         content: msg.parts[0].text
     }));
 
-    // Call the DeepSeek API
     const response = await fetch(DEEPSEEK_API_URL, {
         method: "POST",
         headers: {

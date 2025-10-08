@@ -6,6 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { Dialog } from "@headlessui/react";
+import jsPDF from "jspdf";
+import autoTable from 'jspdf-autotable';
+
 
 //========================================================//
 // 1. ICONS                                               //
@@ -42,36 +45,36 @@ function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         { name: "Hospital Inventory", href: "/dashredcross/manage_hospital_inventory", icon: <HospitalIcon /> },
     ];
 
-  return (
-    <>
-      {isOpen && <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={onClose}></div>}
-      <aside className={`w-72 min-h-screen fixed left-0 top-0 bg-white shadow-lg p-6 flex-col z-50 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:flex`}>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-3xl font-extrabold text-red-600">DUGO</h2>
-            <p className="text-xs text-gray-600 font-medium">
-              (Donor Utility for Giving and Organizing)
-            </p>
-          </div>
+    return (
+        <>
+            {isOpen && <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={onClose}></div>}
+            <aside className={`w-72 min-h-screen fixed left-0 top-0 bg-white shadow-lg p-6 flex-col z-50 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:flex`}>
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 className="text-3xl font-extrabold text-red-600">DUGO</h2>
+                        <p className="text-xs text-gray-600 font-medium">
+                            (Donor Utility for Giving and Organizing)
+                        </p>
+                    </div>
 
-          <button
-            onClick={onClose}
-            className="md:hidden p-2 rounded-full hover:bg-gray-100"
-          >
-            <XIcon />
-          </button>
-        </div>
-        <nav className="flex flex-col space-y-2">
-          {links.map((link) => (
-            <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all font-semibold ${pathname === link.href ? "bg-red-600 text-white shadow-md" : "text-gray-600 hover:bg-red-50 hover:text-red-600"}`}>
-              {link.icon}
-              <span>{link.name}</span>
-            </Link>
-          ))}
-        </nav>
-      </aside>
-    </>
-  );
+                    <button
+                        onClick={onClose}
+                        className="md:hidden p-2 rounded-full hover:bg-gray-100"
+                    >
+                        <XIcon />
+                    </button>
+                </div>
+                <nav className="flex flex-col space-y-2">
+                    {links.map((link) => (
+                        <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all font-semibold ${pathname === link.href ? "bg-red-600 text-white shadow-md" : "text-gray-600 hover:bg-red-50 hover:text-red-600"}`}>
+                            {link.icon}
+                            <span>{link.name}</span>
+                        </Link>
+                    ))}
+                </nav>
+            </aside>
+        </>
+    );
 }
 
 function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
@@ -144,7 +147,7 @@ function CampaignFormModal({ isOpen, onClose, onSave, editingCampaign }: { isOpe
             const { data } = supabase.storage.from("campaigns").getPublicUrl(filePath);
             photoUrl = data.publicUrl;
         }
-        
+
         const payload = { title: form.title, description: form.description, location: form.location, date: form.date, time: form.time, photo_url: photoUrl };
         const { error } = editingCampaign
             ? await supabase.from("blood_campaigns").update(payload).eq("id", editingCampaign.id)
@@ -157,18 +160,18 @@ function CampaignFormModal({ isOpen, onClose, onSave, editingCampaign }: { isOpe
             onSave();
         }
     };
-    
+
     return (
         <Dialog open={isOpen} onClose={onClose} className="relative z-50">
             <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
             <div className="fixed inset-0 flex items-center justify-center p-4">
                 <Dialog.Panel className="bg-white rounded-2xl shadow-xl w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
-                     <div className="hidden md:flex flex-col justify-center p-12 bg-red-600 text-white">
+                    <div className="hidden md:flex flex-col justify-center p-12 bg-red-600 text-white">
                         <h2 className="text-3xl font-bold">{editingCampaign ? "Edit Campaign" : "Create a Campaign"}</h2>
                         <p className="mt-4 text-red-100">{editingCampaign ? "Update the details for this event." : "Fill out the form to schedule a new bloodletting campaign."}</p>
                     </div>
                     <div className="relative p-8 md:p-10 overflow-y-auto max-h-[90vh]">
-                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon/></button>
+                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon /></button>
                         <h3 className="text-2xl font-bold text-gray-800 mb-6">{editingCampaign ? "Edit Campaign Details" : "New Campaign Details"}</h3>
                         <div className="space-y-4">
                             <InputField label="Campaign Title" name="title" value={form.title} onChange={(e: any) => setForm({ ...form, title: e.target.value })} placeholder="e.g., Annual Blood Drive" />
@@ -195,36 +198,115 @@ function CampaignFormModal({ isOpen, onClose, onSave, editingCampaign }: { isOpe
 }
 
 
-// ADD THIS NEW MODAL COMPONENT
 function CampaignReportModal({ campaign, onClose }: { campaign: any | null, onClose: () => void }) {
     const [stats, setStats] = useState<{ total: number, byType: Record<string, number> } | null>(null);
+    const [donors, setDonors] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!campaign) return;
-        
-        const fetchStats = async () => {
+
+        const fetchData = async () => {
             setLoading(true);
-            const { data, error, count } = await supabase
+
+            // Fetch aggregate stats
+            const { data: statsData, error: statsError, count } = await supabase
                 .from('blood_inventory')
                 .select('type', { count: 'exact' })
                 .eq('campaign_id', campaign.id);
-            
-            if (error) {
-                console.error(error);
+
+            if (statsError) {
+                console.error("Stats Error:", statsError);
                 Swal.fire('Error', 'Could not fetch campaign donation data.', 'error');
             } else {
-                const byType = data.reduce((acc, { type }) => {
+                const byType = statsData.reduce((acc, { type }) => {
                     acc[type] = (acc[type] || 0) + 1;
                     return acc;
                 }, {} as Record<string, number>);
                 setStats({ total: count || 0, byType });
             }
+
+            // Fetch detailed donor info
+            const { data: donorData, error: donorError } = await supabase
+                .from('blood_inventory')
+                .select(`
+                    user_id,
+                    type,
+                    users (
+                        name,
+                        age,
+                        gender,
+                        contact,
+                        blood_type
+                    )
+                `)
+                .eq('campaign_id', campaign.id);
+
+            if (donorError) {
+                console.error("Donor Fetch Error:", donorError);
+                Swal.fire('Database Error', `Could not fetch donor details: ${donorError.message}`, 'error');
+            } else {
+                setDonors(donorData);
+            }
+
             setLoading(false);
         };
 
-        fetchStats();
+        fetchData();
     }, [campaign]);
+
+    const handleExportPDF = () => {
+        if (!stats || donors.length === 0) {
+            Swal.fire('Info', 'No data available to export.', 'info');
+            return;
+        }
+
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        // 1. Add Header
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Campaign Donation Report", pageWidth / 2, 20, { align: 'center' });
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Campaign Title: ${campaign.title}`, 15, 35);
+        doc.text(`Location: ${campaign.location}`, 15, 42);
+        doc.text(`Date: ${campaign.date}`, 15, 49);
+        doc.text(`Report Generated: ${today}`, 15, 56);
+
+        // 2. Add Donation Summary Table
+        autoTable(doc, {
+            startY: 65,
+            head: [['Donation Summary', 'Value']],
+            body: [
+                ['Total Donations Collected', stats.total],
+                ...Object.entries(stats.byType).map(([type, count]) => [`Blood Type: ${type}`, `${count} bag(s)`])
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [209, 36, 42] } // Red Cross color
+        });
+
+        // 3. Add Donor Details Table
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 15,
+            head: [['Donor Name', 'Age', 'Gender', 'Contact', 'Blood Type (Donated)']],
+            body: donors.map(donor => [
+                donor.users?.name || 'N/A',
+                donor.users?.age || 'N/A',
+                donor.users?.gender || 'N/A',
+                donor.users?.contact || 'N/A',
+                donor.type || 'N/A'
+            ]),
+            theme: 'striped',
+            headStyles: { fillColor: [209, 36, 42] } // Red Cross color
+        });
+
+        // 4. Save the PDF
+        doc.save(`Campaign_Report_${campaign.title.replace(/ /g, "_")}.pdf`);
+    };
 
     if (!campaign) return null;
 
@@ -236,7 +318,6 @@ function CampaignReportModal({ campaign, onClose }: { campaign: any | null, onCl
                     <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon /></button>
                     <h2 className="text-2xl font-bold text-gray-800">{campaign.title}</h2>
                     <p className="text-sm text-gray-500 mb-6">Donation Report</p>
-                    
                     {loading ? (
                         <p className="py-8 text-center text-gray-500">Loading report...</p>
                     ) : stats && stats.total > 0 ? (
@@ -254,6 +335,14 @@ function CampaignReportModal({ campaign, onClose }: { campaign: any | null, onCl
                                     ))}
                                 </ul>
                             </div>
+                            <div className="mt-6 pt-4 border-t">
+                                <button
+                                    onClick={handleExportPDF}
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                                >
+                                    Export Report as PDF
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         <p className="py-8 text-center text-gray-500">No donations have been recorded for this campaign yet.</p>
@@ -264,115 +353,245 @@ function CampaignReportModal({ campaign, onClose }: { campaign: any | null, onCl
     );
 }
 
+
 //========================================================//
-// 4. MAIN PAGE COMPONENT                                 //
+// 4. MAIN PAGE COMPONENT                                 //
 //========================================================//
 export default function ManageCampaigns() {
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
+    const [campaigns, setCampaigns] = useState<any[]>([]);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-  const openReportModal = (c: any) => { setSelectedCampaign(c); };
-  const closeReportModal = () => { setSelectedCampaign(null); };
-  const fetchCampaigns = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from("blood_campaigns").select("*").order("date", { ascending: false });
-    if (!error && data) setCampaigns(data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
-        if (profile) setUserRole(profile.role.toLowerCase());
-      }
+    const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+    const openReportModal = (c: any) => { setSelectedCampaign(c); };
+    const closeReportModal = () => { setSelectedCampaign(null); };
+    const fetchCampaigns = async () => {
+        setLoading(true);
+        const { data, error } = await supabase.from("blood_campaigns").select("*").order("date", { ascending: false });
+        if (!error && data) setCampaigns(data);
+        setLoading(false);
     };
-    fetchUserRole();
-    fetchCampaigns();
-  }, []);
 
-  const saveCampaign = () => {
-    fetchCampaigns();
-    setIsModalOpen(false);
-    setEditingId(null);
-  };
-  
-  const openAddModal = () => { setEditingId(null); setIsModalOpen(true); };
-  const openEditModal = (c: any) => { setEditingId(c.id); setIsModalOpen(true); };
-  const closeModal = () => { setIsModalOpen(false); setEditingId(null); };
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+                if (profile) setUserRole(profile.role.toLowerCase());
+            }
+        };
+        fetchUserRole();
+        fetchCampaigns();
+    }, []);
+
+    const saveCampaign = () => {
+        fetchCampaigns();
+        setIsModalOpen(false);
+        setEditingId(null);
+    };
+
+    const openAddModal = () => { setEditingId(null); setIsModalOpen(true); };
+    const openEditModal = (c: any) => { setEditingId(c.id); setIsModalOpen(true); };
+    const closeModal = () => { setIsModalOpen(false); setEditingId(null); };
 
 
-  const deleteCampaign = async (id: string) => {
-    const { isConfirmed } = await Swal.fire({
-        title: "Are you sure?",
-        text: "This will permanently delete the campaign and cannot be undone.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        confirmButtonText: "Yes, delete it!",
+    const deleteCampaign = async (id: string) => {
+        const { isConfirmed } = await Swal.fire({
+            title: "Are you sure?",
+            text: "This will permanently delete the campaign and cannot be undone.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!",
+        });
+
+        if (isConfirmed) {
+            const { error } = await supabase.from("blood_campaigns").delete().eq("id", id);
+            if (error) {
+                Swal.fire("Error", error.message, "error");
+            } else {
+                Swal.fire("Deleted!", "The campaign has been deleted.", "success");
+                fetchCampaigns();
+            }
+        }
+    };
+
+    const cancelCampaign = async (id: string) => {
+        const { isConfirmed } = await Swal.fire({
+            title: 'Are you sure?',
+            text: "This will mark the campaign as 'Cancelled'.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f59e0b', // A yellow/amber color
+            confirmButtonText: 'Yes, cancel it',
+        });
+
+        if (isConfirmed) {
+            const { error } = await supabase
+                .from('blood_campaigns')
+                .update({ status: 'Cancelled' })
+                .eq('id', id);
+
+            if (error) {
+                Swal.fire('Error', `Could not cancel the campaign: ${error.message}`, 'error');
+            } else {
+                Swal.fire('Cancelled!', 'The campaign has been marked as cancelled.', 'success');
+                fetchCampaigns(); // Refresh the list to show the new status
+            }
+        }
+    };
+
+    const handleExportMonthlyReport = async () => {
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    const { value: formValues, isConfirmed } = await Swal.fire({
+        title: 'Select Month and Year for Report',
+        html: `
+            <select id="swal-month" class="swal2-select">
+                ${months.map((m, i) => `<option value="${i}" ${i === currentMonth ? 'selected' : ''}>${m}</option>`).join('')}
+            </select>
+            <input id="swal-year" type="number" value="${currentYear}" class="swal2-input">
+        `,
+        focusConfirm: false,
+        preConfirm: () => ({
+            month: (document.getElementById('swal-month') as HTMLSelectElement).value,
+            year: (document.getElementById('swal-year') as HTMLInputElement).value
+        })
     });
 
-    if (isConfirmed) {
-        const { error } = await supabase.from("blood_campaigns").delete().eq("id", id);
-        if (error) {
-            Swal.fire("Error", error.message, "error");
-        } else {
-            Swal.fire("Deleted!", "The campaign has been deleted.", "success");
-            fetchCampaigns();
-        }
-    }
-};
-  
-  const cancelCampaign = async (id: string) => {
-    const { isConfirmed } = await Swal.fire({
-        title: 'Are you sure?',
-        text: "This will mark the campaign as 'Cancelled'.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#f59e0b', // A yellow/amber color
-        confirmButtonText: 'Yes, cancel it',
+    if (!isConfirmed || !formValues) return;
+
+    const selectedMonth = parseInt(formValues.month, 10);
+    const selectedYear = parseInt(formValues.year, 10);
+
+    const filteredCampaigns = campaigns.filter(c => {
+        const campaignDate = new Date(c.date);
+        return campaignDate.getMonth() === selectedMonth && campaignDate.getFullYear() === selectedYear;
     });
 
-    if (isConfirmed) {
-        const { error } = await supabase
-            .from('blood_campaigns')
-            .update({ status: 'Cancelled' })
-            .eq('id', id);
-
-        if (error) {
-            Swal.fire('Error', `Could not cancel the campaign: ${error.message}`, 'error');
-        } else {
-            Swal.fire('Cancelled!', 'The campaign has been marked as cancelled.', 'success');
-            fetchCampaigns(); // Refresh the list to show the new status
-        }
+    if (filteredCampaigns.length === 0) {
+        Swal.fire('No Data', `No campaigns found for ${months[selectedMonth]} ${selectedYear}.`, 'info');
+        return;
     }
+
+    // --- NEW: CALCULATE STATUS COUNTS ---
+    const statusCounts = {
+        Completed: 0,
+        Cancelled: 0,
+        Upcoming: 0,
+        Ongoing: 0,
+    };
+    filteredCampaigns.forEach(campaign => {
+        const status = getCampaignStatus(campaign);
+        if (statusCounts.hasOwnProperty(status)) {
+            (statusCounts as any)[status]++;
+        }
+    });
+
+    const campaignIds = filteredCampaigns.map(c => c.id);
+    const { data: donations, error: donationError } = await supabase
+        .from('blood_inventory')
+        .select('campaign_id, type')
+        .in('campaign_id', campaignIds);
+
+    if (donationError) {
+        Swal.fire('Error', `Failed to fetch donation data: ${donationError.message}`, 'error');
+        return;
+    }
+
+    const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+    let topCampaign = { title: 'N/A', total: 0 };
+    const campaignResults = new Map();
+
+    // --- UPDATED: Initialize with ALL campaigns for the month ---
+    filteredCampaigns.forEach(c => {
+        campaignResults.set(c.id, {
+            title: c.title,
+            total: 0,
+            byType: Object.fromEntries(bloodTypes.map(bt => [bt, 0]))
+        });
+    });
+
+    donations?.forEach(donation => {
+        if (campaignResults.has(donation.campaign_id)) {
+            const campaignData = campaignResults.get(donation.campaign_id);
+            campaignData.total += 1;
+            if (campaignData.byType.hasOwnProperty(donation.type)) {
+                campaignData.byType[donation.type] += 1;
+            }
+        }
+    });
+
+    campaignResults.forEach(data => {
+        if (data.total > topCampaign.total) {
+            topCampaign = { title: data.title, total: data.total };
+        }
+    });
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Monthly Campaign Report', pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${months[selectedMonth]} ${selectedYear}`, pageWidth / 2, 28, { align: 'center' });
+    doc.text(`Top Campaign: ${topCampaign.title} (${topCampaign.total} units collected)`, 14, 40);
+
+    // --- UPDATED: Summary table with new status counts ---
+    autoTable(doc, {
+        startY: 50,
+        head: [['Summary', 'Total']],
+        body: [
+            ['Total Campaigns', filteredCampaigns.length],
+            ['Completed', statusCounts.Completed],
+            ['Cancelled', statusCounts.Cancelled],
+            ['Upcoming', statusCounts.Upcoming],
+            ['Ongoing', statusCounts.Ongoing],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [209, 36, 42] }
+    });
+
+    const tableHeaders = ['Campaign', 'Total Units', ...bloodTypes];
+    const tableBody = Array.from(campaignResults.values()).map(data => [
+        data.title,
+        data.total,
+        ...bloodTypes.map(bt => data.byType[bt] || 0)
+    ]);
+
+    autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 10,
+        head: [tableHeaders],
+        body: tableBody,
+        theme: 'striped',
+        headStyles: { fillColor: [209, 36, 42] }
+    });
+
+    doc.save(`Campaign_Report_${months[selectedMonth]}_${selectedYear}.pdf`);
 };
 
-  const filteredCampaigns = campaigns.filter(c =>
-      c.title.toLowerCase().includes(search.toLowerCase()) ||
-      c.location.toLowerCase().includes(search.toLowerCase()) ||
-      c.date.includes(search)
-  );
+    const filteredCampaigns = campaigns.filter(c =>
+        c.title.toLowerCase().includes(search.toLowerCase()) ||
+        c.location.toLowerCase().includes(search.toLowerCase()) ||
+        c.date.includes(search)
+    );
 
-  const editingCampaign = editingId ? campaigns.find(c => c.id === editingId) : null;
+    const editingCampaign = editingId ? campaigns.find(c => c.id === editingId) : null;
     const getCampaignStatus = (campaign: any): string => {
-        // If manually cancelled, it stays Cancelled
         if (campaign.status === "Cancelled") {
             return "Cancelled";
         }
-
         const today = new Date();
         const campaignDate = new Date(campaign.date);
-
-        // Set times to midnight to compare dates only
         today.setHours(0, 0, 0, 0);
         campaignDate.setHours(0, 0, 0, 0);
 
@@ -385,57 +604,60 @@ export default function ManageCampaigns() {
         return "Upcoming";
     };
 
-  return (
-    <div className="flex bg-gray-50 min-h-screen">
-      <BloodbankSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 w-full transition-all duration-300 md:ml-72">
-        <Header toggleSidebar={toggleSidebar} />
-        <main className="mt-20 p-4 md:p-8">
-            <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="w-full md:max-w-md">
-                        <div className="relative">
-                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z" /></svg></span>
-                            <input type="text" placeholder="Search by Title, Location, or Date..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400"/>
+    return (
+        <div className="flex bg-gray-50 min-h-screen">
+            <BloodbankSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <div className="flex-1 w-full transition-all duration-300 md:ml-72">
+                <Header toggleSidebar={toggleSidebar} />
+                <main className="mt-20 p-4 md:p-8">
+                    <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="w-full md:max-w-md">
+                                <div className="relative">
+                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z" /></svg></span>
+                                    <input type="text" placeholder="Search by Title, Location, or Date..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 w-full md:w-auto">
+                                <button onClick={handleExportMonthlyReport} className="w-full md:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition">Export Report</button>
+                                {userRole === "redcross" && <button onClick={openAddModal} className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm transition">+ New Campaign</button>}
+                            </div>
                         </div>
                     </div>
-                    {userRole === "redcross" && <button onClick={openAddModal} className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm transition">+ New Campaign</button>}
-                </div>
-            </div>
-            {loading ? <p className="text-center text-gray-500">Loading campaigns...</p> : 
-                filteredCampaigns.length === 0 ? <p className="text-center text-gray-500">No campaigns found.</p> : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCampaigns.map((c) => (
-                    <div key={c.id} className="bg-white border rounded-2xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden flex flex-col">
-                        <img src={c.photo_url || 'https://placehold.co/600x400/ef4444/ffffff?text=DUGO'} alt={c.title} className="w-full h-48 object-cover" />
-                        <div className="p-4 flex flex-col flex-grow">
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="font-bold text-lg text-gray-800">{c.title}</h3>
-                                <StatusBadge status={getCampaignStatus(c)} />
-                            </div>
-                            <p className="text-sm text-gray-500">{c.location} • {c.date} • {c.time}</p>
-                            <p className="text-gray-600 text-sm mt-2 flex-grow">{c.description}</p>
-                            {userRole === "redcross" && (
-                                <div className="border-t mt-4 pt-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex space-x-2">
-                                            <button onClick={() => openReportModal(c)} title="View Report" className="p-1.5 text-green-600 hover:bg-green-100 rounded-md"><ReportIcon/></button>
-                                            <button onClick={() => openEditModal(c)} title="Edit Campaign" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md"><EditIcon/></button>
-                                            <button onClick={() => cancelCampaign(c.id)} title="Cancel Campaign" className="p-1.5 text-yellow-600 hover:bg-yellow-100 rounded-md"><XIcon /></button>
-                                            <button onClick={() => deleteCampaign(c.id)} title="Delete Campaign" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><DeleteIcon/></button>
+                    {loading ? <p className="text-center text-gray-500">Loading campaigns...</p> :
+                        filteredCampaigns.length === 0 ? <p className="text-center text-gray-500">No campaigns found.</p> : (
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredCampaigns.map((c) => (
+                                    <div key={c.id} className="bg-white border rounded-2xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden flex flex-col">
+                                        <img src={c.photo_url || 'https://placehold.co/600x400/ef4444/ffffff?text=DUGO'} alt={c.title} className="w-full h-48 object-cover" />
+                                        <div className="p-4 flex flex-col flex-grow">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="font-bold text-lg text-gray-800">{c.title}</h3>
+                                                <StatusBadge status={getCampaignStatus(c)} />
+                                            </div>
+                                            <p className="text-sm text-gray-500">{c.location} • {c.date} • {c.time}</p>
+                                            <p className="text-gray-600 text-sm mt-2 flex-grow">{c.description}</p>
+                                            {userRole === "redcross" && (
+                                                <div className="border-t mt-4 pt-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex space-x-2">
+                                                            <button onClick={() => openReportModal(c)} title="View Report" className="p-1.5 text-green-600 hover:bg-green-100 rounded-md"><ReportIcon /></button>
+                                                            <button onClick={() => openEditModal(c)} title="Edit Campaign" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md"><EditIcon /></button>
+                                                            <button onClick={() => cancelCampaign(c.id)} title="Cancel Campaign" className="p-1.5 text-yellow-600 hover:bg-yellow-100 rounded-md"><XIcon /></button>
+                                                            <button onClick={() => deleteCampaign(c.id)} title="Delete Campaign" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><DeleteIcon /></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    ))}
-                </div>
-            )}
-        </main>
-        {isModalOpen && <CampaignFormModal isOpen={isModalOpen} onClose={closeModal} onSave={saveCampaign} editingCampaign={editingCampaign} />}
-        {selectedCampaign && <CampaignReportModal campaign={selectedCampaign} onClose={closeReportModal} />}
-      </div>
-    </div>
-  );
+                                ))}
+                            </div>
+                        )}
+                </main>
+                {isModalOpen && <CampaignFormModal isOpen={isModalOpen} onClose={closeModal} onSave={saveCampaign} editingCampaign={editingCampaign} />}
+                {selectedCampaign && <CampaignReportModal campaign={selectedCampaign} onClose={closeReportModal} />}
+            </div>
+        </div>
+    );
 }

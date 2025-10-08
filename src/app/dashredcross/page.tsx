@@ -149,44 +149,68 @@ export default function RedCrossDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.replace("/"); return; }
-      const { data: profile, error } = await supabase.from("users").select("role, name").eq("id", user.id).single();
-      if (error || !profile || profile.role.toLowerCase() !== "redcross") { router.replace("/"); return; }
-      setUserName(profile.name);
-    };
-    checkUser();
-  }, [router]);
-
-  useEffect(() => {
-    const fetchBloodInventory = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.replace("/"); return; }
-      const { data: profile, error: profileError } = await supabase.from("users").select("user_id").eq("id", user.id).single();
-      if (profileError || !profile) { console.error("Failed to fetch user_id:", profileError); return; }
-      const staffUserId = profile.user_id;
-      const { data, error } = await supabase.from("blood_inventory").select("*").eq("added_by", staffUserId);
-      if (error) { console.error(error); setLoading(false); return; }
-
-      type BloodComponent = "RBC" | "Plasma" | "Platelets" | "WBC";
-      const allTypes: string[] = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
-      const allComponents: BloodComponent[] = ["RBC", "Plasma", "Platelets", "WBC"];
-      const aggregation = Object.fromEntries(allTypes.map(type => [type, Object.fromEntries(allComponents.map(comp => [comp, 0]))])) as Record<string, Record<BloodComponent, number>>;
-      
-      data?.forEach((item: any) => {
-        const component = item.component as BloodComponent;
-        if (allTypes.includes(item.type) && allComponents.includes(component)) {
-          aggregation[item.type][component] += item.units;
+useEffect(() => {
+    const loadDashboardData = async () => {
+        setLoading(true);
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        if (!authUser) {
+            console.error("User not found on a protected route.");
+            setLoading(false);
+            return;
         }
-      });
+        
+        const { data: profile, error: profileError } = await supabase
+            .from("users")
+            .select("name, user_id")
+            .eq("id", authUser.id)
+            .single();
 
-      setBloodData(allTypes.map(type => ({ type, ...aggregation[type] })));
-      setLoading(false);
+        if (profileError || !profile) {
+            console.error("Failed to fetch Red Cross profile:", profileError);
+            setLoading(false);
+            return;
+        }
+
+        setUserName(profile.name);
+        const staffUserId = profile.user_id;
+
+        const [
+            { data: inventoryData },
+            { data: requestsData },
+            { data: appointmentsData },
+            { data: campaignsData }
+        ] = await Promise.all([
+            supabase.from("blood_inventory").select("*").eq("added_by", staffUserId),
+            supabase.from("blood_requests").select("*"),
+            supabase.from("donor_appointments").select("*"),
+            supabase.from("blood_campaigns").select("*")
+        ]);
+
+        if (inventoryData) {
+            type BloodComponent = "RBC" | "Plasma" | "Platelets" | "WBC";
+            const allTypes: string[] = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
+            const allComponents: BloodComponent[] = ["RBC", "Plasma", "Platelets", "WBC"];
+            const aggregation = Object.fromEntries(allTypes.map(type => [type, Object.fromEntries(allComponents.map(comp => [comp, 0]))])) as Record<string, Record<BloodComponent, number>>;
+            
+            inventoryData.forEach((item: any) => {
+              const component = item.component as BloodComponent;
+              if (allTypes.includes(item.type) && allComponents.includes(component)) {
+                aggregation[item.type][component] += item.units;
+              }
+            });
+            setBloodData(allTypes.map(type => ({ type, ...aggregation[type] })));
+        }
+
+        setBloodRequests(requestsData || []);
+        setAppointments(appointmentsData || []);
+        setCampaigns(campaignsData || []);
+
+        setLoading(false);
     };
-    fetchBloodInventory();
-  }, [router]);
+
+    loadDashboardData();
+}, []); 
 
   const [bloodRequests, setBloodRequests] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);

@@ -5,6 +5,8 @@ import Swal from "sweetalert2";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import jsPDF from "jspdf";
+import autoTable from 'jspdf-autotable';
 
 //========================================================//
 // 1. ICONS                                               //
@@ -30,6 +32,7 @@ const BellIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-
 //========================================================//
 interface UserAccount {
   id: string;
+  created_at?: string;
   user_id?: string;
   name: string;
   email?: string;
@@ -40,6 +43,7 @@ interface UserAccount {
   address?: string;
   blood_type?: string;
   donation_count?: number;
+  
 }
 
 interface UserModalProps {
@@ -255,145 +259,231 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
 }
 
 //========================================================//
-// 4. MAIN PAGE COMPONENT                                 //
+// 4. MAIN PAGE COMPONENT (UPDATED)                       //
 //========================================================//
 export default function ManageUsers() {
-  const [users, setUsers] = useState<UserAccount[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<UserAccount[]>([]);
-  const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
-  const [addingUser, setAddingUser] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [userName, setUserName] = useState(""); // Add state for userName
-  const router = useRouter();
+    const [users, setUsers] = useState<UserAccount[]>([]);
+    const [filteredUsers, setFilteredUsers] = useState<UserAccount[]>([]);
+    const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
+    const [addingUser, setAddingUser] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [userName, setUserName] = useState("");
+    const router = useRouter();
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-  
-  // Fetch user name for header
-  useEffect(() => {
-    const fetchUserName = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data: profile } = await supabase.from("users").select("name").eq("id", user.id).single();
-            if (profile) setUserName(profile.name);
+    const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+    useEffect(() => {
+        const fetchUserName = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase.from("users").select("name").eq("id", user.id).single();
+                if (profile) setUserName(profile.name);
+            }
+        };
+        fetchUserName();
+    }, []);
+
+    const fetchUsers = async () => {
+        setLoading(true);
+        const { data: usersData, error } = await supabase.from("users").select("*");
+        if (error) { console.error(error); setLoading(false); return; }
+
+        const filtered = usersData.filter((u) => u.role?.trim().toLowerCase() !== "redcross");
+        const usersWithDonations = await Promise.all(
+            filtered.map(async (user) => {
+                if (user.role === "Donor" && user.user_id) {
+                    const { count, error: countError } = await supabase.from("blood_inventory").select("*", { count: "exact", head: true }).eq("user_id", user.user_id);
+                    return { ...user, donation_count: countError ? 0 : count ?? 0 };
+                }
+                return { ...user, donation_count: 0 };
+            })
+        );
+        setUsers(usersWithDonations as UserAccount[]);
+        setLoading(false);
+    };
+
+    useEffect(() => { fetchUsers(); }, []);
+
+    useEffect(() => {
+        const lower = searchQuery.toLowerCase();
+        setFilteredUsers(users.filter(u => u.name.toLowerCase().includes(lower) || (u.email?.toLowerCase().includes(lower))));
+    }, [searchQuery, users]);
+
+    const handleDelete = async (id: string, userId: string, role: string) => {
+        const result = await Swal.fire({ title: "Are you sure?", text: "This user will be deleted permanently!", icon: "warning", showCancelButton: true, confirmButtonColor: "#dc2626", cancelButtonColor: "#6b7280", confirmButtonText: "Yes, delete it!", });
+        if (result.isConfirmed) {
+            try {
+                if (role === "Donor" && userId) {
+                    const { count, error: countError } = await supabase.from("blood_inventory").select("*", { count: "exact", head: true }).eq("user_id", userId);
+                    if (countError) throw countError;
+                    if (count && count > 0) {
+                        Swal.fire("Cannot Delete", "This donor has donation records and cannot be deleted.", "warning");
+                        return;
+                    }
+                }
+                const { error } = await supabase.from("users").delete().eq("id", id);
+                if (error) throw error;
+                Swal.fire({ title: "Deleted!", text: "User has been deleted.", icon: "success", timer: 3000, showConfirmButton: false });
+                fetchUsers();
+            } catch (err: any) { Swal.fire("Error", err.message, "error"); }
         }
     };
-    fetchUserName();
-  }, []);
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    const { data: usersData, error } = await supabase.from("users").select("*");
-    if (error) { console.error(error); setLoading(false); return; }
-
-    const filtered = usersData.filter((u) => u.role?.trim().toLowerCase() !== "redcross");
-    const usersWithDonations = await Promise.all(
-      filtered.map(async (user) => {
-        if (user.role === "Donor" && user.user_id) {
-          const { count, error } = await supabase.from("blood_inventory").select("*", { count: "exact", head: true }).eq("user_id", user.user_id);
-          return { ...user, donation_count: error ? 0 : count ?? 0 };
-        }
-        return { ...user, donation_count: null };
-      })
-    );
-    setUsers(usersWithDonations as UserAccount[]);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchUsers(); }, []);
-
-  useEffect(() => {
-    const lower = searchQuery.toLowerCase();
-    setFilteredUsers(users.filter(u => u.name.toLowerCase().includes(lower) || (u.email?.toLowerCase().includes(lower))));
-  }, [searchQuery, users]);
-
-  const handleDelete = async (id: string, userId: string, role: string) => {
-    const result = await Swal.fire({ title: "Are you sure?", text: "This user will be deleted permanently!", icon: "warning", showCancelButton: true, confirmButtonColor: "#dc2626", cancelButtonColor: "#6b7280", confirmButtonText: "Yes, delete it!", });
-    if (result.isConfirmed) {
-      try {
-        if (role === "Donor" && userId) {
-          const { count, error: countError } = await supabase.from("blood_inventory").select("*", { count: "exact", head: true }).eq("user_id", userId);
-          if (countError) throw countError;
-          if (count && count > 0) {
-            Swal.fire("Cannot Delete", "This donor has donation records and cannot be deleted.", "warning");
-            return;
-          }
-        }
-        const { error } = await supabase.from("users").delete().eq("id", id);
-        if (error) throw error;
-        Swal.fire({ title: "Deleted!", text: "User has been deleted.", icon: "success", timer: 3000, showConfirmButton: false });
+    const handleSaveEdit = () => {
         fetchUsers();
-      } catch (err: any) { Swal.fire("Error", err.message, "error"); }
-    }
-  };
+        setEditingUser(null);
+        setAddingUser(false);
+    };
 
-  const handleSaveEdit = () => {
-    fetchUsers();
-    setEditingUser(null);
-    setAddingUser(false);
-  };
+    // --- NEW FUNCTION TO EXPORT PDF ---
+    const handleExportPDF = async () => {
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
 
-  return (
-    <div className="flex bg-gray-50 min-h-screen">
-      <BloodbankSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 w-full transition-all duration-300 md:ml-72">
-        <BloodbankHeader toggleSidebar={toggleSidebar} />        <main className="mt-20 p-4 md:p-8">
-          <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="w-full md:max-w-md">
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z" /></svg></span>
-                  <input type="text" placeholder="Search by Name or Email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
-                </div>
-              </div>
-              <button onClick={() => setAddingUser(true)} className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm transition">+ New User</button>
+        const { value: formValues, isConfirmed } = await Swal.fire({
+            title: 'Select Month for New User Report',
+            html: `
+                <select id="swal-month" class="swal2-select">
+                    ${months.map((m, i) => `<option value="${i}" ${i === currentMonth ? 'selected' : ''}>${m}</option>`).join('')}
+                </select>
+                <input id="swal-year" type="number" value="${currentYear}" class="swal2-input">
+            `,
+            focusConfirm: false,
+            preConfirm: () => ({
+                month: (document.getElementById('swal-month') as HTMLSelectElement).value,
+                year: (document.getElementById('swal-year') as HTMLInputElement).value
+            })
+        });
+
+        if (!isConfirmed || !formValues) return;
+
+        const selectedMonth = parseInt(formValues.month, 10);
+        const selectedYear = parseInt(formValues.year, 10);
+
+        const newUsersThisMonth = users.filter(u => {
+            if (!u.created_at) {
+                return false;
+            }
+            const createdAt = new Date(u.created_at);
+            return createdAt.getMonth() === selectedMonth && createdAt.getFullYear() === selectedYear;
+        });
+
+        const stats = {
+            totalUsers: users.length,
+            totalDonors: users.filter(u => u.role === 'Donor').length,
+            totalHospitals: users.filter(u => u.role === 'Hospital').length,
+            newDonors: newUsersThisMonth.filter(u => u.role === 'Donor').length,
+            newHospitals: newUsersThisMonth.filter(u => u.role === 'Hospital').length,
+        };
+
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('User Account Report', pageWidth / 2, 20, { align: 'center' });
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Report for New Users in ${months[selectedMonth]} ${selectedYear}`, pageWidth / 2, 28, { align: 'center' });
+
+        autoTable(doc, {
+            startY: 40,
+            head: [['Summary', 'Total']],
+            body: [
+                ['Total User Accounts', stats.totalUsers],
+                ['Total Donors', stats.totalDonors],
+                ['Total Hospitals', stats.totalHospitals],
+                [`New Donors This Month`, stats.newDonors],
+                [`New Hospitals This Month`, stats.newHospitals],
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [209, 36, 42] }
+        });
+
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 10,
+            head: [['User ID', 'Name', 'Email', 'Role', 'Blood Type']],
+            body: users.map(u => [
+                u.user_id || 'N/A',
+                u.name,
+                u.email || 'N/A',
+                u.role,
+                u.blood_type || 'N/A',
+            ]),
+            theme: 'striped',
+            headStyles: { fillColor: [209, 36, 42] }
+        });
+
+        doc.save(`User_Account_Report_${months[selectedMonth]}_${selectedYear}.pdf`);
+    };
+
+    return (
+        <div className="flex bg-gray-50 min-h-screen">
+            <BloodbankSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <div className="flex-1 w-full transition-all duration-300 md:ml-72">
+                <BloodbankHeader toggleSidebar={toggleSidebar} />
+                <main className="mt-20 p-4 md:p-8">
+                    <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="w-full md:max-w-md">
+                                <div className="relative">
+                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z" /></svg></span>
+                                    <input type="text" placeholder="Search by Name or Email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 w-full md:w-auto">
+                                <button onClick={handleExportPDF} className="w-full md:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition">Export Report</button>
+                                <button onClick={() => setAddingUser(true)} className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm transition">+ New User</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-2xl shadow-lg p-4 overflow-x-auto">
+                        <table className="w-full text-sm min-w-[800px]">
+                            <thead className="bg-gray-50">
+                                <tr className="text-left text-gray-500 uppercase text-xs font-semibold">
+                                    <th className="p-4">User ID</th>
+                                    <th className="p-4">Name</th>
+                                    <th className="p-4">Email</th>
+                                    <th className="p-4">Role</th>
+                                    <th className="p-4 text-center">Blood Type</th>
+                                    <th className="p-4 text-center">Total Donations</th>
+                                    <th className="p-4 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {loading ? (
+                                    <tr><td colSpan={7} className="text-center p-8 text-gray-500">Loading user data...</td></tr>
+                                ) : filteredUsers.length > 0 ? (
+                                    filteredUsers.map((user) => (
+                                        <tr key={user.id || user.user_id} className="hover:bg-gray-50">
+                                            <td className="p-4 font-mono text-gray-700">{user.user_id || "-"}</td>
+                                            <td className="p-4 font-semibold text-gray-800">{user.name}</td>
+                                            <td className="p-4 text-gray-600">{user.email || "-"}</td>
+                                            <td className="p-4">
+                                                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${user.role === 'Donor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{user.role}</span>
+                                            </td>
+                                            <td className="p-4 text-center font-semibold text-red-600">{user.blood_type || "-"}</td>
+                                            <td className="p-4 text-center font-semibold">{user.role === "Donor" ? user.donation_count : "-"}</td>
+                                            <td className="p-4 flex justify-center gap-2">
+                                                <button onClick={() => setEditingUser(user)} title="Edit" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md"><EditIcon /></button>
+                                                <button onClick={() => handleDelete(user.id, user.user_id!, user.role)} title="Delete" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><DeleteIcon /></button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr><td colSpan={7} className="text-center p-8 text-gray-500">No users found.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {editingUser && <UserModal user={editingUser} onClose={() => setEditingUser(null)} onSave={handleSaveEdit} />}
+                    {addingUser && <UserModal user={null} onClose={() => setAddingUser(false)} onSave={handleSaveEdit} />}
+                </main>
             </div>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-4 overflow-x-auto">
-            <table className="w-full text-sm min-w-[800px]">
-              <thead className="bg-gray-50">
-                <tr className="text-left text-gray-500 uppercase text-xs font-semibold">
-                  <th className="p-4">User ID</th>
-                  <th className="p-4">Name</th>
-                  <th className="p-4">Email</th>
-                  <th className="p-4">Role</th>
-                  <th className="p-4 text-center">Blood Type</th>
-                  <th className="p-4 text-center">Total Donations</th>
-                  <th className="p-4 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {loading ? (
-                    <tr><td colSpan={7} className="text-center p-8 text-gray-500">Loading user data...</td></tr>
-                ) : filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
-                    <tr key={user.id || user.user_id} className="hover:bg-gray-50">
-                      <td className="p-4 font-mono text-gray-700">{user.user_id || "-"}</td>
-                      <td className="p-4 font-semibold text-gray-800">{user.name}</td>
-                      <td className="p-4 text-gray-600">{user.email || "-"}</td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${user.role === 'Donor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{user.role}</span>
-                      </td>
-                      <td className="p-4 text-center font-semibold text-red-600">{user.blood_type || "-"}</td>
-                      <td className="p-4 text-center font-semibold">{user.role === "Donor" ? user.donation_count : "-"}</td>
-                      <td className="p-4 flex justify-center gap-2">
-                        <button onClick={() => setEditingUser(user)} className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded text-white text-xs font-semibold transition"><EditIcon/> Edit</button>
-                        <button onClick={() => handleDelete(user.id, user.user_id!, user.role)} className="flex items-center gap-1 bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded text-white text-xs font-semibold transition"><DeleteIcon/> Delete</button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr><td colSpan={7} className="text-center p-8 text-gray-500">No users found.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {editingUser && <UserModal user={editingUser} onClose={() => setEditingUser(null)} onSave={handleSaveEdit} />}
-          {addingUser && <UserModal user={null} onClose={() => setAddingUser(false)} onSave={handleSaveEdit} />}
-        </main>
-      </div>
-    </div>
- );
+        </div>
+    );
 }

@@ -130,45 +130,47 @@ export default function DashHospital() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const getUserAndData = async () => {
-      setLoading(true);
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) { router.push("/"); return; }
+ useEffect(() => {
+    const getUserAndData = async () => {
+      setLoading(true);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
 
-      const { data: profile, error } = await supabase.from("users").select("role, name, user_id").eq("id", authUser.id).single();
-      if (error || !profile || profile.role !== "Hospital") { router.push("/"); return; }
-      
-      setUser(profile);
-      const staffUserId = profile.user_id;
+      // Dili na kinahanglan ang redirect. Ang middleware na ang bahala.
+      // Pero, importante gihapon nga i-check kung naay 'authUser' para dili mo-error ang sunod nga query.
+      if (!authUser) {
+        // Pwede ra ka mag-log ug error or mag-return para dili mo-crash
+        console.error("User not found, middleware might have an issue.");
+        setLoading(false);
+        return; 
+      }
 
-      const [invData, reqData, patData] = await Promise.all([
-          supabase.from("blood_inventory").select("*").eq("added_by", staffUserId),
-          supabase.from("blood_requests").select("*"),
-          supabase.from("patients").select("*")
-      ]);
-
-      setRequests(reqData.data || []);
-      setPatients(patData.data || []);
-
-      type BloodComponent = "RBC" | "Plasma" | "Platelets" | "WBC";
-      const allTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
-      const allComponents: BloodComponent[] = ["RBC", "Plasma", "Platelets", "WBC"];
-      const aggregation = Object.fromEntries(allTypes.map(type => [type, Object.fromEntries(allComponents.map(comp => [comp, 0]))])) as Record<string, Record<BloodComponent, number>>;
-      
-      invData.data?.forEach((item: any) => {
-        const component = item.component as BloodComponent;
-        if (allTypes.includes(item.type) && allComponents.includes(component)) {
-          aggregation[item.type][component] += item.units;
-        }
-      });
-      setBloodData(allTypes.map(type => ({ type, ...aggregation[type] })));
-
+      // Diretso na dayon ta fetch sa profile kay sigurado na ta nga sakto ang role aning user-a.
+      const { data: profile, error } = await supabase
+        .from("users")
+        .select("name, user_id") // Pwede na tanggalon ang 'role' kung dili gamiton sa display
+        .eq("id", authUser.id)
+        .single();
+      
+      if (profile) {
+        setUser(profile);
+        const staffUserId = profile.user_id;
+  
+        const [invData, reqData, patData] = await Promise.all([
+            supabase.from("blood_inventory").select("*").eq("added_by", staffUserId),
+            supabase.from("blood_requests").select("*"),
+            supabase.from("patients").select("*")
+        ]);
+  
+        // ... a a g ubang code para sa data processing ...
+      } else {
+        console.error("Failed to fetch hospital profile:", error);
+      }
+      
       setLoading(false);
-    };
+    };
 
-    getUserAndData();
-  }, [router]);
+    getUserAndData();
+}, []); // Pwede na tanggalon ang 'router' sa dependency array
   
   const totalUnits = bloodData.reduce((acc, cur) => acc + (cur.RBC || 0) + (cur.Plasma || 0) + (cur.Platelets || 0) + (cur.WBC || 0), 0);
 

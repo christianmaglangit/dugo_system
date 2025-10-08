@@ -17,7 +17,6 @@ interface User {
   profileImage: string;
   user_id: string; 
 }
-
 interface BloodBag {
   blood_bag_id: string;
   type: string;
@@ -25,13 +24,10 @@ interface BloodBag {
   name: string; 
   date_received: string;
 }
-
-// Gemini Chat Message Type
 interface ChatMessage {
     role: "user" | "model";
     parts: { text: string }[];
 }
-
 
 //========================================================//
 // 2. ICONS
@@ -85,26 +81,10 @@ const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void
                     <h1 className="text-2xl font-extrabold text-red-600">DUGO</h1>
                     <p className="text-xs text-gray-500">Donor Utility for Giving and Organizing</p>
                 </div>
-                <div className="flex items-center gap-2 md:gap-4"> {/* Adjusted gap */}
-                    
-                    {/* ADD THIS NOTIFICATION BELL */}
+                <div className="flex items-center gap-2 md:gap-4"> 
                     <NotificationBell user={user} />
-                    
-                    <button
-                        onClick={onOpenRequest}
-                        className="text-sm font-semibold bg-red-600 text-white px-4 py-2 rounded-full shadow-sm hover:bg-red-700 transition"
-                    >
-                        + Request Blood
-                    </button>
-                    <button onClick={() => router.push('/dashdonor/donor_profile')} className="rounded-full hidden md:block">
-                        <Image
-                            src={user.profileImage}
-                            width={44}
-                            height={44}
-                            alt="Profile"
-                            className="rounded-full border-2 border-white shadow"
-                        />
-                    </button>
+                    <button onClick={onOpenRequest}className="text-sm font-semibold bg-red-600 text-white px-4 py-2 rounded-full shadow-sm hover:bg-red-700 transition">+ Request Blood</button>
+                    <button onClick={() => router.push('/dashdonor/donor_profile')} className="rounded-full hidden md:block"><Image src={user.profileImage}width={44}height={44}alt="Profile"className="rounded-full border-2 border-white shadow"/></button>
                 </div>
             </div>
         </Card>
@@ -114,7 +94,6 @@ const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void
 const DonationStatusCard = ({ user, daysLeft, onOpenAppointmentModal }: { user: User, daysLeft: number, onOpenAppointmentModal: () => void }) => {
     const progress = Math.max(0, ((84 - daysLeft) / 84) * 100);
     const [copied, setCopied] = useState(false);
-
     const handleCopy = () => {
         navigator.clipboard.writeText(user.user_id);
         setCopied(true);
@@ -126,17 +105,12 @@ const DonationStatusCard = ({ user, daysLeft, onOpenAppointmentModal }: { user: 
             <div className="text-center">
                 <p className="text-red-200">Welcome back,</p>
                 <h2 className="text-2xl font-bold">{user.name}</h2>
-                <div 
-                    className="mt-1 inline-flex items-center gap-2 px-3 py-1 bg-white/20 text-white rounded-full font-mono text-sm cursor-pointer hover:bg-white/30 transition"
-                    onClick={handleCopy}
-                >
+                <div className="mt-1 inline-flex items-center gap-2 px-3 py-1 bg-white/20 text-white rounded-full font-mono text-sm cursor-pointer hover:bg-white/30 transition"onClick={handleCopy}>
                     <span>{user.user_id}</span>
                     <span className="w-4">{copied ? <CheckIcon/> : <ClipboardIcon />}</span>
                 </div>
             </div>
-            
             <div className="border-t border-white/30 my-4"></div>
-
             <div className="text-center">
                 <p className="text-red-200">Next Donation in</p>
                 <div className="w-28 h-28 mx-auto my-2 relative">
@@ -244,7 +218,6 @@ const BloodJourneyTracker = ({ donation }: { donation: any | null }) => {
     );
 };
 
-
 const DonationHistory = ({ donation }: { donation: any | null }) => {
     const router = useRouter();
     return (
@@ -282,13 +255,7 @@ const CampaignCard = ({ campaign }: { campaign: any | null }) => {
             {campaign ? (
                 <div>
                     {campaign.photo_url && (
-                        <Image
-                            src={campaign.photo_url}
-                            alt={campaign.title}
-                            width={400}
-                            height={200}
-                            className="rounded-lg object-cover w-full h-full mb-4"
-                        />
+                        <Image src={campaign.photo_url} alt={campaign.title} width={400} height={200}className="rounded-lg object-cover w-full h-full mb-4"/>
                     )}
                     <p className="font-semibold text-lg text-red-700">{campaign.title}</p>
                     <p className="text-sm text-gray-500 mt-1">{campaign.description}</p>
@@ -329,29 +296,18 @@ const BottomNav = ({ onOpenAppointmentModal }: { onOpenAppointmentModal: () => v
     );
 };
 
-// ========================================================//
-// ✅ CHATBOT COMPONENT (CORRECTED)
-// ========================================================//
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
-    // The history now starts empty.
     const [history, setHistory] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [isThinking, setIsThinking] = useState(false);
     const chatEndRef = useRef<null | HTMLDivElement>(null);
-
     const scrollToBottom = () => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); };
     useEffect(scrollToBottom, [history, isThinking]);
-
-    // This useEffect that added the initial message has been REMOVED.
-
     const handleSend = async () => {
         if (!inputValue.trim() || isThinking) return;
-
         const userMessage: ChatMessage = { role: 'user', parts: [{ text: inputValue }] };
-        // On the first send, newHistory will correctly start with the user's message.
         const newHistory = [...history, userMessage];
-        
         setHistory(newHistory);
         setInputValue('');
         setIsThinking(true);
@@ -394,15 +350,11 @@ const Chatbot = () => {
                     <button onClick={() => setIsOpen(false)} className="text-2xl leading-none">&times;</button>
                 </div>
                 <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                    {/* START: Static Welcome Message */}
                     <div className="flex justify-start">
                         <p className="max-w-[85%] py-2 px-3 rounded-2xl text-sm bg-gray-200 text-gray-800 rounded-bl-none">
                             Hello! I am Haima, your assistant. How can I help you with your blood donation questions today?
                         </p>
                     </div>
-                    {/* END: Static Welcome Message */}
-
-                    {/* This now only maps the actual conversation */}
                     {history.map((msg, index) => (
                         <div key={index} className={`flex ${msg.role === 'model' ? 'justify-start' : 'justify-end'}`}>
                             <p className={`max-w-[85%] py-2 px-3 rounded-2xl text-sm ${msg.role === 'model' ? 'bg-gray-200 text-gray-800 rounded-bl-none' : 'bg-red-600 text-white rounded-br-none'}`}>
@@ -436,10 +388,6 @@ const Chatbot = () => {
 //========================================================//
 // 5. Notification COMPONENTS
 //========================================================//
-
-// ADD THIS NEW COMPONENT
-// REPLACE the old NotificationBell with this final version
-
 const NotificationBell = ({ user }: { user: User | null }) => {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -450,13 +398,10 @@ const NotificationBell = ({ user }: { user: User | null }) => {
         if (!user) return;
 
         const setupNotifications = async () => {
-            // Find the user's real UUID to listen for notifications
             const { data: profile } = await supabase.from('users').select('id').eq('user_id', user.user_id).single();
             if (!profile) return;
             
             setAuthUserId(profile.id);
-
-            // Fetch initial notifications
             const { data, error } = await supabase
                 .from('notifications')
                 .select('*')
@@ -474,7 +419,6 @@ const NotificationBell = ({ user }: { user: User | null }) => {
         setupNotifications();
     }, [user]);
 
-    // This effect sets up the real-time listener
     useEffect(() => {
         if (!authUserId) return;
 
@@ -522,7 +466,6 @@ const NotificationBell = ({ user }: { user: User | null }) => {
 
     return (
         <>
-            {/* This is the bell icon button */}
             <div className="relative">
                 <button onClick={() => setIsModalOpen(true)} className="relative text-gray-600 hover:text-red-600 transition p-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
@@ -535,7 +478,6 @@ const NotificationBell = ({ user }: { user: User | null }) => {
                 </button>
             </div>
             
-            {/* This renders the modal when isModalOpen is true */}
             <NotificationModal 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -551,9 +493,7 @@ const NotificationBell = ({ user }: { user: User | null }) => {
 //========================================================//
 
 function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => void; onSave: (payload: any) => void; }) {
-    // 1. I-add ang state para sa Indigency selection
     const [isIndigency, setIsIndigency] = useState<boolean>(false);
-
     const [form, setForm] = useState({
         hospital_name: user.name,
         blood_type: "", 
@@ -567,25 +507,18 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        // 2. I-check ang required fields base sa Indigency selection
         let requiredFieldsMissing = false;
         if (!user.user_id || !form.hospital_name || !form.blood_type || !form.blood_component || !form.request_form_file) {
              requiredFieldsMissing = true;
         }
-
         if (requiredFieldsMissing) {
             Swal.fire("Error", "Please fill all main required fields (Blood Type, Component, Units, and Request Form).", "error"); 
             return;
         }
-
-        // I-handle ang required files for indigency request
         if (isIndigency && (!form.indigency_file || !form.referral_note_file)) {
             Swal.fire("Error", "For Indigency requests, the Indigency Certificate and Referral Note are required.", "error");
             return;
         }
-
-
         try {
             const uploadFile = async (file: File | null) => {
                 if(!file) return null;
@@ -595,11 +528,8 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                 if (error) throw error;
                 return supabase.storage.from("blood_requests").getPublicUrl(filePath).data.publicUrl;
             }
-
-            // Dili na kinahanglan mag-upload sa indigency files kung dili indigency ang request
             const [requestFormUrl, indigencyUrl, seniorIdUrl, referralNoteUrl] = await Promise.all([
                 uploadFile(form.request_form_file),
-                // Conditional upload: upload lang kung Indigency
                 isIndigency ? uploadFile(form.indigency_file) : Promise.resolve(null),
                 isIndigency ? uploadFile(form.senior_id_file) : Promise.resolve(null),
                 isIndigency ? uploadFile(form.referral_note_file) : Promise.resolve(null),
@@ -619,12 +549,9 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
         }
     };
     
-    // Function para i-reset ang optional files if mag-change ang selection
     const handleIndigencyChange = (value: string) => {
         const isIndigencyRequest = value === 'Yes';
         setIsIndigency(isIndigencyRequest);
-
-        // I-reset ang optional file states kung dili na Indigency
         if (!isIndigencyRequest) {
             setForm(prev => ({ 
                 ...prev, 
@@ -636,7 +563,7 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
     }
 
     return (
-       <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4">
+       <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-[60] p-4">
             <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden">
                 <form onSubmit={handleSubmit} className="relative p-8 md:p-10 overflow-y-auto max-h-[90vh]">
                     <button type="button" onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon /></button>
@@ -645,8 +572,6 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                         <InputField label="Requester Name" name="hospital_name">
                             <input type="text" value={form.hospital_name} readOnly disabled className="bg-gray-200 border border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"/>
                         </InputField>
-                        
-                        {/* 3. Dropdown para sa Indigency Selection */}
                         <InputField label="Request Type" name="request_type">
                              <select 
                                 onChange={(e) => handleIndigencyChange(e.target.value)} 
@@ -658,7 +583,6 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                                  <option value="Yes">Indigency / Low-Income Request</option>
                              </select>
                          </InputField>
-                        
                         <div className="grid grid-cols-2 gap-4">
                             <InputField label="Blood Type" name="blood_type">
                                 <select required value={form.blood_type} onChange={(e) => setForm({ ...form, blood_type: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -669,13 +593,11 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                                 <input type="number" min={1} value={form.units} onChange={(e) => setForm({ ...form, units: Number(e.target.value) })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/>
                             </InputField>
                         </div>
-                        
                         <InputField label="Component" name="blood_component">
                             <select required value={form.blood_component} onChange={(e) => setForm({ ...form, blood_component: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                 <option value="">Select...</option><option value="Whole Blood">Whole Blood</option><option value="Plasma">Plasma</option><option value="Platelets">Platelets</option>
                             </select>
                         </InputField>
-                        
                         <InputField label="Request Form (Required)" name="request_form_file">
                             <input 
                                 type="file" 
@@ -685,8 +607,6 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                                 className="bg-gray-50 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
                             />
                         </InputField>
-                        
-                        {/* 4. Conditional Rendering para sa Indigency Files */}
                         {isIndigency && (
                             <div className="border-t pt-4 space-y-4">
                                 <label className="font-semibold text-gray-700">Indigency Document Uploads (All Required)</label>
@@ -718,9 +638,7 @@ function AppointmentModal({ isOpen, user, onClose, onSave }: { isOpen: boolean; 
     const [location, setLocation] = useState("");
     const [notes, setNotes] = useState("");
     const [saving, setSaving] = useState(false);
-
     if (!isOpen) return null;
-
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!user || !date) {
@@ -738,7 +656,6 @@ function AppointmentModal({ isOpen, user, onClose, onSave }: { isOpen: boolean; 
         });
         setSaving(false);
     };
-
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-[60] p-4">
             <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
@@ -774,7 +691,6 @@ const BloodSearch = () => {
     const [searchResults, setSearchResults] = useState<BloodBag[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [searchPerformed, setSearchPerformed] = useState(false);
-
     const handleSearch = async () => {
         if (!selectedBloodType) {
             Swal.fire("Info", "Please select a blood type to search.", "info");
@@ -783,18 +699,15 @@ const BloodSearch = () => {
         setIsSearching(true);
         setSearchPerformed(true);
         setSearchResults([]);
-
         try {
             const { data, error } = await supabase
                 .from('blood_inventory')
                 .select('blood_bag_id, type, component, name, date_received')
                 .eq('type', selectedBloodType)
                 .in('status', ['In Inventory', 'Active']); 
-
             if (error) throw error;
-            
-            setSearchResults(data || []);
 
+            setSearchResults(data || []);
         } catch (error: any) {
             Swal.fire("Error", `Failed to fetch blood inventory: ${error.message}`, "error");
         } finally {
@@ -830,8 +743,6 @@ const BloodSearch = () => {
                     <span>{isSearching ? "Searching..." : "Search"}</span>
                 </button>
             </div>
-
-            {/* --- RESULTS AREA --- */}
             <div className="space-y-4">
                 {isSearching ? (
                     <p className="text-center text-gray-500 py-8">Searching for available blood...</p>
@@ -872,7 +783,6 @@ const BloodSearch = () => {
 function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isOpen: boolean; onClose: () => void; notifications: any[]; markAsRead: () => void; }) {
     
     useEffect(() => {
-        // Mark messages as read when the modal is opened
         if (isOpen) {
             markAsRead();
         }
@@ -945,9 +855,11 @@ export default function ResponsiveDonorDashboard() {
     const fetchData = async () => {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) {
-            router.replace("/");
-            return;
-        }
+        // This part is now less likely to happen, but good for safety
+        console.error("No user found despite protected route.");
+        router.replace("/"); 
+        return;
+    }
 
         const { data: profile, error } = await supabase
             .from('users')
@@ -1079,11 +991,8 @@ export default function ResponsiveDonorDashboard() {
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                
                 <Header user={user} onOpenRequest={() => setIsRequestModalOpen(true)} />
-                
                 <main className="pb-24 md:pb-8">
-                
                     {/* --- MOBILE LAYOUT --- */}
                     <div className="md:hidden flex flex-col gap-8">
                         <DonationStatusCard user={user} daysLeft={donationStats.daysLeft} onOpenAppointmentModal={handleOpenAppointmentModal} />

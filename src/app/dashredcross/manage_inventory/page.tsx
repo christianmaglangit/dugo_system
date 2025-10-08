@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import jsPDF from "jspdf";
+import autoTable from 'jspdf-autotable';
 import html2canvas from "html2canvas";
 import { QRCodeCanvas } from "qrcode.react";
 
@@ -293,7 +294,104 @@ export default function ManageInventory() {
     }
   };
 
-  const exportPDF = async () => { /* ... (logic is correct) ... */ };
+  const exportPDF = async () => {
+        if (bloodStocks.length === 0) {
+            Swal.fire('No Data', 'There is no inventory data to export.', 'info');
+            return;
+        }
+
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const today = new Date();
+        const currentMonthName = today.toLocaleString('default', { month: 'long' });
+        const currentYear = today.getFullYear();
+
+        // --- 1. CALCULATE ALL STATISTICS ---
+
+        // Overall Summary
+        const totalUnits = bloodStocks.reduce((sum, stock) => sum + stock.units, 0);
+
+        // Summary by Blood Type
+        const unitsByType = bloodTypes.map(type => {
+            const total = bloodStocks
+                .filter(stock => stock.type === type)
+                .reduce((sum, stock) => sum + stock.units, 0);
+            return { type, total };
+        });
+
+        // Summary by Component
+        const unitsByComponent = components.map(comp => {
+            const total = bloodStocks
+                .filter(stock => stock.component === comp)
+                .reduce((sum, stock) => sum + stock.units, 0);
+            return { component: comp, total };
+        });
+
+        // Donations this month
+        const donationsThisMonth = bloodStocks.filter(stock => {
+            const receivedDate = new Date(stock.date_received);
+            return receivedDate.getMonth() === today.getMonth() && receivedDate.getFullYear() === today.getFullYear();
+        }).length;
+
+        // Most and Least Donated Blood Types
+        let mostDonated = { type: 'N/A', total: 0 };
+        let leastDonated = { type: 'N/A', total: Infinity };
+
+        unitsByType.forEach(item => {
+            if (item.total > mostDonated.total) {
+                mostDonated = item;
+            }
+            if (item.total < leastDonated.total) {
+                leastDonated = item;
+            }
+        });
+
+
+        // --- 2. GENERATE THE PDF DOCUMENT ---
+        
+        // Header
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Blood Inventory Report', pageWidth / 2, 20, { align: 'center' });
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Date: ${today.toLocaleDateString()}`, pageWidth / 2, 28, { align: 'center' });
+
+        // General Summary Table
+        autoTable(doc, {
+            startY: 40,
+            head: [['Overall Summary', 'Value']],
+            body: [
+                ['Total Blood Units Available', totalUnits],
+                [`Donations This Month (${currentMonthName})`, donationsThisMonth],
+                ['Most Common Blood Type', `${mostDonated.type} (${mostDonated.total} units)`],
+                ['Least Common Blood Type', `${leastDonated.type} (${leastDonated.total} units)`],
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [209, 36, 42] }
+        });
+
+        // Units by Blood Type Table
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 10,
+            head: [['Blood Type', 'Total Units']],
+            body: unitsByType.map(item => [item.type, item.total]),
+            theme: 'striped',
+            headStyles: { fillColor: [209, 36, 42] }
+        });
+
+        // Units by Component Table
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 10,
+            head: [['Blood Component', 'Total Units']],
+            body: unitsByComponent.map(item => [item.component, item.total]),
+            theme: 'striped',
+            headStyles: { fillColor: [209, 36, 42] }
+        });
+
+        // Save the PDF
+        doc.save(`Inventory_Report_${currentMonthName}_${currentYear}.pdf`);
+    };
 
   useEffect(() => {
     const fetchDonors = async () => {
@@ -390,7 +488,7 @@ useEffect(() => {
           <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 ">
               
-                 <button onClick={exportPDF} className="w-full md:w-auto px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-100 transition">Export PDF</button>
+                 <button onClick={exportPDF} className="w-full md:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition">Inventory Report</button>
                  <button onClick={() => setAddModalOpen(true)} className="w-full md:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow-sm transition">+ New Stock</button>
               
             </div>
@@ -411,7 +509,7 @@ useEffect(() => {
                             <td className="p-4 font-mono text-gray-700">{b.blood_bag_id}</td><td className="p-4 font-mono text-gray-700">{b.user_id}</td><td className="p-4 text-center font-semibold text-red-600">{b.type}</td><td className="p-4">{b.component}</td><td className="p-4 text-center font-semibold">{b.units}</td><td className="p-4 text-gray-600">{b.expiration_date}</td><td className="p-4 text-center"><StatusBadge status={b.status} expiration_date={b.expiration_date} /></td>
                             <td className="p-4 flex justify-center gap-2">
                                 <button onClick={() => openQrModal(b)} className="flex items-center gap-1 bg-gray-600 hover:bg-gray-700 px-3 py-1.5 rounded text-white text-xs font-semibold transition"><QrCodeIcon/> QR</button>
-                                <button onClick={() => deleteInventory(b.id)} className="flex items-center gap-1 bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded text-white text-xs font-semibold transition"><DeleteIcon/> Delete</button>
+                                <button onClick={() => deleteInventory(b.id)} title="Delete" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><DeleteIcon /></button>
                             </td>
                           </tr>
                         ))}
