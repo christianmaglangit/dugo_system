@@ -87,16 +87,22 @@ export default function LoginModal({ onClose, onLoginSuccess, onSwitchToSignup }
           <p className="text-gray-500 mb-6">Enter your credentials to continue.</p>
           
           <form onSubmit={handleLogin} className="space-y-5">
-            <InputField 
-                name="email" 
-                label="Email" 
+           
+            <div>
+              <div className="flex justify-between items-baseline">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+              </div>
+              <input 
+                id="email" 
                 type="email" 
+                name="email" 
                 placeholder="you@example.com" 
                 value={form.email} 
                 onChange={handleChange} 
+                required 
                 className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" 
-            />
-            
+              />
+            </div>
             <div>
               <div className="flex justify-between items-baseline">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-1">Password</label>
