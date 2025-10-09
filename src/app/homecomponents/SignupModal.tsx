@@ -142,8 +142,10 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
           <h2 className="text-2xl font-bold text-gray-800 mb-1">Create Your Account</h2>
           <p className="text-gray-500 mb-6">Let&apos;s get you started on your donation journey.</p>
           
-          <form onSubmit={handleSignup} className="space-y-4">
-            <InputField name="name" label="Full Name" placeholder="Juan Dela Cruz" value={form.name} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"  />
+          <form onSubmit={handleSignup} className="text-black space-y-4">
+           
+            <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1">Full Name</label>
+            <input name="name" placeholder="Juan Dela Cruz" value={form.name} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"  />
             
             <div className="grid grid-cols-2 gap-4">
                 <InputField name="age" label="Age" type="number" placeholder="e.g., 25" value={form.age} onChange={handleChange} />
