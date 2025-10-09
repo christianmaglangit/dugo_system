@@ -147,9 +147,9 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
             <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1">Full Name</label>
             <input name="name" placeholder="Juan Dela Cruz" value={form.name} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"  />
             
-            <div className="grid grid-cols-2 gap-4">
-                <InputField name="age" label="Age" type="number" placeholder="e.g., 25" value={form.age} onChange={handleChange} />
-                <InputField name="gender" label="Gender" value={form.gender} onChange={handleChange}>
+            <div className="grid grid-cols-2 text-black gap-4">
+                <InputField name="age" label="Age" type="number" placeholder="e.g., 25" value={form.age} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/>
+                <InputField name="gender" label="Gender" value={form.gender} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                     <option value="">Select...</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -159,7 +159,7 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
             <InputField name="contact" label="Contact Number" placeholder="0917..." value={form.contact} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
             <InputField name="address" label="Address" placeholder="Iligan City, etc." value={form.address} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
             
-            <InputField name="bloodType" label="Blood Type" value={form.bloodType} onChange={handleChange}>
+            <InputField name="bloodType" label="Blood Type" value={form.bloodType} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                 <option value="">Select Blood Type</option><option value="Unknown">Don&apos;t know yet</option>
                 <option value="A+">A+</option><option value="A-">A-</option>
                 <option value="B+">B+</option><option value="B-">B-</option>
