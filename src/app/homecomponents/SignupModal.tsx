@@ -25,7 +25,7 @@ const InputField = ({ name, label, placeholder, value, onChange, type = "text", 
           {children}
         </select>
       ) : (
-        <input id={name} type={type} name={name} placeholder={placeholder} value={value} onChange={onChange} required={required} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
+        <input id={name} type={type} name={name} placeholder={placeholder} value={value} onChange={onChange} required={required} className="bg-gray-50 border text-black border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
       )}
     </div>
 );
