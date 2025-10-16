@@ -64,22 +64,24 @@ const InputField: FC<{ label: string, name: string, children: ReactNode }> = ({ 
 const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void }) => {
     const router = useRouter();
     return (
-        <Card className="p-4 mt-4">
+        <Card className="p-4 mt-4 mb-4">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-extrabold text-red-600">DUGO</h1>
                     <p className="text-xs text-gray-500">Donor Utility for Giving and Organizing</p>
                 </div>
-                <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                     <NotificationBell user={user} />
+
                     <button 
                         onClick={onOpenRequest}
-                        className="text-sm font-semibold bg-red-600 text-white px-4 py-2 rounded-full shadow-sm hover:bg-red-700 transition"
+                        className="whitespace-nowrap rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 md:text-sm"
                     >
                         + Request Blood
                     </button>
-                    <button onClick={() => router.push('/dashdonor/donor_profile')} className="rounded-full hidden md:block">
-                        <Image
+
+                    <button onClick={() => router.push('/dashdonor/donor_profile')} className="hidden rounded-full md:block">
+                        <Image 
                             src={user.profileImage}
                             width={44}
                             height={44}

@@ -12,17 +12,17 @@ import Swal from "sweetalert2";
 // 1. TYPE DEFINITIONS
 //========================================================//
 interface User {
-  name: string;
-  bloodType: string;
-  profileImage: string;
-  user_id: string; 
+    name: string;
+    bloodType: string;
+    profileImage: string;
+    user_id: string; 
 }
 interface BloodBag {
-  blood_bag_id: string;
-  type: string;
-  component: string;
-  name: string; 
-  date_received: string;
+    blood_bag_id: string;
+    type: string;
+    component: string;
+    name: string; 
+    date_received: string;
 }
 interface ChatMessage {
     role: "user" | "model";
@@ -43,7 +43,7 @@ const CalendarIconNav = () => <svg xmlns="http://www.w3.org/2000/svg" className=
 const HistoryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const HashtagIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.434 6H17a1 1 0 110 2h-2.566l-.66 2.641h2.432a1 1 0 110 2H13.24l-.56 2.243a1 1 0 11-1.94-.486L11.174 14H8.234l-.56 2.243a1 1 0 11-1.94-.486L6.17 14H3a1 1 0 110-2h2.566l.66-2.641H3.799a1 1 0 110-2H6.24l.56-2.243a1 1 0 011.213-.727zM10.5 8h-2.94l-.66 2.641h2.94l.66-2.641z" clipRule="evenodd" /></svg>;
 const ChatIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>;
-const ClipboardIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" /><path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm3 0h6v2H6V5zm6 4H6v2h6V9zm-6 4h6v2H6v-2z" clipRule="evenodd" /></svg>;
+const ClipboardIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" /><path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2-2H5a2 2 0 01-2-2V5zm3 0h6v2H6V5zm6 4H6v2h6V9zm-6 4h6v2H6v-2z" clipRule="evenodd" /></svg>;
 const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>;
 const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const InfoIcon: FC<{ className?: string }> = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 text-gray-400 ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>;
@@ -81,10 +81,25 @@ const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void
                     <h1 className="text-2xl font-extrabold text-red-600">DUGO</h1>
                     <p className="text-xs text-gray-500">Donor Utility for Giving and Organizing</p>
                 </div>
-                <div className="flex items-center gap-2 md:gap-4"> 
+                <div className="flex items-center gap-2 md:gap-4">
                     <NotificationBell user={user} />
-                    <button onClick={onOpenRequest}className="text-sm font-semibold bg-red-600 text-white px-4 py-2 rounded-full shadow-sm hover:bg-red-700 transition">+ Request Blood</button>
-                    <button onClick={() => router.push('/dashdonor/donor_profile')} className="rounded-full hidden md:block"><Image src={user.profileImage}width={44}height={44}alt="Profile"className="rounded-full border-2 border-white shadow"/></button>
+
+                    <button 
+                        onClick={onOpenRequest}
+                        className="whitespace-nowrap rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 md:text-sm"
+                    >
+                        + Request Blood
+                    </button>
+
+                    <button onClick={() => router.push('/dashdonor/donor_profile')} className="hidden rounded-full md:block">
+                        <Image 
+                            src={user.profileImage}
+                            width={44}
+                            height={44}
+                            alt="Profile"
+                            className="rounded-full border-2 border-white shadow"
+                        />
+                    </button>
                 </div>
             </div>
         </Card>
@@ -159,6 +174,48 @@ const UpcomingAppointmentCard = ({ appointment }: { appointment: any | null }) =
     );
 };
 
+const RequestStatusBadge = ({ status }: { status: string }) => {
+    const statusMap: Record<string, string> = {
+        Pending: "bg-yellow-100 text-yellow-800",
+        Approved: "bg-blue-100 text-blue-800",
+        Fulfilled: "bg-green-100 text-green-800",
+        Rejected: "bg-red-100 text-red-800",
+    };
+    return <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${statusMap[status] || 'bg-gray-100 text-gray-800'}`}>{status}</span>;
+};
+
+// --- NEW COMPONENT: Recent Request Card ---
+const RecentRequestCard = ({ request }: { request: any | null }) => {
+    return (
+        <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-gray-800">My Recent Blood Request</h3>
+                <div className="p-2 bg-yellow-100 rounded-lg text-yellow-600"><ClipboardIcon /></div>
+            </div>
+            {request ? (
+                <div>
+                    <div className="flex justify-between items-center">
+                        <p className="font-semibold text-lg text-red-700">{request.units} Unit(s) of {request.blood_type}</p>
+                        <RequestStatusBadge status={request.status} />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Requested on {new Date(request.requested_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                    </p>
+                    <div className="border-t my-4"></div>
+                    <div className="space-y-2 text-sm text-gray-600">
+                        <p className="flex items-center gap-2"><LocationMarkerIcon /> <span>For: {request.hospital_name}</span></p>
+                        <p className="flex items-center gap-2"><HashtagIcon /> <span>Component: {request.blood_component}</span></p>
+                    </div>
+                </div>
+            ) : (
+                <div className="text-center py-8 text-gray-500">
+                    <InfoIcon className="mx-auto h-10 w-10" />
+                    <p className="mt-2 font-semibold">No recent requests found.</p>
+                </div>
+            )}
+        </Card>
+    );
+};
 
 const YourImpact = ({ livesSaved, bloodType, lastDonation, appointment }: { livesSaved: number, bloodType: string, lastDonation: string | null, appointment: any | null }) => (
     <div className="md:col-span-2 grid gap-6">
@@ -691,6 +748,7 @@ const BloodSearch = () => {
     const [searchResults, setSearchResults] = useState<BloodBag[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [searchPerformed, setSearchPerformed] = useState(false);
+    
     const handleSearch = async () => {
         if (!selectedBloodType) {
             Swal.fire("Info", "Please select a blood type to search.", "info");
@@ -704,10 +762,10 @@ const BloodSearch = () => {
                 .from('blood_inventory')
                 .select('blood_bag_id, type, component, name, date_received')
                 .eq('type', selectedBloodType)
-                .in('status', ['In Inventory', 'Active']); 
+                .eq('status', 'Added to Inventory');
+            
             if (error) throw error;
-
-            setSearchResults(data || []);
+            setSearchResults(data as BloodBag[] || []);
         } catch (error: any) {
             Swal.fire("Error", `Failed to fetch blood inventory: ${error.message}`, "error");
         } finally {
@@ -743,7 +801,9 @@ const BloodSearch = () => {
                     <span>{isSearching ? "Searching..." : "Search"}</span>
                 </button>
             </div>
-            <div className="space-y-4">
+            
+            {/* --- KINI ANG GI-UPDATE NGA PART --- */}
+            <div className="space-y-4 overflow-y-auto h-64 pr-2">
                 {isSearching ? (
                     <p className="text-center text-gray-500 py-8">Searching for available blood...</p>
                 ) : !searchPerformed ? (
@@ -850,16 +910,15 @@ export default function ResponsiveDonorDashboard() {
     const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
     const [recentDonation, setRecentDonation] = useState<any | null>(null);
     const [upcomingCampaign, setUpcomingCampaign] = useState<any | null>(null);
+    const [recentRequest, setRecentRequest] = useState<any | null>(null);
     const router = useRouter();
 
     const fetchData = async () => {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) {
-        // This part is now less likely to happen, but good for safety
-        console.error("No user found despite protected route.");
-        router.replace("/"); 
-        return;
-    }
+            router.replace("/"); 
+            return;
+        }
 
         const { data: profile, error } = await supabase
             .from('users')
@@ -874,7 +933,7 @@ export default function ResponsiveDonorDashboard() {
         }
 
         if(!user) {
-             setUser({
+            setUser({
                 name: profile.name,
                 bloodType: profile.blood_type,
                 profileImage: profile.profile_image_url || '/images/user.png',
@@ -885,11 +944,13 @@ export default function ResponsiveDonorDashboard() {
         const [
             { data: donations, count },
             { data: appointment },
-            { data: campaign }
+            { data: campaign },
+            { data: request }
         ] = await Promise.all([
             supabase.from('blood_inventory').select('*, blood_journey(stage)', { count: 'exact' }).eq('user_id', profile.user_id).order('date_received', { ascending: false }),
             supabase.from('appointments').select('*').eq('user_id', profile.user_id).eq('status', 'Pending').order('date', { ascending: true }).limit(1).single(),
-            supabase.from('blood_campaigns').select('*').gte('date', new Date().toISOString()).order('created_at', { ascending: false }).limit(1).single()
+            supabase.from('blood_campaigns').select('*').gte('date', new Date().toISOString()).order('created_at', { ascending: false }).limit(1).single(),
+            supabase.from('blood_requests').select('*').eq('user_id', profile.user_id).order('requested_at', { ascending: false }).limit(1).single()
         ]);
 
         if (donations && donations.length > 0) {
@@ -912,17 +973,18 @@ export default function ResponsiveDonorDashboard() {
         
         setLatestAppointment(appointment);
         setUpcomingCampaign(campaign);
+        setRecentRequest(request);
         
         setLoading(false);
     };
 
     useEffect(() => {
         fetchData();
-
         const channel = supabase.channel('realtime-dashboard')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'blood_journey' }, () => fetchData())
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchData())
-          .subscribe()
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'blood_journey' }, () => fetchData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'blood_requests' }, () => fetchData())
+            .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
@@ -1001,6 +1063,7 @@ export default function ResponsiveDonorDashboard() {
                         <YourImpact livesSaved={donationStats.livesSaved} bloodType={user.bloodType} lastDonation={donationStats.lastDonation} appointment={latestAppointment} />
                         <DonationHistory donation={recentDonation} />
                         <CampaignCard campaign={upcomingCampaign} />
+                        <RecentRequestCard request={recentRequest} />
                     </div>
 
                     {/* --- DESKTOP LAYOUT --- */}
@@ -1010,17 +1073,17 @@ export default function ResponsiveDonorDashboard() {
                             <YourImpact livesSaved={donationStats.livesSaved} bloodType={user.bloodType} lastDonation={donationStats.lastDonation} appointment={latestAppointment} />
                         </div>
                         <div className="mt-8">
-                           <BloodJourneyTracker donation={recentDonation} />
+                            <BloodJourneyTracker donation={recentDonation} />
                         </div>
                         <div className="mt-8">
-                           <BloodSearch />
+                            <BloodSearch />
                         </div>
-                        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                             <DonationHistory donation={recentDonation} />
                             <CampaignCard campaign={upcomingCampaign} />
+                            <RecentRequestCard request={recentRequest} />
                         </div>
                     </div>
-
                 </main>
             </div>
             

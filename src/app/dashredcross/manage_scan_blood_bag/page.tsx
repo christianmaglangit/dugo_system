@@ -323,7 +323,7 @@ export default function HospitalQRScanner() {
                             <div className="bg-white rounded-2xl shadow-lg p-6">
                                 <h2 className="text-lg font-semibold text-gray-800">Scan Blood Bag QR Code</h2>
                                 <p className="text-sm text-gray-500 mt-1 mb-4">Position the QR code inside the frame to scan.</p>
-                                <div id="reader" className="w-full rounded-lg overflow-hidden border-2 border-gray-200"></div>
+                                <div id="reader" className="w-full aspect-rectangle rounded-lg overflow-hidden border-2 border-gray-200"></div>
                             </div>
                         </div>
 
@@ -333,7 +333,7 @@ export default function HospitalQRScanner() {
                                 <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
                                     <h2 className="font-semibold text-lg text-gray-800">Blood Journey Log</h2>
                                     <div className="flex items-center gap-2 w-full md:w-auto">
-                                        <button onClick={handleExportPDF} className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm font-semibold hover:bg-green-800 transition">Export Report</button>
+                                        <button onClick={handleExportPDF} className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm font-semibold hover:bg-green-800 transition">Export</button>
                                         <input type="text" placeholder="Search by Bag ID..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full md:w-64 pl-4 pr-2 py-2 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                                     </div>
                                 </div>

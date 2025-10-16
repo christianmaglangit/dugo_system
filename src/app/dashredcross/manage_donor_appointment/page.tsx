@@ -534,24 +534,49 @@ export default function ManageDonorAppointments() {
                         <StatCard title="Upcoming Appointments" value={upcomingCount} icon={<ReportIcon />} color="bg-purple-500" />
                         <StatCard title="Total Pending" value={appointments.filter(a => a.status === 'Pending').length} icon={<UsersIcon />} color="bg-yellow-500" />
                     </div>
+
                     <Card>
+                        {/* --- Search and Filter Controls --- */}
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-                            <h2 className="text-xl font-bold text-gray-800 self-start md:self-center">Appointments</h2>
+                            <div className="relative w-full md:flex-grow">
+                                <input 
+                                    type="text" 
+                                    value={search} 
+                                    onChange={(e) => setSearch(e.target.value)} 
+                                    placeholder="Search by name, ID, location..." 
+                                    className="w-full pl-4 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" 
+                                />
+                            </div>
                             <div className="flex items-center gap-2 w-full md:w-auto">
-                                <div className="relative w-full md:max-w-xs">
-                                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, ID, location..." className="w-full pl-4 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
-                                </div>
-                                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full md:w-auto border px-3 py-2.5 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400">
+                                <select 
+                                    value={filterStatus} 
+                                    onChange={(e) => setFilterStatus(e.target.value)} 
+                                    className="w-full md:w-auto border px-3 py-2.5 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400 whitespace-nowrap"
+                                >
                                     <option value="All">All Statuses</option>
                                     <option value="Pending">Pending</option>
                                     <option value="Completed">Completed</option>
                                     <option value="Cancelled">Cancelled</option>
                                 </select>
-                                <button onClick={handleExportPDF} className="w-full md:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition">Export</button>
-                                <button onClick={openAdd} className="w-full px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow-sm transition">+ New</button>
+                                <button 
+                                    onClick={handleExportPDF} 
+                                    className="w-full md:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition whitespace-nowrap"
+                                >
+                                    Export
+                                </button>
+                                <button 
+                                    onClick={openAdd} 
+                                    className="w-full md:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow-sm transition whitespace-nowrap"
+                                >
+                                    + New
+                                </button>
                             </div>
                         </div>
-                        <div className="overflow-x-auto">
+
+                        {/* --- RESPONSIVE TABLE SECTION --- */}
+                        
+                        {/* 1. TABLE VIEW for Desktop (hidden on mobile) */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-sm min-w-[1000px]">
                                 <thead className="bg-gray-50">
                                     <tr className="text-left text-gray-500 uppercase text-xs font-semibold">
@@ -564,34 +589,62 @@ export default function ManageDonorAppointments() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {loading ? (<tr><td colSpan={5} className="text-center p-8 text-gray-500">Loading...</td></tr>) :
-                                        filtered.length === 0 ? (<tr><td colSpan={5} className="text-center p-8 text-gray-500">No appointments found.</td></tr>) :
-                                            (filtered.map((a) => (
-                                                <tr key={a.id} className="hover:bg-gray-50">
-                                                    <td className="p-4"><div className="font-semibold text-gray-800">{a.donor_name}</div><div className="text-gray-500 font-mono">{a.user_id || 'N/A'}</div></td>
-                                                    <td className="p-4"><div className="font-semibold">{a.date}</div><div className="text-gray-500">{a.time || 'N/A'}</div></td>
-                                                    <td className="p-4 text-gray-600">{a.location || 'N/A'}</td>
-                                                    <td className="p-4 text-center"><StatusBadge status={a.status} /></td>
-                                                    <td className="p-4 text-center">
-                                                        <div className="flex justify-center items-center gap-1">
-                                                            {/* NOTIFY DONOR BUTTON (Custom Message) */}
-                                                            <button onClick={() => notifyDonor(a)} title="Notify Donor / Send Message" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md"><SendIcon /></button>
-
-                                                            {/* MARK AS COMPLETED BUTTON */}
-                                                            {a.status === 'Pending' && <button onClick={() => completeAppointment(a)} title="Mark as Completed & Notify" className="p-1.5 text-green-600 hover:bg-green-100 rounded-md"><CheckIcon /></button>}
-
-                                                            {/* CANCEL APPOINTMENT BUTTON */}
-                                                            {a.status === 'Pending' && <button onClick={() => cancelAppointment(a)} title="Cancel Appointment & Notify" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><CancelIcon /></button>}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )))}
+                                    filtered.length === 0 ? (<tr><td colSpan={5} className="text-center p-8 text-gray-500">No appointments found.</td></tr>) :
+                                    (filtered.map((a) => (
+                                        <tr key={a.id} className="hover:bg-gray-50">
+                                            <td className="p-4"><div className="font-semibold text-gray-800">{a.donor_name}</div><div className="text-gray-500 font-mono">{a.user_id || 'N/A'}</div></td>
+                                            <td className="p-4"><div className="font-semibold">{a.date}</div><div className="text-gray-500">{a.time || 'N/A'}</div></td>
+                                            <td className="p-4 text-gray-600">{a.location || 'N/A'}</td>
+                                            <td className="p-4 text-center"><StatusBadge status={a.status} /></td>
+                                            <td className="p-4 text-center">
+                                                <div className="flex justify-center items-center gap-1">
+                                                    <button onClick={() => notifyDonor(a)} title="Notify Donor / Send Message" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md"><SendIcon /></button>
+                                                    {a.status === 'Pending' && <button onClick={() => completeAppointment(a)} title="Mark as Completed & Notify" className="p-1.5 text-green-600 hover:bg-green-100 rounded-md"><CheckIcon /></button>}
+                                                    {a.status === 'Pending' && <button onClick={() => cancelAppointment(a)} title="Cancel Appointment & Notify" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><CancelIcon /></button>}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )))}
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* 2. CARD VIEW for Mobile (hidden on desktop) */}
+                        <div className="grid grid-cols-1 gap-4 md:hidden">
+                            {loading ? (<div className="text-center p-8 text-gray-500">Loading...</div>) :
+                            filtered.length === 0 ? (<div className="text-center p-8 text-gray-500">No appointments found.</div>) :
+                            (filtered.map((a) => (
+                                <div key={a.id} className="bg-white p-4 rounded-lg shadow border border-gray-200">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <p className="font-semibold text-gray-800">{a.donor_name}</p>
+                                            <p className="text-xs text-gray-500 font-mono">{a.user_id || 'N/A'}</p>
+                                        </div>
+                                        <StatusBadge status={a.status} />
+                                    </div>
+                                    <div className="text-sm text-gray-700 space-y-2">
+                                        <div className="flex justify-between">
+                                            <strong className="text-gray-500">Date & Time:</strong>
+                                            <span>{a.date} at {a.time || 'N/A'}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <strong className="text-gray-500">Location:</strong>
+                                            <span className="text-right">{a.location || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="border-t mt-3 pt-3 flex justify-end items-center gap-2">
+                                        <button onClick={() => notifyDonor(a)} title="Notify Donor / Send Message" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md"><SendIcon /></button>
+                                        {a.status === 'Pending' && <button onClick={() => completeAppointment(a)} title="Mark as Completed & Notify" className="p-1.5 text-green-600 hover:bg-green-100 rounded-md"><CheckIcon /></button>}
+                                        {a.status === 'Pending' && <button onClick={() => cancelAppointment(a)} title="Cancel Appointment & Notify" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><CancelIcon /></button>}
+                                    </div>
+                                </div>
+                            )))}
+                        </div>
                     </Card>
+                    
                     {showForm && <AppointmentForm donors={donors} initial={editing} onClose={() => { setShowForm(false); setEditing(null); }} onSave={saveAppointment} />}
                 </main>
             </div>
         </div>
     );
-}
+};

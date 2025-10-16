@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import Swal from "sweetalert2";
 
 //========================================================//
 // 1. ICONS                                               //
@@ -21,109 +22,130 @@ const HospitalIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-
 const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>;
 const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>;
+const BellIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>;
 
 //========================================================//
 // 2. CHILD COMPONENTS                                    //
 //========================================================//
+// --- Notification Type ---
+type Notification = {
+    id: number;
+    message: string;
+    created_at: string;
+    is_read: boolean;
+};
 
 function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
-  const pathname = usePathname();
-  const links = [
-    { name: "Dashboard", href: "/dashredcross", icon: <DashboardIcon/> },
-    { name: "Manage Inventory", href: "/dashredcross/manage_inventory", icon: <InventoryIcon/> },
-    { name: "Manage Accounts", href: "/dashredcross/manage_users_account", icon: <UsersIcon/> },
-    { name: "Manage Appointments", href: "/dashredcross/manage_donor_appointment", icon: <AppointmentIcon/> },
-    { name: "Predictive Reports", href: "/dashredcross/manage_predictive_reports", icon: <ReportIcon/> },
-    { name: "Blood Requests", href: "/dashredcross/manage_blood_request", icon: <RequestIcon/> },
-    { name: "Blood Campaigns", href: "/dashredcross/manage_blood_campaign", icon: <CampaignIcon/> },
-    { name: "Scan Blood Bags", href: "/dashredcross/manage_scan_blood_bag", icon: <ScanIcon/> },
-    { name: "Hospital Inventory", href: "/dashredcross/manage_hospital_inventory", icon: <HospitalIcon/> },
-  ];
+    const pathname = usePathname();
+    const links = [
+        { name: "Dashboard", href: "/dashredcross", icon: <DashboardIcon/> },
+        { name: "Manage Inventory", href: "/dashredcross/manage_inventory", icon: <InventoryIcon/> },
+        { name: "Manage Accounts", href: "/dashredcross/manage_users_account", icon: <UsersIcon/> },
+        { name: "Manage Appointments", href: "/dashredcross/manage_donor_appointment", icon: <AppointmentIcon/> },
+        { name: "Predictive Reports", href: "/dashredcross/manage_predictive_reports", icon: <ReportIcon/> },
+        { name: "Blood Requests", href: "/dashredcross/manage_blood_request", icon: <RequestIcon/> },
+        { name: "Blood Campaigns", href: "/dashredcross/manage_blood_campaign", icon: <CampaignIcon/> },
+        { name: "Scan Blood Bags", href: "/dashredcross/manage_scan_blood_bag", icon: <ScanIcon/> },
+        { name: "Hospital Inventory", href: "/dashredcross/manage_hospital_inventory", icon: <HospitalIcon/> },
+    ];
 
-  const sidebarClasses = `
-    w-72 min-h-screen fixed left-0 top-0 bg-white shadow-lg p-6 flex flex-col z-50 transition-transform duration-300 ease-in-out
-    ${isOpen ? "translate-x-0" : "-translate-x-full"}
-    md:translate-x-0 md:flex
-  `;
-
-  return (
-    <>
-      {isOpen && <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={onClose}></div>}
-      <aside className={sidebarClasses}>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-3xl font-extrabold text-red-600">DUGO</h2>
-            <p className="text-xs text-gray-600 font-medium">
-              (Donor Utility for Giving and Organizing)
-            </p>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="md:hidden p-2 rounded-full hover:bg-gray-100"
-          >
-            <XIcon />
-          </button>
-        </div>
-
-        <nav className="flex flex-col space-y-2">
-          {links.map(link => (
-            <Link key={link.href} href={link.href}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all font-semibold ${
-                pathname === link.href
-                  ? "bg-red-600 text-white shadow-md"
-                  : "text-gray-600 hover:bg-red-50 hover:text-red-600"
-              }`}
-            >
-              {link.icon}
-              <span>{link.name}</span>
-            </Link>
-          ))}
-        </nav>
-      </aside>
-    </>
-  );
+    return (
+        <>
+            {isOpen && <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={onClose}></div>}
+            <aside className={`w-72 min-h-screen fixed left-0 top-0 bg-white shadow-lg p-6 flex-col z-50 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:flex`}>
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 className="text-3xl font-extrabold text-red-600">DUGO</h2>
+                        <p className="text-xs text-gray-600 font-medium">(Donor Utility for Giving and Organizing)</p>
+                    </div>
+                    <button onClick={onClose} className="md:hidden p-2 rounded-full hover:bg-gray-100"><XIcon /></button>
+                </div>
+                <nav className="flex flex-col space-y-2">
+                    {links.map(link => (
+                        <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all font-semibold ${pathname === link.href ? "bg-red-600 text-white shadow-md" : "text-gray-600 hover:bg-red-50 hover:text-red-600"}`}>
+                            {link.icon}<span>{link.name}</span>
+                        </Link>
+                    ))}
+                </nav>
+            </aside>
+        </>
+    );
 }
 
-function BloodbankHeader({ name, onMenuClick }: { name: string, onMenuClick: () => void }) {
-  const router = useRouter();
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+function BloodbankHeader({ name, onMenuClick, notifications, unreadCount, onNotificationOpen }: { name: string, onMenuClick: () => void, notifications: Notification[], unreadCount: number, onNotificationOpen: () => void }) {
+    const router = useRouter();
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.replace("/");
-  };
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.replace("/");
+    };
 
-  return (
-    <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
-        <div className="flex items-center gap-4">
-            <button onClick={onMenuClick} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
-            <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-        </div>
-      <div className="flex items-center gap-4">
-        {/* User Dropdown */}
-        <div className="relative">
-            <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
-                <span className="font-semibold text-gray-700 text-sm hidden sm:inline">{name}</span>
-                <ChevronDownIcon />
-            </button>
-            {isUserMenuOpen && (
-                <div className="absolute right-0 mt-3 w-48 bg-white rounded-lg shadow-xl z-50 border overflow-hidden">
-                    <div className="p-3 border-b">
-                        <p className="font-semibold text-sm">{name}</p>
-                        <p className="text-xs text-gray-500">Red Cross Admin</p>
-                    </div>
-                    <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50">Logout</button>
+    const handleBellClick = () => {
+        setIsNotificationOpen(!isNotificationOpen);
+        if (unreadCount > 0) {
+            onNotificationOpen();
+        }
+    };
+
+    return (
+        <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
+            <div className="flex items-center gap-4">
+                <button onClick={onMenuClick} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
+                <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+            </div>
+            <div className="flex items-center gap-4">
+                {/* --- Notification Bell --- */}
+                <div className="relative">
+                    <button onClick={handleBellClick} className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-800 relative">
+                        <BellIcon />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white"></span>
+                        )}
+                    </button>
+                    {isNotificationOpen && (
+                        <div className="absolute right-0 mt-3 w-80 bg-white rounded-lg shadow-xl z-50 border overflow-hidden">
+                            <div className="p-3 border-b">
+                                <p className="font-semibold text-sm">Notifications</p>
+                            </div>
+                            <div className="max-h-80 overflow-y-auto">
+                                {notifications.length > 0 ? notifications.map(notif => (
+                                    <div key={notif.id} className={`p-3 text-sm border-b hover:bg-gray-50 ${!notif.is_read ? 'bg-red-50' : ''}`}>
+                                        <p className="text-gray-700">{notif.message}</p>
+                                        <p className="text-xs text-gray-400 mt-1">{new Date(notif.created_at).toLocaleString()}</p>
+                                    </div>
+                                )) : (
+                                    <p className="p-4 text-sm text-gray-500 text-center">No new notifications</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
-        </div>
-      </div>
-    </header>
-  );
+
+                {/* --- User Dropdown --- */}
+                <div className="relative">
+                    <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
+                        <span className="font-semibold text-gray-700 text-sm hidden sm:inline">{name}</span>
+                        <ChevronDownIcon />
+                    </button>
+                    {isUserMenuOpen && (
+                        <div className="absolute right-0 mt-3 w-48 bg-white rounded-lg shadow-xl z-50 border overflow-hidden">
+                            <div className="p-3 border-b">
+                                <p className="font-semibold text-sm">{name}</p>
+                                <p className="text-xs text-gray-500">Red Cross Admin</p>
+                            </div>
+                            <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50">Logout</button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </header>
+    );
 }
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-2xl shadow-lg p-6 bg-white text-black ${className || ""}`}>{children}</div>;
+    return <div className={`rounded-2xl shadow-lg p-6 bg-white text-black ${className || ""}`}>{children}</div>;
 }
 
 const StatCard = ({ title, value, icon, color }: {title: string, value: string | number, icon: ReactNode, color: string}) => (
@@ -143,150 +165,203 @@ const StatCard = ({ title, value, icon, color }: {title: string, value: string |
 // 3. MAIN DASHBOARD COMPONENT                            //
 //========================================================//
 export default function RedCrossDashboard() {
-  const [bloodData, setBloodData] = useState<{ type: string; RBC: number; Plasma: number; Platelets: number; WBC: number }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const router = useRouter();
+    const [bloodData, setBloodData] = useState<{ type: string; RBC: number; Plasma: number; Platelets: number; WBC: number }[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [userName, setUserName] = useState("");
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const router = useRouter();
+    const [bloodRequests, setBloodRequests] = useState<any[]>([]);
+    const [appointments, setAppointments] = useState<any[]>([]);
+    const [campaigns, setCampaigns] = useState<any[]>([]);
+    
+    // --- Notification State ---
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-useEffect(() => {
-    const loadDashboardData = async () => {
-        setLoading(true);
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        
-        if (!authUser) {
-            console.error("User not found on a protected route.");
-            setLoading(false);
-            return;
-        }
-        
-        const { data: profile, error: profileError } = await supabase
-            .from("users")
-            .select("name, user_id")
-            .eq("id", authUser.id)
-            .single();
-
-        if (profileError || !profile) {
-            console.error("Failed to fetch Red Cross profile:", profileError);
-            setLoading(false);
-            return;
-        }
-
-        setUserName(profile.name);
-        const staffUserId = profile.user_id;
-
-        const [
-            { data: inventoryData },
-            { data: requestsData },
-            { data: appointmentsData },
-            { data: campaignsData }
-        ] = await Promise.all([
-            supabase.from("blood_inventory").select("*").eq("added_by", staffUserId),
-            supabase.from("blood_requests").select("*"),
-            supabase.from("donor_appointments").select("*"),
-            supabase.from("blood_campaigns").select("*")
-        ]);
-
-        if (inventoryData) {
-            type BloodComponent = "RBC" | "Plasma" | "Platelets" | "WBC";
-            const allTypes: string[] = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
-            const allComponents: BloodComponent[] = ["RBC", "Plasma", "Platelets", "WBC"];
-            const aggregation = Object.fromEntries(allTypes.map(type => [type, Object.fromEntries(allComponents.map(comp => [comp, 0]))])) as Record<string, Record<BloodComponent, number>>;
+    useEffect(() => {
+        const loadDashboardData = async () => {
+            setLoading(true);
+            const { data: { user: authUser } } = await supabase.auth.getUser();
             
-            inventoryData.forEach((item: any) => {
-              const component = item.component as BloodComponent;
-              if (allTypes.includes(item.type) && allComponents.includes(component)) {
-                aggregation[item.type][component] += item.units;
-              }
-            });
-            setBloodData(allTypes.map(type => ({ type, ...aggregation[type] })));
+            if (!authUser) {
+                console.error("User not found.");
+                setLoading(false);
+                return;
+            }
+
+            setCurrentUserId(authUser.id); // Store the UUID for notifications
+            
+            const { data: profile, error: profileError } = await supabase
+                .from("users")
+                .select("name, user_id")
+                .eq("id", authUser.id)
+                .single();
+
+            if (profileError || !profile) {
+                console.error("Failed to fetch profile:", profileError);
+                setLoading(false);
+                return;
+            }
+            setUserName(profile.name);
+            const staffUserId = profile.user_id;
+
+            // Fetch all initial data concurrently
+            const [
+                { data: inventoryData },
+                { data: requestsData },
+                { data: appointmentsData },
+                { data: campaignsData },
+                { data: initialNotifications }
+            ] = await Promise.all([
+                supabase.from("blood_inventory").select("*").eq("added_by", staffUserId),
+                supabase.from("blood_requests").select("*"),
+                supabase.from("donor_appointments").select("*"),
+                supabase.from("blood_campaigns").select("*"),
+                supabase.from("notifications").select("*").eq("user_id", authUser.id).order('created_at', { ascending: false })
+            ]);
+
+            // Process inventory data
+            if (inventoryData) {
+                type BloodComponent = "RBC" | "Plasma" | "Platelets" | "WBC";
+                const allTypes: string[] = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
+                const allComponents: BloodComponent[] = ["RBC", "Plasma", "Platelets", "WBC"];
+                const aggregation = Object.fromEntries(allTypes.map(type => [type, Object.fromEntries(allComponents.map(comp => [comp, 0]))])) as Record<string, Record<BloodComponent, number>>;
+                
+                inventoryData.forEach((item: any) => {
+                    const component = item.component as BloodComponent;
+                    if (allTypes.includes(item.type) && allComponents.includes(component)) {
+                        aggregation[item.type][component] += item.units;
+                    }
+                });
+                setBloodData(allTypes.map(type => ({ type, ...aggregation[type] })));
+            }
+
+            // Set other data
+            setBloodRequests(requestsData || []);
+            setAppointments(appointmentsData || []);
+            setCampaigns(campaignsData || []);
+
+            // Set initial notifications
+            if (initialNotifications) {
+                setNotifications(initialNotifications);
+                setUnreadCount(initialNotifications.filter(n => !n.is_read).length);
+            }
+
+            setLoading(false);
+        };
+
+        loadDashboardData();
+    }, []); 
+
+    // --- Real-time Notification Listener ---
+    useEffect(() => {
+        if (!currentUserId) return;
+
+        const channel = supabase.channel('public:notifications')
+            .on('postgres_changes', 
+                { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${currentUserId}` }, 
+                (payload) => {
+                    const newNotification = payload.new as Notification;
+                    setNotifications(prev => [newNotification, ...prev]);
+                    setUnreadCount(prev => prev + 1);
+
+                    // Show a toast
+                    Swal.fire({
+                        title: 'New Notification!',
+                        text: newNotification.message,
+                        icon: 'info',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [currentUserId]);
+
+    const handleNotificationOpen = async () => {
+        if (unreadCount > 0 && currentUserId) {
+            const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+            if (unreadIds.length === 0) return;
+
+            // Update in DB
+            await supabase.from('notifications').update({ is_read: true }).in('id', unreadIds);
+
+            // Update local state
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            setUnreadCount(0);
         }
-
-        setBloodRequests(requestsData || []);
-        setAppointments(appointmentsData || []);
-        setCampaigns(campaignsData || []);
-
-        setLoading(false);
     };
 
-    loadDashboardData();
-}, []); 
+    const totalUnits = bloodData.reduce((acc, cur) => acc + cur.RBC + cur.Plasma + cur.Platelets + cur.WBC, 0);
 
-  const [bloodRequests, setBloodRequests] = useState<any[]>([]);
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [campaigns, setCampaigns] = useState<any[]>([]);
+    return (
+        <div className="flex bg-gray-50 min-h-screen">
+            <BloodbankSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+            <div className="w-full transition-all duration-300 md:ml-72">
+                <BloodbankHeader 
+                    name={userName} 
+                    onMenuClick={() => setIsSidebarOpen(true)}
+                    notifications={notifications}
+                    unreadCount={unreadCount}
+                    onNotificationOpen={handleNotificationOpen}
+                />
+                <main className="mt-20 p-4 md:p-8">
+                    <div className=" grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <StatCard title="Total Units" value={totalUnits} icon={<InventoryIcon />} color="bg-red-500" />
+                        <StatCard title="Pending Requests" value={bloodRequests.filter(r => r.status === 'Pending').length} icon={<RequestIcon />} color="bg-yellow-500" />
+                        <StatCard title="Approved Appointments" value={appointments.filter(a => a.status === 'Approved').length} icon={<AppointmentIcon />} color="bg-blue-500" />
+                        <StatCard title="Upcoming Campaigns" value={campaigns.filter(c => new Date(c.date) > new Date()).length} icon={<CampaignIcon />} color="bg-green-500" />
+                    </div>
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: br } = await supabase.from("blood_requests").select("*");
-      const { data: ap } = await supabase.from("donor_appointments").select("*");
-      const { data: cp } = await supabase.from("blood_campaigns").select("*");
-      setBloodRequests(br || []);
-      setAppointments(ap || []);
-      setCampaigns(cp || []);
-    };
-    fetchData();
-  }, []);
-
-  const totalUnits = bloodData.reduce((acc, cur) => acc + cur.RBC + cur.Plasma + cur.Platelets + cur.WBC, 0);
-
-  return (
-    <div className="flex bg-gray-50 min-h-screen">
-      <BloodbankSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      <div className="w-full transition-all duration-300 md:ml-72">
-        <BloodbankHeader name={userName} onMenuClick={() => setIsSidebarOpen(true)} />
-        <main className="mt-20 p-4 md:p-8">
-            <div className=" grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <StatCard title="Total Units" value={totalUnits} icon={<InventoryIcon />} color="bg-red-500" />
-                <StatCard title="Pending Requests" value={bloodRequests.filter(r => r.status === 'Pending').length} icon={<RequestIcon />} color="bg-yellow-500" />
-                <StatCard title="Approved Appointments" value={appointments.filter(a => a.status === 'Approved').length} icon={<AppointmentIcon />} color="bg-blue-500" />
-                <StatCard title="Upcoming Campaigns" value={campaigns.filter(c => new Date(c.date) > new Date()).length} icon={<CampaignIcon />} color="bg-green-500" />
-            </div>
-
-            <div className="grid lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-3">
-                    <Card>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Blood Units by Type</h2>
-                        <div className="w-full h-96">
-                        {loading ? <p className="text-center text-gray-500">Loading chart...</p> : (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={bloodData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <XAxis dataKey="type" stroke="#6b7280" fontSize={12} />
-                                <YAxis stroke="#6b7280" fontSize={12} />
-                                <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.5rem" }} />
-                                <Legend />
-                                <Bar dataKey="RBC" name="RBC" stackId="a" fill="#ef4444" />
-                                <Bar dataKey="Plasma" name="Plasma" stackId="a" fill="#3b82f6" />
-                                <Bar dataKey="Platelets" name="Platelets" stackId="a" fill="#facc15" />
-                                <Bar dataKey="WBC" name="WBC" stackId="a" fill="#10b981" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        )}
+                    <div className="grid lg:grid-cols-5 gap-6">
+                        <div className="lg:col-span-3">
+                            <Card>
+                                <h2 className="text-lg font-semibold text-gray-800 mb-4">Blood Units by Type</h2>
+                                <div className="w-full h-96">
+                                {loading ? <p className="text-center text-gray-500">Loading chart...</p> : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={bloodData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                        <XAxis dataKey="type" stroke="#6b7280" fontSize={12} />
+                                        <YAxis stroke="#6b7280" fontSize={12} />
+                                        <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.5rem" }} />
+                                        <Legend />
+                                        <Bar dataKey="RBC" name="RBC" stackId="a" fill="#ef4444" />
+                                        <Bar dataKey="Plasma" name="Plasma" stackId="a" fill="#3b82f6" />
+                                        <Bar dataKey="Platelets" name="Platelets" stackId="a" fill="#facc15" />
+                                        <Bar dataKey="WBC" name="WBC" stackId="a" fill="#10b981" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                                </div>
+                            </Card>
                         </div>
-                    </Card>
-                </div>
-                <div className="lg:col-span-2 space-y-6">
-                    <Card>
-                      <h2 className="text-lg font-semibold text-gray-800 mb-4">Predictive Report</h2>
-                      <p className="text-sm text-gray-600 mb-4">Based on historical data, we predict a higher demand for O+ blood in the next 30 days.</p>
-                      <button
-                        onClick={() => router.push("/dashredcross/manage_predictive_reports")}
-                        className="w-full py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition"
-                      >
-                        View Full Report
-                      </button>
-                    </Card>
-                     <Card>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
-                        <div className="flex flex-col space-y-3">
-                            <Link href="/dashredcross/manage_blood_request" className="text-center w-full py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition">Manage Requests</Link>
-                            <Link href="/dashredcross/manage_donor_appointment" className="text-center w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition">Manage Appointments</Link>
+                        <div className="lg:col-span-2 space-y-6">
+                            <Card>
+                              <h2 className="text-lg font-semibold text-gray-800 mb-4">Predictive Report</h2>
+                              <p className="text-sm text-gray-600 mb-4">Based on historical data, we predict a higher demand for O+ blood in the next 30 days.</p>
+                              <button onClick={() => router.push("/dashredcross/manage_predictive_reports")} className="w-full py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">
+                                View Full Report
+                              </button>
+                            </Card>
+                            <Card>
+                                <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
+                                <div className="flex flex-col space-y-3">
+                                    <Link href="/dashredcross/manage_blood_request" className="text-center w-full py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition">Manage Requests</Link>
+                                    <Link href="/dashredcross/manage_donor_appointment" className="text-center w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition">Manage Appointments</Link>
+                                </div>
+                            </Card>
                         </div>
-                    </Card>
-                </div>
+                    </div>
+                </main>
             </div>
-        </main>
-      </div>
-    </div>
-  );
+        </div>
+    );
 }

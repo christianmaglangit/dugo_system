@@ -63,7 +63,7 @@ const InputField: FC<{ label: string, name: string, children: ReactNode }> = ({ 
 
 const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void }) => {
     return (
-        <Card className="p-4 my-4">
+        <Card className="p-4 mt-4 mb-4">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-extrabold text-red-600">DUGO</h1>
@@ -71,7 +71,13 @@ const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void
                 </div>
                 <div className="flex items-center gap-2 md:gap-4">
                     <NotificationBell user={user} />
-                    <button onClick={onOpenRequest} className="text-sm font-semibold bg-red-600 text-white px-4 py-2 rounded-full shadow-sm hover:bg-red-700 transition">+ Request Blood</button>
+
+                    <button 
+                        onClick={onOpenRequest}
+                        className="whitespace-nowrap rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 md:text-sm"
+                    >
+                        + Request Blood
+                    </button>
                 </div>
             </div>
         </Card>
