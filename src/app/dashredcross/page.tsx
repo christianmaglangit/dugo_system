@@ -59,7 +59,7 @@ function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
             <aside className={`w-72 min-h-screen fixed left-0 top-0 bg-white shadow-lg p-6 flex-col z-50 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:flex`}>
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h2 className="text-3xl md:text-2xl lg:text-3xl font-extrabold text-red-600">DUGO</h2>
+                        <h2 className="text-3xl sm:font-extrabold md:font-extrabold md:text-2xl lg:text-3xl font-extrabold text-red-600">DUGO</h2>
                     </div>
                     <button onClick={onClose} className="md:hidden p-2 rounded-full hover:bg-gray-100"><XIcon /></button>
                 </div>
