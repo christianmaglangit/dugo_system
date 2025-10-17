@@ -67,45 +67,48 @@ export default function HomePage() {
 
   return (
     <div className="bg-gray-50">
-      {/* Navbar */}
       <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md text-gray-800 border-b border-gray-200/80">
         <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
-          {/* UPDATED LOGO LAYOUT */}
-          <div>
-            <div className="text-3xl font-extrabold text-red-600">DUGO</div>
-            <div className="text-xs text-gray-500">Donor Utility for Giving and Organizing</div>
-          </div>
-
-          <ul className="hidden md:flex items-center space-x-4">{renderAuthButtons()}</ul>
-
-          <button
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition"
+          <div className="flex align-middle">
+            <button
+            className="md:hidden p-2 pr-3 rounded-lg hover:bg-gray-100 transition"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <Menu size={24} className="text-gray-700" />
           </button>
+            <div>
+              <div className="text-3xl md:text-2xl lg:text-3xl font-extrabold text-red-600">DUGO</div>
+              <div className="text-xs text-gray-500">Donor Utility for Giving and Organizing</div>
+            </div>
+          </div>
+          <ul className="hidden md:flex items-center space-x-4">{renderAuthButtons()}</ul>
         </div>
       </nav>
-      
-      {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-          <div className="md:hidden fixed inset-0 bg-white z-[100] p-4">
-            <div className="flex justify-end mb-8">
-                <button onClick={() => setIsMenuOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 transition">
-                    <X size={24} className="text-gray-700" />
-                </button>
+        <div className={`md:hidden fixed inset-0 z-[100] transition-opacity duration-300 ease-in-out
+                      ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+            <div 
+                className="absolute inset-0 bg-black/50"
+                onClick={() => setIsMenuOpen(false)}
+            ></div>
+            <div className={`relative w-3/4 max-w-sm h-full bg-white p-4 shadow-xl 
+                          transition-transform duration-300 ease-in-out
+                          ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex justify-end mb-8">
+                    <button onClick={() => setIsMenuOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 transition">
+                        <X size={24} className="text-gray-700" />
+                    </button>
+                </div>
+                <ul className="flex flex-col items-center space-y-4">
+                    {renderAuthButtons()}
+                </ul>
             </div>
-            <ul className="flex flex-col items-center space-y-4">
-              {renderAuthButtons()}
-            </ul>
-          </div>
+        </div>
       )}
-
-      {/* Slideshow */}
       <div className="relative w-full h-[70vh] md:h-[calc(100vh-80px)] flex items-center justify-center text-center text-white pt-[76px] overflow-hidden">
-        <div className="absolute inset-0 transition-opacity duration-1000">
+        <div className="absolute inset-0 transition-opacity text-3xl md:text-2xl lg:text-3xl font-extrabold duration-1000">
           <Image
-            key={currentIndex} // Re-triggers animation
+            key={currentIndex}
             src={slides[currentIndex].image}
             alt="Slide"
             fill
@@ -130,8 +133,6 @@ export default function HomePage() {
           ))}
         </div>
       </div>
-
-      {/* Features Section */}
       <section className="bg-white py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
@@ -151,8 +152,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Auth Modals */}
       {modalType === 'signup' && (
         <SignupModal
           onClose={() => setModalType(null)}
