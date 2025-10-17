@@ -39,8 +39,7 @@ const HeartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w
 const GiftIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5v9a1 1 0 11-2 0V10H4a2 2 0 110-4h1.17A3 3 0 015 5zm7 1a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>;
 const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const ChatIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>;
-const BellSlashedIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M12 21a8.25 8.25 0 006.26-14.829l-1.178-1.178a8.25 8.25 0 00-13.183 9.435L3 18.75h1.5a8.25 8.25 0 007.5 2.25z" /></svg>;
-const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const BellSlashedIcon = ({ className }: { className?: string }) => (<svg xmlns="http://www.w3.org/2000/svg" className={`h-16 w-16 text-gray-300 ${className || ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M12 21a8.25 8.25 0 006.26-14.829l-1.178-1.178a8.25 8.25 0 00-13.183 9.435L3 18.75h1.5a8.25 8.25 0 007.5 2.25z" /></svg>);const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const XCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 
 
@@ -66,12 +65,10 @@ const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void
         <Card className="p-4 mt-4 mb-4">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-extrabold text-red-600">DUGO</h1>
-                    <p className="text-xs text-gray-500">Donor Utility for Giving and Organizing</p>
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-red-600">DUGO</h1>
                 </div>
                 <div className="flex items-center gap-2 md:gap-4">
                     <NotificationBell user={user} />
-
                     <button 
                         onClick={onOpenRequest}
                         className="whitespace-nowrap rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 md:text-sm"
@@ -99,7 +96,7 @@ const PageHeader = ({ title }: { title: string }) => {
     );
 };
 
-const BottomNav = ({ onOpenAppointmentModal }: { onOpenAppointmentModal: () => void }) => {
+const BottomNav = ({ user, onOpenAppointmentModal }: { user: User | null; onOpenAppointmentModal: () => void }) => {
     const router = useRouter();
     const pathname = usePathname();
     const navItems = [
@@ -107,7 +104,23 @@ const BottomNav = ({ onOpenAppointmentModal }: { onOpenAppointmentModal: () => v
         { icon: <ListIcon />, label: "History", path: '/dashdonor/donor_history' },
         { icon: <CalendarIconNav />, label: "Appointment", primary: true },
         { icon: <MegaphoneIcon />, label: "Campaigns", path: '/dashdonor/donor_campaign' },
-        { icon: <UserIcon />, label: "Profile", path: '/dashdonor/donor_profile' },
+        { 
+            icon: (user && user.profileImage) ? (
+                <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-300">
+                    <Image 
+                        src={user.profileImage} 
+                        width={24}
+                        height={24}
+                        alt="Profile" 
+                        className="object-cover"
+                    />
+                </div>
+            ) : (
+                <UserIcon />
+            ), 
+            label: "Profile", 
+            path: '/dashdonor/donor_profile' 
+        },
     ];
 
     return (
@@ -115,20 +128,20 @@ const BottomNav = ({ onOpenAppointmentModal }: { onOpenAppointmentModal: () => v
             {navItems.map((item) => {
                 const isActive = pathname === item.path;
                 if (item.primary) {
-                    return (
+                    return ( 
                         <button key={item.label} onClick={onOpenAppointmentModal} className="text-white -mt-8" title="Book Appointment">
                             <div className="w-16 h-16 bg-red-600 rounded-full flex flex-col items-center justify-center shadow-lg hover:bg-red-700 transition">
                                 {item.icon}
                                 <span className="text-xs font-medium mt-0.5">Book</span>
                             </div>
-                        </button>
+                        </button> 
                     );
                 }
-                return (
+                return ( 
                     <button key={item.label} onClick={() => router.push(item.path as string)} className={`flex flex-col items-center justify-center gap-1 flex-1 h-full ${isActive ? 'text-red-600' : 'text-gray-400'}`}>
                         {item.icon}
                         <span className="text-xs font-medium">{item.label}</span>
-                    </button>
+                    </button> 
                 );
             })}
         </nav>
@@ -658,7 +671,6 @@ const NotificationBell = ({ user }: { user: User | null }) => {
 
 const ProfileSummaryCard = ({ user, onEdit }: { user: User, onEdit: () => void }) => (
     <Card className="p-6 flex flex-col items-center text-center">
-        {/* ✅ Circular image container */}
         <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-2xl -mt-20">
             <Image
                 src={user.profileImage || '/images/user.png'}
@@ -668,14 +680,11 @@ const ProfileSummaryCard = ({ user, onEdit }: { user: User, onEdit: () => void }
                 className="object-cover w-full h-full"
             />
         </div>
-
-        <h2 className="mt-4 text-2xl font-bold text-gray-800">{user.name}</h2>
-
+        <h2 className="mt-4 text-2xl font-bold text-gray-800 capitalize">{user.name}</h2>
         <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-full font-semibold">
             <BloodDropIcon />
             <span>Blood Type: {user.bloodType}</span>
         </div>
-
         <button
             onClick={onEdit}
             className="w-full mt-6 px-4 py-3 rounded-xl text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20 transition font-semibold"
@@ -685,15 +694,36 @@ const ProfileSummaryCard = ({ user, onEdit }: { user: User, onEdit: () => void }
     </Card>
 );
 
-
+const truncateMiddle = (str: string, startChars: number, endChars: number): string => {
+  if (str.length <= startChars + endChars) {
+    return str;
+  }
+  const start = str.substring(0, startChars);
+  const end = str.substring(str.length - endChars);
+  return `${start}...${end}`;
+};
 const ProfileInfoCard = ({ user }: { user: User }) => (
     <Card className="p-6">
         <h3 className="font-bold text-gray-800 mb-4">Personal Information</h3>
         <ul className="space-y-3 text-sm">
-            <li className="flex justify-between"><span className="text-gray-500">Donor ID</span><span className="font-semibold text-gray-700 font-mono">{user.user_id}</span></li>
-            <li className="flex justify-between"><span className="text-gray-500">Email</span><span className="font-semibold text-gray-700">{user.email}</span></li>
-            <li className="flex justify-between"><span className="text-gray-500">Phone</span><span className="font-semibold text-gray-700">{user.phone}</span></li>
-            <li className="flex justify-between"><span className="text-gray-500">Address</span><span className="font-semibold text-gray-700">{user.location}</span></li>
+            <li className="flex justify-between items-center gap-4">
+                <span className="text-gray-500 flex-shrink-0">Donor ID</span>
+                <span className="font-semibold text-gray-700 font-mono truncate text-right">{user.user_id}</span>
+            </li>
+            <li className="flex justify-between items-center gap-4">
+                <span className="text-gray-500 flex-shrink-0">Email</span>
+                <span className="font-semibold text-gray-700 truncate text-right">
+                    {truncateMiddle(user.email, 10, 10)} 
+                </span>
+            </li>
+            <li className="flex justify-between items-center gap-4">
+                <span className="text-gray-500 flex-shrink-0">Phone</span>
+                <span className="font-semibold text-gray-700 truncate text-right">{user.phone}</span>
+            </li>
+            <li className="flex justify-between items-center gap-4">
+                <span className="text-gray-500 flex-shrink-0">Address</span>
+                <span className="font-semibold text-gray-700 truncate text-right">{user.location}</span>
+            </li>
         </ul>
     </Card>
 );
@@ -753,24 +783,19 @@ const ProfilePageSkeleton = () => (
         </div>
     </div>
 );
-
 function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isOpen: boolean; onClose: () => void; notifications: any[]; markAsRead: () => void; }) {
-    
     useEffect(() => {
         // Mark messages as read when the modal is opened
         if (isOpen) {
             markAsRead();
         }
     }, [isOpen, markAsRead]);
-
     if (!isOpen) return null;
-
     const notificationStyles: Record<string, { icon: ReactNode, color: string }> = {
         success: { icon: <CheckCircleIcon />, color: 'green' },
         error: { icon: <XCircleIcon />, color: 'red' },
         info: { icon: <XCircleIcon />, color: 'blue' },
     };
-
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-[60] p-4">
             <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
@@ -802,7 +827,7 @@ function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isO
                         })
                     ) : (
                         <div className="text-center py-20 px-6 text-gray-500">
-                            <BellSlashedIcon />
+                            <BellSlashedIcon className="mx-auto"/>
                             <p className="mt-4 font-semibold">No Notifications Yet</p>
                             <p className="text-sm">Messages from the Red Cross will appear here.</p>
                         </div>
@@ -937,18 +962,15 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen bg-gray-100 font-sans text-gray-900">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                
                  <Header user={user} onOpenRequest={() => setIsRequestModalOpen(true)} />
                  <PageHeader title=" My Profile" />
                 <main className="pb-24 md:pb-8">
-
                     <div className="space-y-6">
                         <div className="pt-16">
                             <ProfileSummaryCard user={user} onEdit={() => setIsEditProfileModalOpen(true)} />
                         </div>
                         <DonationStatsCard user={user} />
                         <ProfileInfoCard user={user} />
-
                         <button
                             onClick={handleLogout}
                             className="w-full text-center py-3 border-2 border-red-500 text-red-500 font-bold rounded-xl hover:bg-red-50 transition"
@@ -958,10 +980,7 @@ export default function ProfilePage() {
                     </div>
                 </main>
             </div>
-            
-            <BottomNav onOpenAppointmentModal={() => setIsAppointmentModalOpen(true)} />
-            
-            {/* Modals */}
+            <BottomNav user={user} onOpenAppointmentModal={() => setIsAppointmentModalOpen(true)} />
              {isRequestModalOpen && user && (
                 <AddRequestForm 
                     user={user} 

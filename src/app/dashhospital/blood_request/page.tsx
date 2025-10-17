@@ -182,7 +182,11 @@ function AddRequestForm({ onClose, onSave }: { onClose: () => void; onSave: (pay
                       </div>
                       <InputField label="Component" name="blood_component">
                           <select value={form.blood_component} onChange={(e) => setForm({ ...form, blood_component: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
-                              <option value="">Select...</option><option value="Whole Blood">Whole Blood</option><option value="Plasma">Plasma</option><option value="Platelets">Platelets</option>
+                              <option value="">Select...</option>
+                              <option value="White Blood Cells">White Blood Cells (WBCs)</option>
+                              <option value="Plasma">Plasma</option>
+                              <option value="Platelets">Platelets</option>
+                              <option value="Red Blood Cells">Red Blood Cells (RBCs)</option>
                           </select>
                       </InputField>
                       <InputField label="Request Form (Required)" name="request_form_file"><input type="file" required accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, request_form_file: e.target.files?.[0] || null })} className="bg-gray-50 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>

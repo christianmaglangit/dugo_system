@@ -52,11 +52,7 @@ function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-3xl font-extrabold text-red-600">DUGO</h2>
-            <p className="text-xs text-gray-600 font-medium">
-              (Donor Utility for Giving and Organizing)
-            </p>
           </div>
-
           <button
             onClick={onClose}
             className="md:hidden p-2 rounded-full hover:bg-gray-100"
@@ -117,7 +113,7 @@ const InputField = ({ label, children, ...props }: any) => (
 function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, campaigns, search, setSearch }: any) { // Add 'campaigns' here
     if (!isOpen) return null;
     const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
-    const components = ["RBC", "Plasma", "Platelets", "WBCs"];
+    const components = ["Red Blood Cells (RBCs)", "Plasma", "Platelets", "White Blood Cells (WBCs)"];
     
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">

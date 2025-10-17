@@ -55,9 +55,6 @@ function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h2 className="text-3xl font-extrabold text-red-600">DUGO</h2>
-                        <p className="text-xs text-gray-600 font-medium">
-                            (Donor Utility for Giving and Organizing)
-                        </p>
                     </div>
 
                     <button
@@ -206,7 +203,11 @@ function AddRequestForm({ onClose, onSave, }: { onClose: () => void; onSave: (pa
                             </InputField>
                             <InputField label="Component" name="blood_component">
                                 <select value={form.blood_component} onChange={(e) => setForm({ ...form, blood_component: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
-                                    <option value="">Select...</option><option value="Whole Blood">Whole Blood</option><option value="Plasma">Plasma</option><option value="Platelets">Platelets</option>
+                                    <option value="">Select...</option>
+                                    <option value="White Blood Cells">White Blood Cells (WBCs)</option>
+                                    <option value="Plasma">Plasma</option>
+                                    <option value="Platelets">Platelets</option>
+                                    <option value="Red Blood Cells">Red Blood Cells (RBCs)</option>
                                 </select>
                             </InputField>
                         </div>

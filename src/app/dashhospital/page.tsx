@@ -40,9 +40,6 @@ function HospitalSidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => 
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-3xl font-extrabold text-red-600">DUGO</h2>
-            <p className="text-xs text-gray-600 font-medium">
-              (Donor Utility for Giving and Organizing)
-            </p>
           </div>
 
           <button
@@ -134,20 +131,14 @@ export default function DashHospital() {
     const getUserAndData = async () => {
       setLoading(true);
       const { data: { user: authUser } } = await supabase.auth.getUser();
-
-      // Dili na kinahanglan ang redirect. Ang middleware na ang bahala.
-      // Pero, importante gihapon nga i-check kung naay 'authUser' para dili mo-error ang sunod nga query.
       if (!authUser) {
-        // Pwede ra ka mag-log ug error or mag-return para dili mo-crash
         console.error("User not found, middleware might have an issue.");
         setLoading(false);
         return; 
       }
-
-      // Diretso na dayon ta fetch sa profile kay sigurado na ta nga sakto ang role aning user-a.
       const { data: profile, error } = await supabase
         .from("users")
-        .select("name, user_id") // Pwede na tanggalon ang 'role' kung dili gamiton sa display
+        .select("name, user_id") 
         .eq("id", authUser.id)
         .single();
       

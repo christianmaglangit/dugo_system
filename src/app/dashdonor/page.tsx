@@ -48,8 +48,7 @@ const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w
 const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const InfoIcon: FC<{ className?: string }> = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 text-gray-400 ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>;
 const SearchIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
-const BellSlashedIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M12 21a8.25 8.25 0 006.26-14.829l-1.178-1.178a8.25 8.25 0 00-13.183 9.435L3 18.75h1.5a8.25 8.25 0 007.5 2.25z" /></svg>;
-const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const BellSlashedIcon = ({ className }: { className?: string }) => (<svg xmlns="http://www.w3.org/2000/svg" className={`h-16 w-16 text-gray-300 ${className || ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M12 21a8.25 8.25 0 006.26-14.829l-1.178-1.178a8.25 8.25 0 00-13.183 9.435L3 18.75h1.5a8.25 8.25 0 007.5 2.25z" /></svg>);const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const XCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 
 //========================================================//
@@ -78,27 +77,30 @@ const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void
         <Card className="p-4 mt-4 mb-4">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-extrabold text-red-600">DUGO</h1>
-                    <p className="text-xs text-gray-500">Donor Utility for Giving and Organizing</p>
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-red-600">
+                        DUGO
+                    </h1>
                 </div>
                 <div className="flex items-center gap-2 md:gap-4">
-                    <NotificationBell user={user} />
-
+                    <NotificationBell user={user} /> 
                     <button 
                         onClick={onOpenRequest}
                         className="whitespace-nowrap rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 md:text-sm"
                     >
                         + Request Blood
                     </button>
-
-                    <button onClick={() => router.push('/dashdonor/donor_profile')} className="hidden rounded-full md:block">
-                        <Image 
-                            src={user.profileImage}
-                            width={44}
-                            height={44}
-                            alt="Profile"
-                            className="rounded-full border-2 border-white shadow"
-                        />
+                    <button 
+                        onClick={() => router.push('/dashdonor/donor_profile')} 
+                        className="hidden rounded-full md:block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                        <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow">
+                            <Image 
+                                src={user.profileImage} 
+                                alt="Profile"
+                                fill 
+                                className="object-cover" 
+                            />
+                        </div>
                     </button>
                 </div>
             </div>
@@ -119,7 +121,7 @@ const DonationStatusCard = ({ user, daysLeft, onOpenAppointmentModal }: { user: 
         <div className="md:col-span-1 bg-red-600 text-white rounded-3xl p-6 shadow-lg shadow-red-500/30 flex flex-col justify-between">
             <div className="text-center">
                 <p className="text-red-200">Welcome back,</p>
-                <h2 className="text-2xl font-bold">{user.name}</h2>
+                <h2 className="text-2xl font-bold capitalize">{user.name}</h2>
                 <div className="mt-1 inline-flex items-center gap-2 px-3 py-1 bg-white/20 text-white rounded-full font-mono text-sm cursor-pointer hover:bg-white/30 transition"onClick={handleCopy}>
                     <span>{user.user_id}</span>
                     <span className="w-4">{copied ? <CheckIcon/> : <ClipboardIcon />}</span>
@@ -330,7 +332,7 @@ const CampaignCard = ({ campaign }: { campaign: any | null }) => {
     );
 };
 
-const BottomNav = ({ onOpenAppointmentModal }: { onOpenAppointmentModal: () => void }) => {
+const BottomNav = ({ user, onOpenAppointmentModal }: { user: User | null; onOpenAppointmentModal: () => void }) => {
     const router = useRouter();
     const pathname = usePathname();
     const navItems = [
@@ -338,16 +340,45 @@ const BottomNav = ({ onOpenAppointmentModal }: { onOpenAppointmentModal: () => v
         { icon: <ListIcon />, label: "History", path: '/dashdonor/donor_history' },
         { icon: <CalendarIconNav />, label: "Appointment", primary: true },
         { icon: <MegaphoneIcon />, label: "Campaigns", path: '/dashdonor/donor_campaign' },
-        { icon: <UserIcon />, label: "Profile", path: '/dashdonor/donor_profile' },
+        { 
+            icon: (user && user.profileImage) ? (
+                <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-300">
+                    <Image 
+                        src={user.profileImage} 
+                        width={24}
+                        height={24}
+                        alt="Profile" 
+                        className="object-cover"
+                    />
+                </div>
+            ) : (
+                <UserIcon />
+            ), 
+            label: "Profile", 
+            path: '/dashdonor/donor_profile' 
+        },
     ];
+
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.05)] flex justify-around items-center border-t border-gray-200 h-16">
             {navItems.map((item) => {
                 const isActive = pathname === item.path;
                 if (item.primary) {
-                return ( <button key={item.label} onClick={onOpenAppointmentModal} className="text-white -mt-8" title="Book Appointment"><div className="w-16 h-16 bg-red-600 rounded-full flex flex-col items-center justify-center shadow-lg hover:bg-red-700 transition">{item.icon}<span className="text-xs font-medium mt-0.5">Book</span></div></button> );
+                    return ( 
+                        <button key={item.label} onClick={onOpenAppointmentModal} className="text-white -mt-8" title="Book Appointment">
+                            <div className="w-16 h-16 bg-red-600 rounded-full flex flex-col items-center justify-center shadow-lg hover:bg-red-700 transition">
+                                {item.icon}
+                                <span className="text-xs font-medium mt-0.5">Book</span>
+                            </div>
+                        </button> 
+                    );
                 }
-                return ( <button key={item.label} onClick={() => router.push(item.path as string)} className={`flex flex-col items-center justify-center gap-1 flex-1 h-full ${isActive ? 'text-red-600' : 'text-gray-400'}`}>{item.icon}<span className="text-xs font-medium">{item.label}</span></button> );
+                return ( 
+                    <button key={item.label} onClick={() => router.push(item.path as string)} className={`flex flex-col items-center justify-center gap-1 flex-1 h-full ${isActive ? 'text-red-600' : 'text-gray-400'}`}>
+                        {item.icon}
+                        <span className="text-xs font-medium">{item.label}</span>
+                    </button> 
+                );
             })}
         </nav>
     );
@@ -652,7 +683,11 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                         </div>
                         <InputField label="Component" name="blood_component">
                             <select required value={form.blood_component} onChange={(e) => setForm({ ...form, blood_component: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
-                                <option value="">Select...</option><option value="Whole Blood">Whole Blood</option><option value="Plasma">Plasma</option><option value="Platelets">Platelets</option>
+                                <option value="">Select...</option>
+                                <option value="White Blood Cells">White Blood Cells (WBCs)</option>
+                                <option value="Plasma">Plasma</option>
+                                <option value="Platelets">Platelets</option>
+                                <option value="Red Blood Cells">Red Blood Cells (RBCs)</option>
                             </select>
                         </InputField>
                         <InputField label="Request Form (Required)" name="request_form_file">
@@ -801,8 +836,6 @@ const BloodSearch = () => {
                     <span>{isSearching ? "Searching..." : "Search"}</span>
                 </button>
             </div>
-            
-            {/* --- KINI ANG GI-UPDATE NGA PART --- */}
             <div className="space-y-4 overflow-y-auto h-64 pr-2">
                 {isSearching ? (
                     <p className="text-center text-gray-500 py-8">Searching for available blood...</p>
@@ -887,7 +920,7 @@ function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isO
                         })
                     ) : (
                         <div className="text-center py-20 px-6 text-gray-500">
-                            <BellSlashedIcon />
+                            <BellSlashedIcon className="mx-auto"/>
                             <p className="mt-4 font-semibold">No Notifications Yet</p>
                             <p className="text-sm">Messages from the Red Cross will appear here.</p>
                         </div>
@@ -1045,7 +1078,9 @@ export default function ResponsiveDonorDashboard() {
     if (loading || !user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <h1 className="text-2xl font-extrabold text-red-600">DUGO</h1>
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-red-600">
+                    DUGO
+                </h1>
             </div>
         );
     }
@@ -1087,10 +1122,11 @@ export default function ResponsiveDonorDashboard() {
                 </main>
             </div>
             
-            <BottomNav onOpenAppointmentModal={handleOpenAppointmentModal} />
-            {isRequestModalOpen && <AddRequestForm user={user} onClose={() => setIsRequestModalOpen(false)} onSave={addRequest} />}
+            <BottomNav user={user} onOpenAppointmentModal={handleOpenAppointmentModal} />            {isRequestModalOpen && <AddRequestForm user={user} onClose={() => setIsRequestModalOpen(false)} onSave={addRequest} />}
             {isAppointmentModalOpen && user && <AppointmentModal isOpen={isAppointmentModalOpen} user={user} onClose={() => setIsAppointmentModalOpen(false)} onSave={saveAppointment} />}
             <Chatbot />
         </div>
     );
 }
+
+
