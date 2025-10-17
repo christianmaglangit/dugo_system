@@ -619,8 +619,21 @@ export default function ManageCampaigns() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 w-full md:w-auto">
-                                <button onClick={handleExportMonthlyReport} className="w-full md:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition">Export Report</button>
-                                {userRole === "redcross" && <button onClick={openAddModal} className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm transition">+ New Campaign</button>}
+                                <button 
+                                    onClick={handleExportMonthlyReport} 
+                                    className="w-full md:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition text-xs md:text-sm whitespace-nowrap"
+                                >
+                                    Export Report 
+                                </button>
+                                
+                                {userRole === "redcross" && 
+                                    <button 
+                                    onClick={openAddModal} 
+                                    className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm transition text-xs md:text-sm whitespace-nowrap"
+                                    >
+                                    + New Campaign
+                                    </button>
+                                }
                             </div>
                         </div>
                     </div>

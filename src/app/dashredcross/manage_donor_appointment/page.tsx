@@ -536,7 +536,6 @@ export default function ManageDonorAppointments() {
                     </div>
 
                     <Card>
-                        {/* --- Search and Filter Controls --- */}
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                             <div className="relative w-full md:flex-grow">
                                 <input 
@@ -558,24 +557,22 @@ export default function ManageDonorAppointments() {
                                     <option value="Completed">Completed</option>
                                     <option value="Cancelled">Cancelled</option>
                                 </select>
+                                
                                 <button 
                                     onClick={handleExportPDF} 
-                                    className="w-full md:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition whitespace-nowrap"
+                                    className="w-full md:w-auto px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition whitespace-nowrap text-sm"
                                 >
                                     Export
                                 </button>
+                                
                                 <button 
                                     onClick={openAdd} 
-                                    className="w-full md:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow-sm transition whitespace-nowrap"
+                                    className="w-full md:w-auto px-3 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow-sm transition whitespace-nowrap text-sm"
                                 >
                                     + New
                                 </button>
                             </div>
                         </div>
-
-                        {/* --- RESPONSIVE TABLE SECTION --- */}
-                        
-                        {/* 1. TABLE VIEW for Desktop (hidden on mobile) */}
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-sm min-w-[1000px]">
                                 <thead className="bg-gray-50">

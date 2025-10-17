@@ -23,6 +23,9 @@ const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-
 const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>;
 const BellIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>;
+const BellSlashedIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M12 21a8.25 8.25 0 006.26-14.829l-1.178-1.178a8.25 8.25 0 00-13.183 9.435L3 18.75h1.5a8.25 8.25 0 007.5 2.25z" /></svg>;
+const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const XCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 
 //========================================================//
 // 2. CHILD COMPONENTS                                    //
@@ -33,6 +36,7 @@ type Notification = {
     message: string;
     created_at: string;
     is_read: boolean;
+    type?: 'success' | 'error' | 'info'; // Optional type
 };
 
 function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
@@ -72,21 +76,13 @@ function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
     );
 }
 
-function BloodbankHeader({ name, onMenuClick, notifications, unreadCount, onNotificationOpen }: { name: string, onMenuClick: () => void, notifications: Notification[], unreadCount: number, onNotificationOpen: () => void }) {
+function BloodbankHeader({ name, onMenuClick, unreadCount, onNotificationClick }: { name: string, onMenuClick: () => void, unreadCount: number, onNotificationClick: () => void }) {
     const router = useRouter();
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
         router.replace("/");
-    };
-
-    const handleBellClick = () => {
-        setIsNotificationOpen(!isNotificationOpen);
-        if (unreadCount > 0) {
-            onNotificationOpen();
-        }
     };
 
     return (
@@ -96,31 +92,17 @@ function BloodbankHeader({ name, onMenuClick, notifications, unreadCount, onNoti
                 <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
             </div>
             <div className="flex items-center gap-4">
-                {/* --- Notification Bell --- */}
+                {/* --- Notification Bell (Calls the function passed via props) --- */}
                 <div className="relative">
-                    <button onClick={handleBellClick} className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-800 relative">
+                    <button onClick={onNotificationClick} className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-800 relative">
                         <BellIcon />
                         {unreadCount > 0 && (
-                            <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white"></span>
+                            <span className="absolute top-0 right-0 flex h-4 w-4">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-white text-xs items-center justify-center">{unreadCount}</span>
+                            </span>
                         )}
                     </button>
-                    {isNotificationOpen && (
-                        <div className="absolute right-0 mt-3 w-80 bg-white rounded-lg shadow-xl z-50 border overflow-hidden">
-                            <div className="p-3 border-b">
-                                <p className="font-semibold text-sm">Notifications</p>
-                            </div>
-                            <div className="max-h-80 overflow-y-auto">
-                                {notifications.length > 0 ? notifications.map(notif => (
-                                    <div key={notif.id} className={`p-3 text-sm border-b hover:bg-gray-50 ${!notif.is_read ? 'bg-red-50' : ''}`}>
-                                        <p className="text-gray-700">{notif.message}</p>
-                                        <p className="text-xs text-gray-400 mt-1">{new Date(notif.created_at).toLocaleString()}</p>
-                                    </div>
-                                )) : (
-                                    <p className="p-4 text-sm text-gray-500 text-center">No new notifications</p>
-                                )}
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* --- User Dropdown --- */}
@@ -161,6 +143,73 @@ const StatCard = ({ title, value, icon, color }: {title: string, value: string |
     </Card>
 );
 
+function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isOpen: boolean; onClose: () => void; notifications: Notification[]; markAsRead: () => void; }) {
+    
+    useEffect(() => {
+        // Mark messages as read when the modal is opened
+        if (isOpen) {
+            markAsRead();
+        }
+    }, [isOpen, markAsRead]);
+
+    if (!isOpen) return null;
+
+    // Define styles based on notification type (optional)
+    const notificationStyles: Record<string, { icon: ReactNode, color: string }> = {
+        success: { icon: <CheckCircleIcon />, color: 'green' },
+        error: { icon: <XCircleIcon />, color: 'red' },
+        info: { icon: <BellIcon />, color: 'blue' }, // Default to info/bell icon
+    };
+
+    return (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-[60] p-4">
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
+                {/* Modal Header */}
+                <div className="p-5 border-b flex justify-between items-center flex-shrink-0">
+                    <h2 className="text-xl font-bold text-gray-800">Notifications</h2>
+                    <button onClick={onClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition"><XIcon /></button>
+                </div>
+                
+                {/* Modal Body (Scrollable List) */}
+                <div className="flex-1 overflow-y-auto">
+                    {notifications.length > 0 ? (
+                        notifications.map(n => {
+                            // Determine style, defaulting to 'info' if type is not specified
+                            const style = notificationStyles[n.type || 'info']; 
+                            return (
+                                <div key={n.id} className={`relative flex gap-4 p-5 border-b border-gray-100 ${!n.is_read ? 'bg-red-50/50' : 'bg-white'}`}>
+                                    {/* Optional colored border based on type */}
+                                    <div className={`absolute left-0 top-0 bottom-0 w-1 bg-${style.color}-500`}></div>
+                                    {/* Icon based on type */}
+                                    <div className={`mt-1 text-${style.color}-500 flex-shrink-0`}>
+                                        {style.icon}
+                                    </div>
+                                    {/* Message and Timestamp */}
+                                    <div className="flex-1">
+                                        <p className="text-sm text-gray-700 leading-relaxed">{n.message}</p>
+                                        <p className="text-xs text-gray-400 mt-2">
+                                            {new Date(n.created_at).toLocaleString('en-US', {
+                                                month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+                                            })}
+                                        </p>
+                                    </div>
+                                </div>
+                            )
+                        })
+                    ) : (
+                        // Display if no notifications
+                        <div className="text-center py-20 px-6 text-gray-500">
+                            <BellSlashedIcon />
+                            <p className="mt-4 font-semibold">No Notifications Yet</p>
+                            <p className="text-sm">New updates will appear here.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 //========================================================//
 // 3. MAIN DASHBOARD COMPONENT                            //
 //========================================================//
@@ -173,11 +222,10 @@ export default function RedCrossDashboard() {
     const [bloodRequests, setBloodRequests] = useState<any[]>([]);
     const [appointments, setAppointments] = useState<any[]>([]);
     const [campaigns, setCampaigns] = useState<any[]>([]);
-    
-    // --- Notification State ---
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
     useEffect(() => {
         const loadDashboardData = async () => {
@@ -190,7 +238,7 @@ export default function RedCrossDashboard() {
                 return;
             }
 
-            setCurrentUserId(authUser.id); // Store the UUID for notifications
+            setCurrentUserId(authUser.id); 
             
             const { data: profile, error: profileError } = await supabase
                 .from("users")
@@ -205,8 +253,6 @@ export default function RedCrossDashboard() {
             }
             setUserName(profile.name);
             const staffUserId = profile.user_id;
-
-            // Fetch all initial data concurrently
             const [
                 { data: inventoryData },
                 { data: requestsData },
@@ -220,8 +266,6 @@ export default function RedCrossDashboard() {
                 supabase.from("blood_campaigns").select("*"),
                 supabase.from("notifications").select("*").eq("user_id", authUser.id).order('created_at', { ascending: false })
             ]);
-
-            // Process inventory data
             if (inventoryData) {
                 type BloodComponent = "RBC" | "Plasma" | "Platelets" | "WBC";
                 const allTypes: string[] = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
@@ -236,28 +280,19 @@ export default function RedCrossDashboard() {
                 });
                 setBloodData(allTypes.map(type => ({ type, ...aggregation[type] })));
             }
-
-            // Set other data
             setBloodRequests(requestsData || []);
             setAppointments(appointmentsData || []);
             setCampaigns(campaignsData || []);
-
-            // Set initial notifications
             if (initialNotifications) {
                 setNotifications(initialNotifications);
                 setUnreadCount(initialNotifications.filter(n => !n.is_read).length);
             }
-
             setLoading(false);
         };
-
         loadDashboardData();
-    }, []); 
-
-    // --- Real-time Notification Listener ---
+    }, []);
     useEffect(() => {
         if (!currentUserId) return;
-
         const channel = supabase.channel('public:notifications')
             .on('postgres_changes', 
                 { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${currentUserId}` }, 
@@ -265,8 +300,6 @@ export default function RedCrossDashboard() {
                     const newNotification = payload.new as Notification;
                     setNotifications(prev => [newNotification, ...prev]);
                     setUnreadCount(prev => prev + 1);
-
-                    // Show a toast
                     Swal.fire({
                         title: 'New Notification!',
                         text: newNotification.message,
@@ -286,22 +319,21 @@ export default function RedCrossDashboard() {
         };
     }, [currentUserId]);
 
-    const handleNotificationOpen = async () => {
+    const markNotificationsAsRead = async () => {
         if (unreadCount > 0 && currentUserId) {
             const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
             if (unreadIds.length === 0) return;
-
-            // Update in DB
             await supabase.from('notifications').update({ is_read: true }).in('id', unreadIds);
-
-            // Update local state
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
             setUnreadCount(0);
         }
     };
 
-    const totalUnits = bloodData.reduce((acc, cur) => acc + cur.RBC + cur.Plasma + cur.Platelets + cur.WBC, 0);
+    const handleNotificationClick = () => {
+        setIsNotificationModalOpen(true); 
+    };
 
+const totalUnits = bloodData.reduce((acc, cur) => acc + cur.RBC + cur.Plasma + cur.Platelets + cur.WBC, 0);
     return (
         <div className="flex bg-gray-50 min-h-screen">
             <BloodbankSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
@@ -309,9 +341,8 @@ export default function RedCrossDashboard() {
                 <BloodbankHeader 
                     name={userName} 
                     onMenuClick={() => setIsSidebarOpen(true)}
-                    notifications={notifications}
                     unreadCount={unreadCount}
-                    onNotificationOpen={handleNotificationOpen}
+                    onNotificationClick={handleNotificationClick} 
                 />
                 <main className="mt-20 p-4 md:p-8">
                     <div className=" grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -320,26 +351,30 @@ export default function RedCrossDashboard() {
                         <StatCard title="Approved Appointments" value={appointments.filter(a => a.status === 'Approved').length} icon={<AppointmentIcon />} color="bg-blue-500" />
                         <StatCard title="Upcoming Campaigns" value={campaigns.filter(c => new Date(c.date) > new Date()).length} icon={<CampaignIcon />} color="bg-green-500" />
                     </div>
-
                     <div className="grid lg:grid-cols-5 gap-6">
                         <div className="lg:col-span-3">
                             <Card>
                                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Blood Units by Type</h2>
                                 <div className="w-full h-96">
-                                {loading ? <p className="text-center text-gray-500">Loading chart...</p> : (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={bloodData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                        <XAxis dataKey="type" stroke="#6b7280" fontSize={12} />
-                                        <YAxis stroke="#6b7280" fontSize={12} />
-                                        <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.5rem" }} />
-                                        <Legend />
-                                        <Bar dataKey="RBC" name="RBC" stackId="a" fill="#ef4444" />
-                                        <Bar dataKey="Plasma" name="Plasma" stackId="a" fill="#3b82f6" />
-                                        <Bar dataKey="Platelets" name="Platelets" stackId="a" fill="#facc15" />
-                                        <Bar dataKey="WBC" name="WBC" stackId="a" fill="#10b981" />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                )}
+                                    {loading ? <p className="text-center text-gray-500">Loading chart...</p> : (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={bloodData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                                <XAxis dataKey="type" stroke="#6b7280" fontSize={12} tick={{ dy: 5 }}/> {/* Added dy for slight bottom margin */}
+                                                <YAxis stroke="#6b7280" fontSize={12} />
+                                                <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.5rem" }} />
+                                                {/* --- GI-UPDATE NGA LEGEND --- */}
+                                                <Legend 
+                                                    align="center"          // Centers the legend items horizontally
+                                                    verticalAlign="bottom"  // Positions the legend below the chart
+                                                    wrapperStyle={{ paddingTop: '10px' }} // Adds some space above the legend
+                                                />
+                                                <Bar dataKey="RBC" name="RBC" stackId="a" fill="#ef4444" />
+                                                <Bar dataKey="Plasma" name="Plasma" stackId="a" fill="#3b82f6" />
+                                                <Bar dataKey="Platelets" name="Platelets" stackId="a" fill="#facc15" />
+                                                <Bar dataKey="WBC" name="WBC" stackId="a" fill="#10b981" />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    )}
                                 </div>
                             </Card>
                         </div>
@@ -362,6 +397,12 @@ export default function RedCrossDashboard() {
                     </div>
                 </main>
             </div>
+            <NotificationModal 
+                isOpen={isNotificationModalOpen}
+                onClose={() => setIsNotificationModalOpen(false)}
+                notifications={notifications}
+                markAsRead={markNotificationsAsRead}
+            />
         </div>
     );
 }
