@@ -72,7 +72,7 @@ function BloodbankHeader({ toggleSidebar }: { toggleSidebar: () => void }) {
     return (
         <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
             <div className="flex items-center gap-4">
-                <button onClick={toggleSidebar} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
+                <button onClick={toggleSidebar} className="md:hidden dark:text-gray-700 p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
                 <h1 className="text-xl font-bold text-gray-800">Scan Blood Bag</h1>
             </div>
             <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-sm">Logout</button>
@@ -334,7 +334,7 @@ export default function HospitalQRScanner() {
                                     <h2 className="font-semibold text-lg text-gray-800">Blood Journey Log</h2>
                                     <div className="flex items-center gap-2 w-full md:w-auto">
                                         <button onClick={handleExportPDF} className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm font-semibold hover:bg-green-800 transition">Export</button>
-                                        <input type="text" placeholder="Search by Bag ID..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full md:w-64 pl-4 pr-2 py-2 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                                        <input type="text" placeholder="Search by Bag ID..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full dark:text-gray-700 md:w-64 pl-4 pr-2 py-2 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                                     </div>
                                 </div>
                                 <div className="overflow-x-auto">

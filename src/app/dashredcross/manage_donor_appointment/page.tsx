@@ -87,7 +87,7 @@ function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
     return (
         <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
             <div className="flex items-center gap-4">
-                {toggleSidebar && <button onClick={toggleSidebar} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>}
+                {toggleSidebar && <button onClick={toggleSidebar} className="md:hidden p-2 -ml-2 dark:text-black rounded-full hover:bg-gray-100"><MenuIcon /></button>}
                 <h1 className="text-xl font-bold text-gray-800">Manage Donor Appointments</h1>
             </div>
             <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-sm">Logout</button>
@@ -183,12 +183,12 @@ function AppointmentForm({ donors, initial, onClose, onSave }: { donors: Donor[]
                     <div className="space-y-4">
                         <div className="relative">
                             <InputField label="Registered Donor" name="donor-search">
-                                <input type="text" placeholder="Search by ID or name..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
+                                <input type="text" placeholder="Search by ID or name..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
                             </InputField>
                             {search && (
-                                <div className="absolute z-10 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
+                                <div className="absolute dark:text-gray-700 z-10 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
                                     {donors.filter(d => d.user_id?.toLowerCase().includes(search.toLowerCase()) || d.name.toLowerCase().includes(search.toLowerCase())).map(d => (
-                                        <div key={d.user_id} className="px-3 py-2 hover:bg-red-50 cursor-pointer" onClick={() => { setDonorId(d.user_id); setDonorName(d.name); setSearch(`${d.user_id} - ${d.name}`); }}>
+                                        <div key={d.user_id} className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer" onClick={() => { setDonorId(d.user_id); setDonorName(d.name); setSearch(`${d.user_id} - ${d.name}`); }}>
                                             {d.user_id}
                                         </div>
                                     ))}
@@ -196,19 +196,19 @@ function AppointmentForm({ donors, initial, onClose, onSave }: { donors: Donor[]
                             )}
                         </div>
                         <InputField label="Donor Name" name="donorName">
-                            <input type="text" value={donorName} onChange={(e) => { setDonorName(e.target.value); setDonorId(""); setSearch(""); }} placeholder="Enter full name" className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
+                            <input type="text" value={donorName} onChange={(e) => { setDonorName(e.target.value); setDonorId(""); setSearch(""); }} placeholder="Enter full name" className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
                         </InputField>
                         <div className="grid grid-cols-2 gap-4">
-                            <InputField label="Date" name="date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
-                            <InputField label="Time" name="time"><input type="time" value={time ?? ""} onChange={(e) => setTime(e.target.value)} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                            <InputField label="Date" name="date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                            <InputField label="Time" name="time"><input type="time" value={time ?? ""} onChange={(e) => setTime(e.target.value)} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
                         </div>
-                        <InputField label="Location" name="location"><input value={location ?? ""} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Red Cross Office" className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                        <InputField label="Location" name="location"><input value={location ?? ""} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Red Cross Office" className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
                         {isEdit && (
                             <input type="hidden" name="status" value={status} />
                         )}
                         <div>
                             <label className="block text-sm font-medium text-gray-600 mb-1">Notes</label>
-                            <textarea name="notes" value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} className="bg-gray-50 border border-gray-300 px-3 py-2 rounded-lg w-full h-24 focus:outline-none focus:ring-2 focus:ring-red-500" />
+                            <textarea name="notes" value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 py-2 rounded-lg w-full h-24 focus:outline-none focus:ring-2 focus:ring-red-500" />
                         </div>
                         <div className="flex justify-end gap-3 pt-4">
                             <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
@@ -540,14 +540,14 @@ export default function ManageDonorAppointments() {
                                     value={search} 
                                     onChange={(e) => setSearch(e.target.value)} 
                                     placeholder="Search by name, ID, location..." 
-                                    className="w-full pl-4 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" 
+                                    className="w-full dark:text-gray-700 pl-4 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" 
                                 />
                             </div>
                             <div className="flex items-center gap-2 w-full md:w-auto">
                                 <select 
                                     value={filterStatus} 
                                     onChange={(e) => setFilterStatus(e.target.value)} 
-                                    className="w-full md:w-auto border px-3 py-2.5 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400 whitespace-nowrap"
+                                    className="w-full dark:text-gray-700 md:w-auto border px-3 py-2.5 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400 whitespace-nowrap"
                                 >
                                     <option value="All">All Statuses</option>
                                     <option value="Pending">Pending</option>
@@ -587,7 +587,7 @@ export default function ManageDonorAppointments() {
                                     (filtered.map((a) => (
                                         <tr key={a.id} className="hover:bg-gray-50">
                                             <td className="p-4"><div className="font-semibold text-gray-800">{a.donor_name}</div><div className="text-gray-500 font-mono">{a.user_id || 'N/A'}</div></td>
-                                            <td className="p-4"><div className="font-semibold">{a.date}</div><div className="text-gray-500">{a.time || 'N/A'}</div></td>
+                                            <td className="p-4"><div className="font-semibold dark:text-gray-700">{a.date}</div><div className="text-gray-500">{a.time || 'N/A'}</div></td>
                                             <td className="p-4 text-gray-600">{a.location || 'N/A'}</td>
                                             <td className="p-4 text-center"><StatusBadge status={a.status} /></td>
                                             <td className="p-4 text-center">

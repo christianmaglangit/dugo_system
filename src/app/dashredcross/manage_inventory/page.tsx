@@ -82,7 +82,7 @@ function BloodbankHeader({ toggleSidebar }: { toggleSidebar: () => void }) {
     return (
         <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
             <div className="flex items-center gap-4">
-                <button onClick={toggleSidebar} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
+                <button onClick={toggleSidebar} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:text-black"><MenuIcon /></button>
                 <h1 className="text-xl font-bold text-gray-800">Manage Inventory</h1>
             </div>
             <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-sm">Logout</button>
@@ -128,12 +128,12 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, cam
                     <div className="space-y-4">
                         <div className="relative">
                            <InputField label="Donor" name="donor-search">
-                                <input type="text" placeholder="Search donor by ID or name..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/>
+                                <input type="text" placeholder="Search donor by ID or name..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/>
                            </InputField>
                             {search && (
-                                <div className="absolute z-10 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
+                                <div className="absolute z-10 dark:text-gray-700 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
                                     {donors.filter((d: any) => d.user_id?.toLowerCase().includes(search.toLowerCase()) || d.name.toLowerCase().includes(search.toLowerCase())).map((d: any) => (
-                                        <div key={d.user_id} className="px-3 py-2 hover:bg-red-50 cursor-pointer" onClick={() => { setForm({ ...form, user_id: d.user_id }); setSearch(`${d.user_id} - ${d.name}`); }}>
+                                        <div key={d.user_id} className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer" onClick={() => { setForm({ ...form, user_id: d.user_id }); setSearch(`${d.user_id} - ${d.name}`); }}>
                                             {d.user_id} 
                                         </div>
                                     ))}
@@ -144,7 +144,7 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, cam
                                 <select 
                                     value={form.campaign_id || ""} 
                                     onChange={(e) => setForm({ ...form, campaign_id: e.target.value })} 
-                                    className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                    className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <option value="">Walk-in / Not from a campaign</option>
                                     {campaigns.map((c: any) => (
                                         <option key={c.id} value={c.id}>{c.title}</option>
@@ -153,31 +153,31 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, cam
                             </InputField>
                         <div className="grid grid-cols-2 gap-4">
                             <InputField label="Blood Type" name="type">
-                                <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <option value="">Select...</option>
                                     {bloodTypes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                 </select>
                             </InputField>
                             <InputField label="Component" name="component">
-                                <select value={form.component} onChange={(e) => setForm({ ...form, component: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <select value={form.component} onChange={(e) => setForm({ ...form, component: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <option value="">Select...</option>
                                     {components.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                 </select>
                             </InputField>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <InputField label="Units" name="units"><input type="number" value={form.units} onChange={(e) => setForm({ ...form, units: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
-                            <InputField label="Volume (mL)" name="volume_ml"><input type="number" value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                            <InputField label="Units" name="units"><input type="number" placeholder="0" value={form.units} onChange={(e) => setForm({ ...form, units: e.target.value })} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                            <InputField label="Volume (mL)" name="volume_ml"><input type="number" placeholder="0" value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <InputField label="Date Received" name="date_received"><input type="date" value={form.date_received} onChange={(e) => setForm({ ...form, date_received: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                            <InputField label="Date Received" name="date_received"><input type="date" value={form.date_received} onChange={(e) => setForm({ ...form, date_received: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
                             <InputField label="Date Expired" name="date_expired">
                                 <input 
                                     type="date" 
                                     value={form.date_expired} 
                                     readOnly 
                                     disabled 
-                                    className="bg-gray-200 border border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"
+                                    className="bg-gray-200 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"
                                 />
                             </InputField>
                         </div>
@@ -295,41 +295,28 @@ export default function ManageInventory() {
             Swal.fire('No Data', 'There is no inventory data to export.', 'info');
             return;
         }
-
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const today = new Date();
         const currentMonthName = today.toLocaleString('default', { month: 'long' });
         const currentYear = today.getFullYear();
-
-        // --- 1. CALCULATE ALL STATISTICS ---
-
-        // Overall Summary
         const totalUnits = bloodStocks.reduce((sum, stock) => sum + stock.units, 0);
-
-        // Summary by Blood Type
         const unitsByType = bloodTypes.map(type => {
             const total = bloodStocks
                 .filter(stock => stock.type === type)
                 .reduce((sum, stock) => sum + stock.units, 0);
             return { type, total };
         });
-
-        // Summary by Component
         const unitsByComponent = components.map(comp => {
             const total = bloodStocks
                 .filter(stock => stock.component === comp)
                 .reduce((sum, stock) => sum + stock.units, 0);
             return { component: comp, total };
         });
-
-        // Donations this month
         const donationsThisMonth = bloodStocks.filter(stock => {
             const receivedDate = new Date(stock.date_received);
             return receivedDate.getMonth() === today.getMonth() && receivedDate.getFullYear() === today.getFullYear();
         }).length;
-
-        // Most and Least Donated Blood Types
         let mostDonated = { type: 'N/A', total: 0 };
         let leastDonated = { type: 'N/A', total: Infinity };
 
@@ -384,8 +371,6 @@ export default function ManageInventory() {
             theme: 'striped',
             headStyles: { fillColor: [209, 36, 42] }
         });
-
-        // Save the PDF
         doc.save(`Inventory_Report_${currentMonthName}_${currentYear}.pdf`);
     };
 
@@ -398,12 +383,9 @@ export default function ManageInventory() {
   }, []);
 
   useEffect(() => {
-    // Check if both component and date_received have been selected
     if (form.component && form.date_received) {
         const startDate = new Date(form.date_received);
         const expirationDate = new Date(startDate);
-
-        // Add the correct duration based on the selected component
         switch (form.component) {
             case 'RBC':
                 expirationDate.setDate(startDate.getDate() + 42);
@@ -439,8 +421,6 @@ useEffect(() => {
       // This part for donors already exists
       const { data: donorData, error: donorError } = await supabase.from("users").select("user_id, name, email").eq("role", "Donor");
       if (donorError) { console.error(donorError); } else { setDonors(donorData || []); }
-
-      // ADD THIS PART TO FETCH CAMPAIGNS
       const { data: campaignData, error: campaignError } = await supabase.from("blood_campaigns").select("id, title").order('date', { ascending: false });
       if (campaignError) { console.error(campaignError); } else { setCampaigns(campaignData || []); }
     };
@@ -502,7 +482,7 @@ useEffect(() => {
                         {loading ? (<tr><td colSpan={8} className="text-center p-8 text-gray-500">Loading...</td></tr>) : 
                         bloodStocks.map((b) => (
                           <tr key={b.id} className="hover:bg-gray-50">
-                            <td className="p-4 font-mono text-gray-700">{b.blood_bag_id}</td><td className="p-4 font-mono text-gray-700">{b.user_id}</td><td className="p-4 text-center font-semibold text-red-600">{b.type}</td><td className="p-4">{b.component}</td><td className="p-4 text-center font-semibold">{b.units}</td><td className="p-4 text-gray-600">{b.expiration_date}</td><td className="p-4 text-center"><StatusBadge status={b.status} expiration_date={b.expiration_date} /></td>
+                            <td className="p-4 font-mono text-gray-700">{b.blood_bag_id}</td><td className="p-4 font-mono text-gray-700">{b.user_id}</td><td className="p-4 text-center font-semibold text-red-600">{b.type}</td><td className="p-4 dark:text-gray-700">{b.component}</td><td className="p-4 dark:text-gray-700 text-center font-semibold">{b.units}</td><td className="p-4 text-gray-600">{b.expiration_date}</td><td className="p-4 text-center"><StatusBadge status={b.status} expiration_date={b.expiration_date} /></td>
                             <td className="p-4 flex justify-center gap-2">
                                 <button onClick={() => openQrModal(b)} className="flex items-center gap-1 bg-gray-600 hover:bg-gray-700 px-3 py-1.5 rounded text-white text-xs font-semibold transition"><QrCodeIcon/> QR</button>
                                 <button onClick={() => deleteInventory(b.id)} title="Delete" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><DeleteIcon /></button>

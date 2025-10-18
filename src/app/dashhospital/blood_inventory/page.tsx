@@ -69,7 +69,7 @@ function BloodbankHeader({ toggleSidebar }: { toggleSidebar: () => void }) {
     return (
         <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
             <div className="flex items-center gap-4">
-                <button onClick={toggleSidebar} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
+                <button onClick={toggleSidebar} className="md:hidden dark:text-gray-700 p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
                 <h1 className="text-xl font-bold text-gray-800">Manage Inventory</h1>
             </div>
             <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-sm">Logout</button>
@@ -115,10 +115,10 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, sea
                     <div className="space-y-4">
                         <div className="relative">
                            <InputField label="Donor" name="donor-search">
-                                <input type="text" placeholder="Search donor by ID or name..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/>
+                                <input type="text" placeholder="Search donor by ID or name..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/>
                            </InputField>
                             {search && (
-                                <div className="absolute z-10 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
+                                <div className="absolute z-10 bg-white dark:text-gray-700 border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
                                     {donors.filter((d: any) => d.user_id?.toLowerCase().includes(search.toLowerCase()) || d.name.toLowerCase().includes(search.toLowerCase())).map((d: any) => (
                                         <div key={d.user_id} className="px-3 py-2 hover:bg-red-50 cursor-pointer" onClick={() => { setForm({ ...form, user_id: d.user_id }); setSearch(`${d.user_id} - ${d.name}`); }}>
                                             {d.user_id} ({d.name})
@@ -127,7 +127,7 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, sea
                                 </div>
                             )}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 dark:text-gray-700">
                             <InputField label="Blood Type" name="type">
                                 <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <option value="">Select...</option>
@@ -135,17 +135,17 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, sea
                                 </select>
                             </InputField>
                             <InputField label="Component" name="component">
-                                <select value={form.component} onChange={(e) => setForm({ ...form, component: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <select value={form.component} onChange={(e) => setForm({ ...form, component: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <option value="">Select...</option>
                                     {components.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                 </select>
                             </InputField>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <InputField label="Units" name="units"><input type="number" value={form.units} onChange={(e) => setForm({ ...form, units: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
-                            <InputField label="Volume (mL)" name="volume_ml"><input type="number" value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                        <div className="grid grid-cols-2 gap-4 dark:text-gray-700">
+                            <InputField label="Units" placeholder="0" name="units"><input type="number" value={form.units} onChange={(e) => setForm({ ...form, units: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                            <InputField label="Volume (mL)"  placeholder="0" name="volume_ml"><input type="number" value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 dark:text-gray-700">
                             <InputField label="Date Received" name="date_received"><input type="date" value={form.date_received} onChange={(e) => setForm({ ...form, date_received: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
                             <InputField label="Date Expired" name="date_expired"><input type="date" value={form.date_expired} onChange={(e) => setForm({ ...form, date_expired: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
                         </div>
@@ -349,8 +349,8 @@ export default function ManageInventory() {
                                                 <td className="p-4 font-mono text-gray-700">{b.blood_bag_id}</td>
                                                 <td className="p-4 font-mono text-gray-700">{b.user_id}</td>
                                                 <td className="p-4 text-center font-semibold text-red-600">{b.type}</td>
-                                                <td className="p-4">{b.component}</td>
-                                                <td className="p-4 text-center font-semibold">{b.units}</td>
+                                                <td className="p-4 dark:text-gray-700">{b.component}</td>
+                                                <td className="p-4 dark:text-gray-700 text-center font-semibold">{b.units}</td>
                                                 <td className="p-4 text-gray-600">{b.expiration_date}</td>
                                                 <td className="p-4 text-center"><StatusBadge status={b.status} expiration_date={b.expiration_date} /></td>
                                                 <td className="p-4 flex justify-center gap-2">

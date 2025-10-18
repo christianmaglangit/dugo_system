@@ -74,10 +74,10 @@ function HospitalHeader({ name, onMenuClick }: { name: string, onMenuClick: () =
   return (
     <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
         <div className="flex items-center gap-4">
-            <button onClick={onMenuClick} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
+            <button onClick={onMenuClick} className="md:hidden dark:text-gray-700 p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
             <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
         </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 dark:text-gray-700">
         <div className="relative">
             <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
                 <span className="font-semibold text-gray-700 text-sm hidden sm:inline">{name}</span>

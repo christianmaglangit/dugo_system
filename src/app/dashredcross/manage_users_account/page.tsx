@@ -108,7 +108,7 @@ function BloodbankHeader({ toggleSidebar }: { toggleSidebar: () => void }) {
     return (
         <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
             <div className="flex items-center gap-4">
-                <button onClick={toggleSidebar} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
+                <button onClick={toggleSidebar} className="md:hidden p-2 -ml-2 rounded-full dark:text-gray-700 hover:bg-gray-100"><MenuIcon /></button>
                 <h1 className="text-xl font-bold text-gray-800">Manage User Account</h1>
             </div>
             <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-sm">Logout</button>
@@ -426,9 +426,9 @@ export default function ManageUsers() {
                     <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                             <div className="w-full md:max-w-md">
-                                <div className="relative">
+                                <div className="relative dark:text-gray-700">
                                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z" /></svg></span>
-                                    <input type="text" placeholder="Search by Name or Email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                                    <input type="text" placeholder="Search by Name or Email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full dark:text-gray-700 pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 w-full md:w-auto">
@@ -463,9 +463,9 @@ export default function ManageUsers() {
                                                 <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${user.role === 'Donor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{user.role}</span>
                                             </td>
                                             <td className="p-4 text-center font-semibold text-red-600">{user.blood_type || "-"}</td>
-                                            <td className="p-4 text-center font-semibold">{user.role === "Donor" ? user.donation_count : "-"}</td>
+                                            <td className="p-4 text-center dark:text-gray-700 font-semibold">{user.role === "Donor" ? user.donation_count : "-"}</td>
                                             <td className="p-4 flex justify-center gap-2">
-                                                <button onClick={() => setEditingUser(user)} title="Edit" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md"><EditIcon /></button>
+                                                <button onClick={() => setEditingUser(user)} title="Edit" className="p-1.5 text-blue-600  hover:bg-blue-100 rounded-md"><EditIcon /></button>
                                                 <button onClick={() => handleDelete(user.id, user.user_id!, user.role)} title="Delete" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><DeleteIcon /></button>
                                             </td>
                                         </tr>

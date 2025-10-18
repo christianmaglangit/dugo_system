@@ -87,7 +87,7 @@ function BloodbankHeader({ name, onMenuClick, unreadCount, onNotificationClick }
     return (
         <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
             <div className="flex items-center gap-4">
-                <button onClick={onMenuClick} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
+                <button onClick={onMenuClick} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:text-black "><MenuIcon /></button>
                 <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
             </div>
             <div className="flex items-center gap-4">
@@ -105,7 +105,7 @@ function BloodbankHeader({ name, onMenuClick, unreadCount, onNotificationClick }
                 </div>
 
                 {/* --- User Dropdown --- */}
-                <div className="relative">
+                <div className="relative dark:text-black">
                     <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
                         <span className="font-semibold text-gray-700 text-sm hidden sm:inline">{name}</span>
                         <ChevronDownIcon />

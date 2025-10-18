@@ -86,7 +86,7 @@ function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
     return (
         <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
             <div className="flex items-center gap-4">
-                {toggleSidebar && <button onClick={toggleSidebar} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>}
+                {toggleSidebar && <button onClick={toggleSidebar} className="md:hidden p-2 -ml-2 rounded-full dark:text-gray-700 hover:bg-gray-100"><MenuIcon /></button>}
                 <h1 className="text-xl font-bold text-gray-800">Blood Request Management</h1>
             </div>
             <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-sm">Logout</button>
@@ -184,25 +184,22 @@ function AddRequestForm({ onClose, onSave, }: { onClose: () => void; onSave: (pa
                     <button type="button" onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon /></button>
                     <h2 className="text-2xl font-bold text-gray-800 mb-6">Request Details</h2>
                     <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+
                             <InputField label="User ID" name="user_id">
-                                <select value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <select value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <option value="">Select Donor</option>
                                     {users.map(u => <option key={u.user_id} value={u.user_id}>{u.user_id}</option>)}
                                 </select>
                             </InputField>
-                            <InputField label="Hospital Name" name="hospital_name">
-                                <input type="text" value={form.hospital_name} onChange={(e) => setForm({ ...form, hospital_name: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
-                            </InputField>
-                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <InputField label="Blood Type" name="blood_type">
-                                <select value={form.blood_type} onChange={(e) => setForm({ ...form, blood_type: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <select value={form.blood_type} onChange={(e) => setForm({ ...form, blood_type: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <option value="">Select...</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option>
                                 </select>
                             </InputField>
                             <InputField label="Component" name="blood_component">
-                                <select value={form.blood_component} onChange={(e) => setForm({ ...form, blood_component: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <select value={form.blood_component} onChange={(e) => setForm({ ...form, blood_component: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <option value="">Select...</option>
                                     <option value="White Blood Cells">White Blood Cells (WBCs)</option>
                                     <option value="Plasma">Plasma</option>
@@ -211,13 +208,13 @@ function AddRequestForm({ onClose, onSave, }: { onClose: () => void; onSave: (pa
                                 </select>
                             </InputField>
                         </div>
-                        <InputField label="Units" name="units"><input type="number" min={1} value={form.units} onChange={(e) => setForm({ ...form, units: Number(e.target.value) })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
-                        <InputField label="Request Form (Required)" name="request_form_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, request_form_file: e.target.files?.[0] || null })} className="bg-gray-50 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                        <InputField label="Units" name="units"><input type="number" min={1} value={form.units} onChange={(e) => setForm({ ...form, units: Number(e.target.value) })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                        <InputField label="Request Form (Required)" name="request_form_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, request_form_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
                         <div className="border-t pt-4 space-y-4">
-                            <label htmlFor="">For Indigency (Optional)</label>
-                            <InputField label="Indigency Certificate" name="indigency_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, indigency_file: e.target.files?.[0] || null })} className="bg-gray-50 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
-                            <InputField label="Senior Citizen ID" name="senior_id_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, senior_id_file: e.target.files?.[0] || null })} className="bg-gray-50 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
-                            <InputField label="Referral Note" name="referral_note_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, referral_note_file: e.target.files?.[0] || null })} className="bg-gray-50 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                            <label className="dark:text-gray-600">For Indigency (Optional)</label>
+                            <InputField label="Indigency Certificate" name="indigency_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, indigency_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                            <InputField label="Senior Citizen ID" name="senior_id_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, senior_id_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                            <InputField label="Referral Note" name="referral_note_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, referral_note_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
                         </div>
 
                         <div className="flex justify-end gap-3 pt-4">
@@ -541,12 +538,8 @@ const handleExportPDF = async () => {
                         <StatCard title="Rejected Requests" value={requests.filter(r => r.status === 'Rejected').length} icon={<CancelIcon />} color="bg-red-500" />
                         <StatCard title="Total Requests" value={requests.length} icon={<UsersIcon />} color="bg-gray-500" />
                     </div>
-
                     <Card>
                         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                            <h2 className="text-2xl font-bold whitespace-nowrap text-gray-800">
-                                Blood Requests
-                            </h2>
                             <div className="flex flex-col-reverse md:flex-row md:items-center gap-3 w-full md:w-auto">
                                 <div className="relative w-full md:w-auto">
                                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
@@ -554,11 +547,10 @@ const handleExportPDF = async () => {
                                     </span>
                                     <input 
                                     type="text" 
-                                    placeholder="Search Hospital or User Name..." 
+                                    placeholder="Search Hospital / User Name..." 
                                     value={searchQuery} 
                                     onChange={(e) => setSearchQuery(e.target.value)} 
-                                    className="w-full pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" 
-                                />
+                                    className="w-full pl-10 dark:text-gray-700 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                                 </div>
                                 <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                                     <button onClick={handleExportPDF} className="w-full md:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition text-sm whitespace-nowrap">
@@ -568,7 +560,6 @@ const handleExportPDF = async () => {
                                         + New Request
                                     </button>
                                 </div>
-
                             </div>
                         </div>
                         <div className="overflow-x-auto">
