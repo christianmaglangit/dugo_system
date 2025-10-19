@@ -192,7 +192,6 @@ export default function HospitalQRScanner() {
             '1': 'Collected by Red Cross',
             '2': 'Undergoing Testing',
             '3': 'Added to Inventory',
-            '5': 'Transfusion Complete'
         };
 
         const buttonsHtml = Object.entries(stageOptions).map(([num, text]) =>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FC, ReactNode } from "react";
+import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";

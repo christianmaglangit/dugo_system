@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState, FC, ReactNode } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 //========================================================//
-// 1. ICONS                                               //
+// 1. ICONS (Walay nausab) 
 //========================================================//
 const DashboardIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>;
 const InventoryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>;
@@ -20,7 +20,7 @@ const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className=
 const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zm-1.558 4.078a.75.75 0 00-1.06 1.06 5.25 5.25 0 007.238 0 .75.75 0 00-1.06-1.06 3.75 3.75 0 01-5.117 0zM15.625 9a2.375 2.375 0 100-4.75 2.375 2.375 0 000 4.75zM12.5 10.75a.75.75 0 00-1.06 1.06 5.25 5.25 0 007.238 0 .75.75 0 00-1.06-1.06 3.75 3.75 0 01-5.117 0z" /></svg>;
 
 //========================================================//
-// 2. CHILD COMPONENTS                                    //
+// 2. CHILD COMPONENTS (Walay nausab)
 //========================================================//
 
 function HospitalSidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
@@ -41,11 +41,7 @@ function HospitalSidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => 
           <div>
             <h2 className="text-3xl font-extrabold text-red-600">DUGO</h2>
           </div>
-
-          <button
-            onClick={onClose}
-            className="md:hidden p-2 rounded-full hover:bg-gray-100"
-          >
+          <button onClick={onClose} className="md:hidden p-2 rounded-full hover:bg-gray-100">
             <XIcon />
           </button>
         </div>
@@ -73,10 +69,10 @@ function HospitalHeader({ name, onMenuClick }: { name: string, onMenuClick: () =
 
   return (
     <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-6 z-40 md:left-72">
-        <div className="flex items-center gap-4">
-            <button onClick={onMenuClick} className="md:hidden dark:text-gray-700 p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
-            <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
-        </div>
+      <div className="flex items-center gap-4">
+          <button onClick={onMenuClick} className="md:hidden dark:text-gray-700 p-2 -ml-2 rounded-full hover:bg-gray-100"><MenuIcon /></button>
+          <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
+      </div>
       <div className="flex items-center gap-4 dark:text-gray-700">
         <div className="relative">
             <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
@@ -116,7 +112,106 @@ const StatCard = ({ title, value, icon, color }: {title: string, value: string |
 );
 
 //========================================================//
-// 3. MAIN DASHBOARD COMPONENT                            //
+// 3. ✅ BAG-ONG CHILD COMPONENTS PARA SA DASHBOARD
+//========================================================//
+
+function DashboardStats({ loading, totalUnits, pendingRequests, totalPatients }: any) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 text-sm gap-6 mb-8 dark:text-gray-700">
+        <StatCard title="Total Units in Stock" value="Loading" icon={<InventoryIcon />} color="bg-red-500" />
+        <StatCard title="Pending Requests" value="Loading" icon={<RequestIcon />} color="bg-yellow-500" />
+        <StatCard title="Total Patients" value="Loading" icon={<UsersIcon />} color="bg-blue-500" />
+      </div>
+    );
+  }
+  
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <StatCard title="Total Units in Stock" value={totalUnits} icon={<InventoryIcon />} color="bg-red-500" />
+      <StatCard title="Pending Requests" value={pendingRequests} icon={<RequestIcon />} color="bg-yellow-500" />
+      <StatCard title="Total Patients" value={totalPatients} icon={<UsersIcon />} color="bg-blue-500" />
+    </div>
+  );
+}
+
+/**
+ * Component para sa Bar Chart
+ */
+function InventoryChart({ data, loading }: { data: any[], loading: boolean }) {
+  return (
+    <Card className="lg:col-span-3">
+      <h2 className="text-lg font-semibold text-gray-800 mb-4">Your Blood Inventory by Type</h2>
+      <div className="w-full h-96">
+        {loading ? <p className="text-center text-gray-500 pt-16">Loading chart...</p> : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <XAxis dataKey="type" stroke="#6b7280" fontSize={12} />
+              <YAxis stroke="#6b7280" fontSize={12} />
+              <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.5rem" }} />
+              <Legend />
+              <Bar dataKey="RBC" name="RBC" stackId="a" fill="#ef4444" />
+              <Bar dataKey="Plasma" name="Plasma" stackId="a" fill="#3b82f6" />
+              <Bar dataKey="Platelets" name="Platelets" stackId="a" fill="#facc15" />
+              <Bar dataKey="WBC" name="WBC" stackId="a" fill="#10b981" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * Component para sa Quick Actions ug Request Status
+ */
+function ActionPanel({ requests, loading }: { requests: any[], loading: boolean }) {
+  const requestCounts: { [key: string]: number } = {
+    Pending: 0,
+    Approved: 0,
+    Rejected: 0,
+  };
+
+  if (!loading) {
+    requests.forEach(r => {
+      if (r.status in requestCounts) {
+        requestCounts[r.status]++;
+      }
+    });
+  }
+
+  return (
+    <div className="lg:col-span-2 space-y-6">
+      <Card>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
+        <div className="flex flex-col space-y-3">
+          <Link href="/dashhospital/blood_request" className="text-center w-full py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">Make a Blood Request</Link>
+          <Link href="/dashhospital/blood_inventory" className="text-center w-full py-2.5 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition">View Full Inventory</Link>
+        </div>
+      </Card>
+      <Card>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Requests Status</h2>
+        <div className="space-y-2">
+          {loading ? <p className="text-sm text-gray-500">Loading stats...</p> : (
+            ["Pending", "Approved", "Rejected"].map(status => (
+              <div key={status} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                <span className="font-semibold text-gray-600">{status}</span>
+                <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${
+                    status === "Pending" ? "bg-yellow-100 text-yellow-800" :
+                    status === "Approved" ? "bg-green-100 text-green-800" :
+                    "bg-red-100 text-red-800"
+                }`}>{requestCounts[status]}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+//========================================================//
+// 4. MAIN DASHBOARD COMPONENT (Mas Limpyo na Karon)
 //========================================================//
 export default function DashHospital() {
   const [user, setUser] = useState<any>(null);
@@ -125,104 +220,94 @@ export default function DashHospital() {
   const [bloodData, setBloodData] = useState<{ type: string; RBC: number; Plasma: number; Platelets: number; WBC: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const router = useRouter();
+  const router = useRouter(); // Gitanggal sa useEffect dependency
 
- useEffect(() => {
-    const getUserAndData = async () => {
-      setLoading(true);
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
+  useEffect(() => {
+    const getUserAndData = async () => {
+      setLoading(true);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
         console.error("User not found, middleware might have an issue.");
         setLoading(false);
+        router.replace("/"); // I-redirect kung walay user
         return; 
       }
-      const { data: profile, error } = await supabase
+      const { data: profile, error } = await supabase
         .from("users")
         .select("name, user_id") 
         .eq("id", authUser.id)
         .single();
-      
+      
       if (profile) {
         setUser(profile);
-        const staffUserId = profile.user_id;
-  
-        const [invData, reqData, patData] = await Promise.all([
-            supabase.from("blood_inventory").select("*").eq("added_by", staffUserId),
-            supabase.from("blood_requests").select("*"),
-            supabase.from("patients").select("*")
-        ]);
-  
-        // ... a a g ubang code para sa data processing ...
+        const staffUserId = profile.user_id;
+    
+        const [invData, reqData, patData] = await Promise.all([
+            supabase.from("blood_inventory").select("type, component, units").eq("added_by", staffUserId),
+            // ✅ ILISI ANG "user_id" SA IMONG SAKTONG COLUMN NAME
+            supabase.from("blood_requests").select("status").eq("user_id", staffUserId), 
+            supabase.from("patients").select("id") 
+        ]);
+        
+        // ✅ GIDUGANG ANG DATA PROCESSING NGA NAWALA
+        const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+        const summary = new Map(bloodTypes.map(type => [type, { type, RBC: 0, Plasma: 0, Platelets: 0, WBC: 0 }]));
+
+        if(invData.data) {
+          for (const item of invData.data) {
+            const entry = summary.get(item.type);
+            if (entry) {
+              if (item.component === 'Red Blood Cells') entry.RBC += item.units;
+              else if (item.component === 'Plasma') entry.Plasma += item.units;
+              else if (item.component === 'Platelets') entry.Platelets += item.units;
+              else if (item.component === 'White Blood Cells') entry.WBC += item.units;
+            }
+          }
+        }
+        
+        setBloodData(Array.from(summary.values()));
+        setRequests(reqData.data || []);
+        setPatients(patData.data || []);
+
       } else {
         console.error("Failed to fetch hospital profile:", error);
       }
-      
+      
       setLoading(false);
-    };
+    };
 
-    getUserAndData();
-}, []); // Pwede na tanggalon ang 'router' sa dependency array
+    getUserAndData();
+  }, [router]); // Ibalik ang router or pwede ra wala, pero mas safe naa
   
-  const totalUnits = bloodData.reduce((acc, cur) => acc + (cur.RBC || 0) + (cur.Plasma || 0) + (cur.Platelets || 0) + (cur.WBC || 0), 0);
+  // Kalkulaha ang props para sa child components
+  const totalUnits = loading ? 0 : bloodData.reduce((acc, cur) => acc + (cur.RBC || 0) + (cur.Plasma || 0) + (cur.Platelets || 0) + (cur.WBC || 0), 0);
+  const pendingRequestsCount = loading ? 0 : requests.filter(r => r.status === 'Pending').length;
+  const totalPatientsCount = loading ? 0 : patients.length;
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <HospitalSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="w-full transition-all duration-300 md:ml-72">
         {user && <HospitalHeader name={user.name} onMenuClick={() => setIsSidebarOpen(true)} />}
+        
         <main className="mt-20 p-4 md:p-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <StatCard title="Total Units in Stock" value={totalUnits} icon={<InventoryIcon />} color="bg-red-500" />
-                <StatCard title="Pending Requests" value={requests.filter(r => r.status === 'Pending').length} icon={<RequestIcon />} color="bg-yellow-500" />
-                <StatCard title="Total Patients" value={patients.length} icon={<UsersIcon />} color="bg-blue-500" />
-            </div>
+            
+            {/* ✅ GIGAMIT ANG BAG-ONG COMPONENT */}
+            <DashboardStats
+                loading={loading}
+                totalUnits={totalUnits}
+                pendingRequests={pendingRequestsCount}
+                totalPatients={totalPatientsCount}
+            />
 
             <div className="grid lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-3">
-                    <Card>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Your Blood Inventory by Type</h2>
-                        <div className="w-full h-96">
-                        {loading ? <p className="text-center text-gray-500">Loading chart...</p> : (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={bloodData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <XAxis dataKey="type" stroke="#6b7280" fontSize={12} />
-                                <YAxis stroke="#6b7280" fontSize={12} />
-                                <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.5rem" }} />
-                                <Legend />
-                                <Bar dataKey="RBC" name="RBC" stackId="a" fill="#ef4444" />
-                                <Bar dataKey="Plasma" name="Plasma" stackId="a" fill="#3b82f6" />
-                                <Bar dataKey="Platelets" name="Platelets" stackId="a" fill="#facc15" />
-                                <Bar dataKey="WBC" name="WBC" stackId="a" fill="#10b981" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        )}
-                        </div>
-                    </Card>
-                </div>
-                <div className="lg:col-span-2 space-y-6">
-                     <Card>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
-                        <div className="flex flex-col space-y-3">
-                            <Link href="/dashhospital/blood_request" className="text-center w-full py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">Make a Blood Request</Link>
-                            <Link href="/dashhospital/blood_inventory" className="text-center w-full py-2.5 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition">View Full Inventory</Link>
-                        </div>
-                    </Card>
-                    <Card>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Requests Status</h2>
-                        <div className="space-y-2">
-                           {["Pending", "Approved", "Rejected"].map(status => (
-                             <div key={status} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
-                               <span className="font-semibold text-gray-600">{status}</span>
-                               <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${
-                                    status === "Pending" ? "bg-yellow-100 text-yellow-800" :
-                                    status === "Approved" ? "bg-green-100 text-green-800" :
-                                    "bg-red-100 text-red-800"
-                               }`}>{requests.filter(r => r.status === status).length}</span>
-                             </div>
-                           ))}
-                        </div>
-                    </Card>
-                </div>
+                
+                {/* ✅ GIGAMIT ANG BAG-ONG COMPONENT */}
+                <InventoryChart data={bloodData} loading={loading} />
+                
+                {/* ✅ GIGAMIT ANG BAG-ONG COMPONENT */}
+                <ActionPanel requests={requests} loading={loading} />
+
             </div>
         </main>
       </div>

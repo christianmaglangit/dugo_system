@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, FC, ReactNode } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -132,9 +132,13 @@ export default function NearBloodBagPage() {
     const fetchBloodData = async () => {
       setLoading(true);
       
+      // ✅ I-kuha ang date karon para sa filter
+      const today = new Date().toISOString(); 
+
       const { data: inventoryData, error: inventoryError } = await supabase
         .from("blood_inventory")
         .select("*")
+        .gt("expiration_date", today) // ✅ IDUGANG KINI NGA LINYA
         .order("date_received", { ascending: false });
 
       if (inventoryError) {
@@ -231,7 +235,7 @@ export default function NearBloodBagPage() {
                     (
                         filteredData.map((blood) => (
                           <tr key={blood.id} className="hover:bg-gray-50">
-                            <td className="p-4 font-mono text-gray-700">{blood.blood_bag_id}</td>
+                            <td className="p-4 text-gray-700">{blood.blood_bag_id}</td>
                             <td className="p-4 font-semibold text-gray-800">{blood.name}</td>
                             <td className="p-4 text-center font-bold text-red-600">{blood.type}</td>
                             <td className="p-4 dark:text-gray-700">{blood.component}</td>

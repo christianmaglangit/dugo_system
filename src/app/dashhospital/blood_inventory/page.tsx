@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FC, ReactNode } from "react";
+import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -147,7 +147,15 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, sea
                         </div>
                         <div className="grid grid-cols-2 gap-4 dark:text-gray-700">
                             <InputField label="Date Received" name="date_received"><input type="date" value={form.date_received} onChange={(e) => setForm({ ...form, date_received: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
-                            <InputField label="Date Expired" name="date_expired"><input type="date" value={form.date_expired} onChange={(e) => setForm({ ...form, date_expired: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                            <InputField label="Date Expired" name="date_expired">
+                                <input 
+                                    type="date" 
+                                    value={form.date_expired} 
+                                    readOnly 
+                                    disabled 
+                                    className="bg-gray-200 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"
+                                />
+                            </InputField>
                         </div>
                         <div className="flex justify-end gap-3 pt-4">
                             <button onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
@@ -225,27 +233,53 @@ export default function ManageInventory() {
     }, []);
 
     const addInventory = async () => {
-        if (!form.user_id || !form.type || !form.component || !form.units || !form.volume_ml || !form.date_received || !form.date_expired) {
-            Swal.fire("Error", "Please fill in all fields including donor.", "error"); return;
-        }
-        const bloodBagId = generateBloodBagId();
-        let addedByUserId = null;
-        if (currentUser) {
-            const { data: profile } = await supabase.from("users").select("user_id").eq("email", currentUser.email).single();
-            if (!profile) { Swal.fire("Error", "Current user not found.", "error"); return; }
-            addedByUserId = profile.user_id;
-        }
-        const qrPayload = `Blood Bag ID: ${bloodBagId}\nDonor ID: ${form.user_id}\nBlood Type: ${form.type}\nComponent: ${form.component}\nUnits: ${form.units}\nVolume: ${form.volume_ml}ml\nDate Received: ${form.date_received}\nExpiration: ${form.date_expired}\nLocation: Red Cross`;
-        const { data: newStock, error: stockError } = await supabase.from("blood_inventory").insert([{ blood_bag_id: bloodBagId, user_id: form.user_id, type: form.type, component: form.component, units: parseInt(form.units), volume_ml: parseInt(form.volume_ml), date_received: form.date_received, expiration_date: form.date_expired, qr_data: qrPayload, added_by: addedByUserId, status: "Available" }]).select().single();
-        if (stockError) { Swal.fire("Error", stockError.message, "error"); return; }
-        await supabase.from("blood_journey").insert([{ user_id: form.user_id, donation_id: newStock.id, stage: 1, location: "Red Cross" }]);
-        setSelectedQr(qrPayload);
-        setQrModalOpen(true);
-        setForm({ user_id: "", type: "", component: "", units: "", volume_ml: "", date_received: "", date_expired: "" });
-        setSearch("");
-        setAddModalOpen(false);
-        fetchInventory(currentUser);
-    };
+    if (!form.user_id || !form.type || !form.component || !form.units || !form.volume_ml || !form.date_received || !form.date_expired) {
+        Swal.fire("Error", "Please fill in all fields including donor.", "error"); return;
+    }
+    const bloodBagId = generateBloodBagId();
+    let addedByUserId = null;
+
+    if (currentUser) {
+        const { data: profile } = await supabase.from("users").select("user_id").eq("email", currentUser.email).single();
+        if (!profile) { Swal.fire("Error", "Current user not found.", "error"); return; }
+        addedByUserId = profile.user_id;
+    }
+
+    // --- GI-USAB NGA BAHIN ---
+    // I-define ang status base sa kung kinsa ang nag-add
+    let inventoryStatus = "Available"; // Kini ang default kung walay logged-in user
+    if (addedByUserId) {
+        inventoryStatus = "Received at Hospital"; // Kini kung ang staff (logged-in user) ang nag-add
+    }
+    // --- END SA GI-USAB ---
+
+    const qrPayload = `Blood Bag ID: ${bloodBagId}\nDonor ID: ${form.user_id}\nBlood Type: ${form.type}\nComponent: ${form.component}\nUnits: ${form.units}\nVolume: ${form.volume_ml}ml\nDate Received: ${form.date_received}\nExpiration: ${form.date_expired}\nLocation: Red Cross`;
+    
+    const { data: newStock, error: stockError } = await supabase.from("blood_inventory").insert([{ 
+        blood_bag_id: bloodBagId, 
+        user_id: form.user_id, 
+        type: form.type, 
+        component: form.component, 
+        units: parseInt(form.units), 
+        volume_ml: parseInt(form.volume_ml), 
+        date_received: form.date_received, 
+        expiration_date: form.date_expired, 
+        qr_data: qrPayload, 
+        added_by: addedByUserId, 
+        status: inventoryStatus // --- GIGAMIT ANG BAG-O NGA VARIABLE ---
+    }]).select().single();
+
+    if (stockError) { Swal.fire("Error", stockError.message, "error"); return; }
+    
+    await supabase.from("blood_journey").insert([{ user_id: form.user_id, donation_id: newStock.id, stage: 4, location: "Received at Hospital" }]);
+    
+    setSelectedQr(qrPayload);
+    setQrModalOpen(true);
+    setForm({ user_id: "", type: "", component: "", units: "", volume_ml: "", date_received: "", date_expired: "" });
+    setSearch("");
+    setAddModalOpen(false);
+    fetchInventory(currentUser);
+};
 
     const generateBloodBagId = () => Math.floor(1000000000 + Math.random() * 9000000000).toString();
     
@@ -302,9 +336,44 @@ export default function ManageInventory() {
         fetchDonors();
     }, []);
 
+    useEffect(() => {
+        // Check kung naa bay sulod ang duha ka fields
+        if (form.date_received && form.component) {
+            const receivedDate = new Date(form.date_received);
+            let expirationDate = new Date(receivedDate);
+    
+            // I-calculate ang expiration base sa component type
+            switch (form.component) {
+                case "Red Blood Cells":
+                    expirationDate.setDate(receivedDate.getDate() + 42); // Standard 42 days
+                    break;
+                case "Platelets":
+                    expirationDate.setDate(receivedDate.getDate() + 5); // Standard 5 days
+                    break;
+                case "Plasma":
+                    expirationDate.setFullYear(receivedDate.getFullYear() + 1); // Standard 1 year (if frozen)
+                    break;
+                case "White Blood Cells":
+                    expirationDate.setDate(receivedDate.getDate() + 1); // Standard 1 day
+                    break;
+                default:
+                    // Kung "Select..." pa, ayaw sa usba
+                    return; 
+            }
+    
+            // I-format ang date balik sa 'YYYY-MM-DD' para sa input field
+            const formattedExpiration = expirationDate.toISOString().split('T')[0];
+    
+            // I-update ang form state
+            setForm(prevForm => ({
+                ...prevForm,
+                date_expired: formattedExpiration
+            }));
+        }
+    }, [form.date_received, form.component]);
+
     const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
     const summaryData = bloodTypes.map((type) => ({ type, totalUnits: bloodStocks.filter((b) => b.type === type).reduce((sum, b) => sum + b.units, 0) }));
-    
     const openQrModal = (stock: any) => { setSelectedQr(stock.qr_data); setQrModalOpen(true); };
     const closeQrModal = () => { setQrModalOpen(false); setSelectedQr(""); };
     const printQr = () => {
@@ -329,7 +398,7 @@ export default function ManageInventory() {
                 <main className="mt-20 p-4 md:p-8">
                     <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 ">
-                           <button onClick={exportPDF} className="w-full md:w-auto px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-100 transition">Export PDF</button>
+                           <button onClick={exportPDF} className="w-full md:w-auto px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition">Export PDF</button>
                            <button onClick={() => setAddModalOpen(true)} className="w-full md:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow-sm transition">+ New Stock</button>
                         </div>
                     </div>
@@ -346,8 +415,8 @@ export default function ManageInventory() {
                                         {loading ? (<tr><td colSpan={8} className="text-center p-8 text-gray-500">Loading...</td></tr>) : 
                                         bloodStocks.map((b) => (
                                             <tr key={b.id} className="hover:bg-gray-50">
-                                                <td className="p-4 font-mono text-gray-700">{b.blood_bag_id}</td>
-                                                <td className="p-4 font-mono text-gray-700">{b.user_id}</td>
+                                                <td className="p-4 text-gray-700">{b.blood_bag_id}</td>
+                                                <td className="p-4 text-gray-700">{b.user_id}</td>
                                                 <td className="p-4 text-center font-semibold text-red-600">{b.type}</td>
                                                 <td className="p-4 dark:text-gray-700">{b.component}</td>
                                                 <td className="p-4 dark:text-gray-700 text-center font-semibold">{b.units}</td>

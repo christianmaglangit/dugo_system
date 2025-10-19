@@ -166,7 +166,7 @@ function AddRequestForm({ onClose, onSave }: { onClose: () => void; onSave: (pay
               <form onSubmit={handleSubmit} className="relative p-8 md:p-10 overflow-y-auto max-h-[90vh]">
                   <button type="button" onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon /></button>
                   <h2 className="text-2xl font-bold text-gray-800 mb-6">New Blood Request</h2>
-                  <div className="space-y-4">
+                  <div className="space-y-4 dark:text-gray-700">
                       <InputField label="Hospital Name" name="hospital_name">
                           <input type="text" value={form.hospital_name} readOnly disabled className="bg-gray-200 border border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"/>
                       </InputField>
@@ -321,7 +321,7 @@ export default function BloodRequestsPage() {
                                     (filteredRequests.map((r) => (
                                         <tr key={r.id} className="hover:bg-gray-50">
                                             <td className="p-4"><div className="font-bold text-red-600">{r.blood_type}</div><div className="text-gray-500 text-xs">{r.blood_component}</div></td>
-                                            <td className="p-4 text-center font-semibold">{r.units}</td>
+                                            <td className="p-4 dark:text-gray-700 text-center font-semibold">{r.units}</td>
                                             <td className="p-4 text-gray-600">{new Date(r.requested_at!).toLocaleString()}</td>
                                             <td className="p-4 text-center"><StatusBadge status={r.status} /></td>
                                             <td className="p-4 text-center">

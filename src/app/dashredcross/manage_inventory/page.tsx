@@ -113,8 +113,13 @@ const InputField = ({ label, children, ...props }: any) => (
 function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, campaigns, search, setSearch }: any) { // Add 'campaigns' here
     if (!isOpen) return null;
     const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
-    const components = ["Red Blood Cells (RBCs)", "Plasma", "Platelets", "White Blood Cells (WBCs)"];
-    
+    const components = [
+          { value: "RBC", label: "Red Blood Cells (RBCs)" },
+          { value: "Plasma", label: "Plasma" },
+          { value: "Platelets", label: "Platelets" },
+          { value: "WBCs", label: "White Blood Cells (WBCs)" }
+        ];
+
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
@@ -159,10 +164,10 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, cam
                                 </select>
                             </InputField>
                             <InputField label="Component" name="component">
-                                <select value={form.component} onChange={(e) => setForm({ ...form, component: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
-                                    <option value="">Select...</option>
-                                    {components.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
+                              <select value={form.component} onChange={(e) => setForm({ ...form, component: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <option value="">Select...</option>
+                                {components.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                              </select>
                             </InputField>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -233,15 +238,25 @@ export default function ManageInventory() {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const fetchInventory = async (currentUser: any) => {
-    setLoading(true);
-    if (!currentUser) { setLoading(false); return; }
-    const { data: profile } = await supabase.from("users").select("user_id").eq("email", currentUser.email).single();
-    if (!profile) { setLoading(false); return; }
-    const staffUserId = profile.user_id;
-    const { data, error } = await supabase.from("blood_inventory").select("*").eq("added_by", staffUserId).order("inserted_at", { ascending: false });
-    if (error) { console.error(error); } else { setBloodStocks(data || []); }
-    setLoading(false);
-  };
+    setLoading(true);
+    if (!currentUser) { setLoading(false); return; }
+    const { data: profile } = await supabase.from("users").select("user_id").eq("email", currentUser.email).single();
+    if (!profile) { setLoading(false); return; }
+    const staffUserId = profile.user_id;
+
+    // --- Gibag-o nga Query ---
+    // I-filter ra ang inventory nga gi-add sa user UG ang status kay "Available" O "Undergoing Testing"
+    const { data, error } = await supabase
+      .from("blood_inventory")
+      .select("*")
+      .eq("added_by", staffUserId)
+      .in("status", ["Red Cross","Added to Inventory", "Undergoing Testing"]) // Ania ang filter para sa status
+      .order("inserted_at", { ascending: false });
+    // --- Katapusan sa pagbag-o ---
+
+    if (error) { console.error(error); } else { setBloodStocks(data || []); }
+    setLoading(false);
+  };
 
   useEffect(() => {
     const fetchUserAndData = async () => {
@@ -383,36 +398,44 @@ export default function ManageInventory() {
   }, []);
 
   useEffect(() => {
-    if (form.component && form.date_received) {
-        const startDate = new Date(form.date_received);
-        const expirationDate = new Date(startDate);
-        switch (form.component) {
-            case 'RBC':
-                expirationDate.setDate(startDate.getDate() + 42);
-                break;
-            case 'Plasma':
-                expirationDate.setFullYear(startDate.getFullYear() + 1);
-                break;
-            case 'Platelets':
-                expirationDate.setDate(startDate.getDate() + 7);
-                break;
-            case 'WBCs':
-                expirationDate.setDate(startDate.getDate() + 1);
-                break;
-            default:
-                return; // Do nothing if component is not recognized
-        }
+    if (form.component && form.date_received) {
+        const startDate = new Date(form.date_received);
+        const expirationDate = new Date(startDate);
 
-        // Format the date to "YYYY-MM-DD" for the input field
-        const formattedDate = expirationDate.toISOString().split('T')[0];
+        // Karon, kani nga 'switch' statement mo-match na sa values
+        // gikan sa modal: 'RBC', 'Plasma', 'Platelets', 'WBCs'
+        switch (form.component) {
+            case 'RBC':
+                expirationDate.setDate(startDate.getDate() + 42);
+                break;
+            case 'Plasma':
+                expirationDate.setFullYear(startDate.getFullYear() + 1);
+                break;
+            case 'Platelets':
+                expirationDate.setDate(startDate.getDate() + 7);
+                break;
+            case 'WBCs':
+                expirationDate.setDate(startDate.getDate() + 1);
+                break;
+            default:
+                // Limpyohan ang date kung wala napili o 'Select...'
+                setForm((prevForm: any) => ({ ...prevForm, date_expired: "" }));
+                return; 
+        }
 
-        // Update the form state with the new expiration date
-        setForm((prevForm: any) => ({
-            ...prevForm,
-            date_expired: formattedDate
-        }));
+        // Format the date to "YYYY-MM-DD" for the input field
+        const formattedDate = expirationDate.toISOString().split('T')[0];
+
+        // Update the form state with the new expiration date
+        setForm((prevForm: any) => ({
+            ...prevForm,
+            date_expired: formattedDate
+        }));
+    } else {
+      // Limpyohan sad kung walay 'date_received' o 'component'
+      setForm((prevForm: any) => ({ ...prevForm, date_expired: "" }));
     }
-}, [form.component, form.date_received, setForm]); // This effect runs when these values change
+}, [form.component, form.date_received]); // ✅ GITANGTANG ANG 'setForm' sa dependencies kay di kinahanglan
 
 const [campaigns, setCampaigns] = useState<any[]>([]); // Add this line
 
@@ -430,15 +453,6 @@ useEffect(() => {
   const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
   const components = ["RBC", "Plasma", "Platelets", "WBCs"];
   const summaryData = bloodTypes.map((type) => ({ type, totalUnits: bloodStocks.filter((b) => b.type === type).reduce((sum, b) => sum + b.units, 0) }));
-  const chartData = bloodTypes.map((type) => {
-    const data: any = { type };
-    components.forEach((comp) => { 
-        const cleanComp = comp.endsWith('s') ? comp.slice(0, -1) : comp;
-        data[comp] = bloodStocks.filter((b) => b.type === type && b.component === cleanComp).reduce((sum, b) => sum + b.units, 0);
-    });
-    return data;
-  });
-  
   const openQrModal = (stock: any) => { setSelectedQr(stock.qr_data); setQrModalOpen(true); };
   const closeQrModal = () => { setQrModalOpen(false); setSelectedQr(""); };
   const printQr = () => {
@@ -463,10 +477,8 @@ useEffect(() => {
         <main className="mt-20 p-4 md:p-8">
           <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 ">
-              
                  <button onClick={exportPDF} className="w-full md:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition">Inventory Report</button>
                  <button onClick={() => setAddModalOpen(true)} className="w-full md:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow-sm transition">+ New Stock</button>
-              
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 mb-8" id="inventory-summary">
