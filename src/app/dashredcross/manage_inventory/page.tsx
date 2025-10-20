@@ -110,7 +110,7 @@ const InputField = ({ label, children, ...props }: any) => (
     </div>
 );
 
-function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, campaigns, search, setSearch }: any) { // Add 'campaigns' here
+function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, campaigns, search, setSearch, campaignSearch, setCampaignSearch }: any) {
     if (!isOpen) return null;
     const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
     const components = [
@@ -138,24 +138,64 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, cam
                             {search && (
                                 <div className="absolute z-10 dark:text-gray-700 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
                                     {donors.filter((d: any) => d.user_id?.toLowerCase().includes(search.toLowerCase()) || d.name.toLowerCase().includes(search.toLowerCase())).map((d: any) => (
-                                        <div key={d.user_id} className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer" onClick={() => { setForm({ ...form, user_id: d.user_id }); setSearch(`${d.user_id} - ${d.name}`); }}>
-                                            {d.user_id} 
+                                        <div 
+                                          key={d.user_id} 
+                                          className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer" 
+                                          onClick={() => { 
+                                              setForm({ ...form, user_id: d.user_id, type: d.blood_type }); // <--- USBA NGA PAREHAS ANI
+                                              setSearch(`${d.user_id} - ${d.name}`); 
+                                              
+                                          }}>
+                                          {d.user_id} - {d.name}
+                                      </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                          <div className="relative">
+                            <InputField label="Source Campaign (Optional)" name="campaign-search">
+                                <input 
+                                    type="text" 
+                                    placeholder="Search campaign or select Walk-in..." 
+                                    value={campaignSearch} 
+                                    onChange={(e) => {
+                                        setCampaignSearch(e.target.value);
+                                        if (form.campaign_id) {
+                                            setForm({ ...form, campaign_id: "" });
+                                        }
+                                    }} 
+                                    className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                                />
+                            </InputField>
+                            {campaignSearch && (
+                                <div className="absolute z-10 dark:text-gray-700 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
+                                    {"walk-in / not from a campaign".includes(campaignSearch.toLowerCase()) && (
+                                        <div 
+                                            className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer"
+                                            onClick={() => {
+                                                setForm({ ...form, campaign_id: "" }); 
+                                                setCampaignSearch("Walk-in / Not from a campaign"); 
+                                            }}
+                                        >
+                                            Walk-in / Not from a campaign
+                                        </div>
+                                    )}
+                                    {campaigns
+                                        .filter((c: any) => c.title.toLowerCase().includes(campaignSearch.toLowerCase()))
+                                        .map((c: any) => (
+                                        <div 
+                                            key={c.id} 
+                                            className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer" 
+                                            onClick={() => { 
+                                                setForm({ ...form, campaign_id: c.id }); 
+                                                setCampaignSearch(`${c.title} - ${c.title}`);
+                                            }}>
+                                            {c.title} - {c.title}
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
-                            <InputField label="Source Campaign (Optional)" name="campaign_id">
-                                <select 
-                                    value={form.campaign_id || ""} 
-                                    onChange={(e) => setForm({ ...form, campaign_id: e.target.value })} 
-                                    className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
-                                    <option value="">Walk-in / Not from a campaign</option>
-                                    {campaigns.map((c: any) => (
-                                        <option key={c.id} value={c.id}>{c.title}</option>
-                                    ))}
-                                </select>
-                            </InputField>
                         <div className="grid grid-cols-2 gap-4">
                             <InputField label="Blood Type" name="type">
                                 <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -220,6 +260,7 @@ function QrModal({ qrData, onClose, onPrint }: { qrData: string, onClose: () => 
     );
 }
 
+
 //========================================================//
 // 4. MAIN PAGE COMPONENT                                 //
 //========================================================//
@@ -233,10 +274,11 @@ export default function ManageInventory() {
   const [selectedQr, setSelectedQr] = useState<string>("");
   const [donors, setDonors] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [campaignSearch, setCampaignSearch] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState("");
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
   const fetchInventory = async (currentUser: any) => {
     setLoading(true);
     if (!currentUser) { setLoading(false); return; }
@@ -244,15 +286,12 @@ export default function ManageInventory() {
     if (!profile) { setLoading(false); return; }
     const staffUserId = profile.user_id;
 
-    // --- Gibag-o nga Query ---
-    // I-filter ra ang inventory nga gi-add sa user UG ang status kay "Available" O "Undergoing Testing"
     const { data, error } = await supabase
       .from("blood_inventory")
       .select("*")
       .eq("added_by", staffUserId)
       .in("status", ["Red Cross","Added to Inventory", "Undergoing Testing"]) // Ania ang filter para sa status
       .order("inserted_at", { ascending: false });
-    // --- Katapusan sa pagbag-o ---
 
     if (error) { console.error(error); } else { setBloodStocks(data || []); }
     setLoading(false);
@@ -334,7 +373,6 @@ export default function ManageInventory() {
         }).length;
         let mostDonated = { type: 'N/A', total: 0 };
         let leastDonated = { type: 'N/A', total: Infinity };
-
         unitsByType.forEach(item => {
             if (item.total > mostDonated.total) {
                 mostDonated = item;
@@ -343,19 +381,12 @@ export default function ManageInventory() {
                 leastDonated = item;
             }
         });
-
-
-        // --- 2. GENERATE THE PDF DOCUMENT ---
-        
-        // Header
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
         doc.text('Blood Inventory Report', pageWidth / 2, 20, { align: 'center' });
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
         doc.text(`Date: ${today.toLocaleDateString()}`, pageWidth / 2, 28, { align: 'center' });
-
-        // General Summary Table
         autoTable(doc, {
             startY: 40,
             head: [['Overall Summary', 'Value']],
@@ -368,8 +399,6 @@ export default function ManageInventory() {
             theme: 'grid',
             headStyles: { fillColor: [209, 36, 42] }
         });
-
-        // Units by Blood Type Table
         autoTable(doc, {
             startY: (doc as any).lastAutoTable.finalY + 10,
             head: [['Blood Type', 'Total Units']],
@@ -377,8 +406,6 @@ export default function ManageInventory() {
             theme: 'striped',
             headStyles: { fillColor: [209, 36, 42] }
         });
-
-        // Units by Component Table
         autoTable(doc, {
             startY: (doc as any).lastAutoTable.finalY + 10,
             head: [['Blood Component', 'Total Units']],
@@ -401,9 +428,6 @@ export default function ManageInventory() {
     if (form.component && form.date_received) {
         const startDate = new Date(form.date_received);
         const expirationDate = new Date(startDate);
-
-        // Karon, kani nga 'switch' statement mo-match na sa values
-        // gikan sa modal: 'RBC', 'Plasma', 'Platelets', 'WBCs'
         switch (form.component) {
             case 'RBC':
                 expirationDate.setDate(startDate.getDate() + 42);
@@ -418,31 +442,25 @@ export default function ManageInventory() {
                 expirationDate.setDate(startDate.getDate() + 1);
                 break;
             default:
-                // Limpyohan ang date kung wala napili o 'Select...'
                 setForm((prevForm: any) => ({ ...prevForm, date_expired: "" }));
                 return; 
         }
-
-        // Format the date to "YYYY-MM-DD" for the input field
         const formattedDate = expirationDate.toISOString().split('T')[0];
-
-        // Update the form state with the new expiration date
         setForm((prevForm: any) => ({
             ...prevForm,
             date_expired: formattedDate
         }));
     } else {
-      // Limpyohan sad kung walay 'date_received' o 'component'
       setForm((prevForm: any) => ({ ...prevForm, date_expired: "" }));
     }
-}, [form.component, form.date_received]); // ✅ GITANGTANG ANG 'setForm' sa dependencies kay di kinahanglan
-
-const [campaigns, setCampaigns] = useState<any[]>([]); // Add this line
-
+}, [form.component, form.date_received]); 
+const [campaigns, setCampaigns] = useState<any[]>([]); 
 useEffect(() => {
     const fetchDonorsAndCampaigns = async () => {
-      // This part for donors already exists
-      const { data: donorData, error: donorError } = await supabase.from("users").select("user_id, name, email").eq("role", "Donor");
+      const { data: donorData, error: donorError } = await supabase
+          .from("users")
+          .select("user_id, name, email, blood_type") 
+          .eq("role", "Donor");
       if (donorError) { console.error(donorError); } else { setDonors(donorData || []); }
       const { data: campaignData, error: campaignError } = await supabase.from("blood_campaigns").select("id, title").order('date', { ascending: false });
       if (campaignError) { console.error(campaignError); } else { setCampaigns(campaignData || []); }
@@ -469,6 +487,20 @@ useEffect(() => {
     });
   };
 
+  const filteredBloodStocks = bloodStocks.filter((stock) => {
+    if (!globalSearch) return true; // Ipakita tanan kung walay search
+
+    const searchTerm = globalSearch.toLowerCase();
+    
+    // I-check ang tanan fields
+    return (
+        stock.blood_bag_id.toLowerCase().includes(searchTerm) ||
+        stock.user_id.toLowerCase().includes(searchTerm) ||
+        stock.type.toLowerCase().includes(searchTerm) ||
+        stock.component.toLowerCase().includes(searchTerm)
+    );
+  });
+
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <BloodbankSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -486,21 +518,46 @@ useEffect(() => {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-3 bg-white rounded-2xl shadow-lg p-6" id="inventory-table">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">All Blood Stocks</h3>
+                  <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                      <h3 className="text-lg font-semibold text-gray-800">All Blood Stocks</h3>
+                      <input
+                          type="text"
+                          placeholder="Search Bag ID, Donor ID, Type, Component..."
+                          value={globalSearch}
+                          onChange={(e) => setGlobalSearch(e.target.value)}
+                          className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-4 py-2 rounded-lg w-full md:w-auto md:min-w-[300px] focus:outline-none focus:ring-2 focus:ring-red-500"
+                      />
+                  </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm min-w-[1000px]">
                       <thead className="bg-gray-50"><tr className="text-left text-gray-500 uppercase text-xs font-semibold"><th className="p-4">Bag ID</th><th className="p-4">Donor ID</th><th className="p-4 text-center">Type</th><th className="p-4">Component</th><th className="p-4 text-center">Units</th><th className="p-4">Expiration</th><th className="p-4 text-center">Status</th><th className="p-4 text-center">Actions</th></tr></thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {loading ? (<tr><td colSpan={8} className="text-center p-8 text-gray-500">Loading...</td></tr>) : 
-                        bloodStocks.map((b) => (
-                          <tr key={b.id} className="hover:bg-gray-50">
-                            <td className="p-4 font-mono text-gray-700">{b.blood_bag_id}</td><td className="p-4 font-mono text-gray-700">{b.user_id}</td><td className="p-4 text-center font-semibold text-red-600">{b.type}</td><td className="p-4 dark:text-gray-700">{b.component}</td><td className="p-4 dark:text-gray-700 text-center font-semibold">{b.units}</td><td className="p-4 text-gray-600">{b.expiration_date}</td><td className="p-4 text-center"><StatusBadge status={b.status} expiration_date={b.expiration_date} /></td>
-                            <td className="p-4 flex justify-center gap-2">
-                                <button onClick={() => openQrModal(b)} className="flex items-center gap-1 bg-gray-600 hover:bg-gray-700 px-3 py-1.5 rounded text-white text-xs font-semibold transition"><QrCodeIcon/> QR</button>
-                                <button onClick={() => deleteInventory(b.id)} title="Delete" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><DeleteIcon /></button>
-                            </td>
+                      <tbody className="divide-y divide-gray-200 dark:text-gray">
+                        {loading ? (
+                          <tr><td colSpan={8} className="text-center p-8 text-gray-500">Loading...</td></tr>
+                        ) : filteredBloodStocks.length > 0 ? (
+                          filteredBloodStocks.map((b) => (
+                            <tr key={b.id} className="hover:bg-gray-50">
+                              <td className="p-4 font-mono text-gray-700">{b.blood_bag_id}</td>
+                              <td className="p-4 font-mono text-gray-700">{b.user_id}</td>
+                              <td className="p-4 text-center font-semibold text-red-600">{b.type}</td>
+                              <td className="p-4 dark:text-gray-700">{b.component}</td>
+                              <td className="p-4 dark:text-gray-700 text-center font-semibold">{b.units}</td>
+                              <td className="p-4 text-gray-600">{b.expiration_date}</td>
+                              <td className="p-4 text-center"><StatusBadge status={b.status} expiration_date={b.expiration_date} /></td>
+                              <td className="p-4 flex justify-center gap-2">
+                                  <button onClick={() => openQrModal(b)} className="flex items-center gap-1 bg-gray-600 hover:bg-gray-700 px-3 py-1.5 rounded text-white text-xs font-semibold transition"><QrCodeIcon/> QR</button>
+                                  <button onClick={() => deleteInventory(b.id)} title="Delete" className="p-1.5 text-red-600 hover:bg-red-100 rounded-md"><DeleteIcon /></button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          // Message kung walay results
+                          <tr>
+                              <td colSpan={8} className="text-center p-8 text-gray-500">
+                                  {globalSearch ? `No results found for "${globalSearch}"` : "No blood stocks available."}
+                              </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -509,7 +566,7 @@ useEffect(() => {
         </main>
       </div>
       {qrModalOpen && <QrModal qrData={selectedQr} onClose={closeQrModal} onPrint={printQr} />}
-      {addModalOpen && <AddInventoryModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)}  onSave={addInventory} form={form} setForm={setForm} donors={donors} search={search} setSearch={setSearch} campaigns={campaigns}/>}
+      {addModalOpen && <AddInventoryModal isOpen={addModalOpen} onClose={() => { setAddModalOpen(false); setSearch(""); setCampaignSearch(""); }} onSave={addInventory} form={form} setForm={setForm} donors={donors} search={search} setSearch={setSearch} campaigns={campaigns}campaignSearch={campaignSearch}setCampaignSearch={setCampaignSearch}/>}
     </div>
   );
 }

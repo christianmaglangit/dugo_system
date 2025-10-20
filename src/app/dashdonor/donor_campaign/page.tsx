@@ -24,7 +24,7 @@ interface Campaign {
   location: string;
   description: string;
   photo_url: string | null;
-  status: string;
+  status: string; // Assuming status is directly from DB
 }
 
 interface ChatMessage {
@@ -45,7 +45,8 @@ const CalendarIconSvg = () => <svg xmlns="http://www.w3.org/2000/svg" className=
 const LocationMarkerIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 20l-4.95-6.05a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>;
 const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const ChatIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>;
-const BellSlashedIcon = ({ className }: { className?: string }) => (<svg xmlns="http://www.w3.org/2000/svg" className={`h-16 w-16 text-gray-300 ${className || ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M12 21a8.25 8.25 0 006.26-14.829l-1.178-1.178a8.25 8.25 0 00-13.183 9.435L3 18.75h1.5a8.25 8.25 0 007.5 2.25z" /></svg>);const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const BellSlashedIcon = ({ className }: { className?: string }) => (<svg xmlns="http://www.w3.org/2000/svg" className={`h-16 w-16 text-gray-300 ${className || ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M12 21a8.25 8.25 0 006.26-14.829l-1.178-1.178a8.25 8.25 0 00-13.183 9.435L3 18.75h1.5a8.25 8.25 0 007.5 2.25z" /></svg>);
+const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const XCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 
 //========================================================//
@@ -53,9 +54,9 @@ const XCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6
 //========================================================//
 
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = "" }) => (
-    <div className={`bg-white border border-gray-200/80 rounded-2xl shadow-sm ${className}`}>
-        {children}
-    </div>
+  <div className={`bg-white border border-gray-200/80 rounded-2xl shadow-sm ${className}`}>
+    {children}
+  </div>
 );
 
 const InputField: FC<{ label: string, name: string, children: ReactNode }> = ({ label, name, children }) => (
@@ -74,23 +75,23 @@ const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void
                     <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-red-600">DUGO</h1>
                 </div>
                 <div className="flex items-center gap-2 md:gap-4">
-                    <NotificationBell user={user} /> 
-                    <button 
+                    <NotificationBell user={user} />
+                    <button
                         onClick={onOpenRequest}
                         className="whitespace-nowrap rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 md:text-sm"
                     >
                         + Request Blood
                     </button>
-                    <button 
-                        onClick={() => router.push('/dashdonor/donor_profile')} 
+                    <button
+                        onClick={() => router.push('/dashdonor/donor_profile')}
                         className="hidden rounded-full md:block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
                         <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow">
-                            <Image 
-                                src={user.profileImage} 
+                            <Image
+                                src={user.profileImage}
                                 alt="Profile"
-                                fill 
-                                className="object-cover" 
+                                fill
+                                className="object-cover"
                             />
                         </div>
                     </button>
@@ -100,12 +101,13 @@ const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void
     );
 };
 
+
 const PageHeader = ({ title }: { title: string }) => {
     const router = useRouter();
     return (
         <div className="flex items-center gap-4 my-6">
-            <button 
-                onClick={() => router.back()} 
+            <button
+                onClick={() => router.back()}
                 className="p-2 rounded-full hover:bg-gray-200 transition-colors"
             >
                 <ArrowLeftIcon />
@@ -115,8 +117,11 @@ const PageHeader = ({ title }: { title: string }) => {
     );
 };
 
-// Ibutang ni sa section 3 sa imong code
-const BottomNav = ({ user, onOpenAppointmentModal }: { user: User | null; onOpenAppointmentModal: () => void }) => {
+const BottomNav = ({ user, onOpenAppointmentModal, appointment }: {
+    user: User | null;
+    onOpenAppointmentModal: () => void;
+    appointment: any | null; // <-- Prop para sa edit/book logic
+}) => {
     const router = useRouter();
     const pathname = usePathname();
     const navItems = [
@@ -124,23 +129,22 @@ const BottomNav = ({ user, onOpenAppointmentModal }: { user: User | null; onOpen
         { icon: <ListIcon />, label: "History", path: '/dashdonor/donor_history' },
         { icon: <CalendarIconNav />, label: "Appointment", primary: true },
         { icon: <MegaphoneIcon />, label: "Campaigns", path: '/dashdonor/donor_campaign' },
-        { 
-            // --- KINI ANG GI-UPDATE ---
+        {
             icon: (user && user.profileImage) ? (
                 <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-300">
-                    <Image 
-                        src={user.profileImage} 
+                    <Image
+                        src={user.profileImage}
                         width={24}
                         height={24}
-                        alt="Profile" 
+                        alt="Profile"
                         className="object-cover"
                     />
                 </div>
             ) : (
                 <UserIcon />
-            ), 
-            label: "Profile", 
-            path: '/dashdonor/donor_profile' 
+            ),
+            label: "Profile",
+            path: '/dashdonor/donor_profile'
         },
     ];
 
@@ -149,201 +153,127 @@ const BottomNav = ({ user, onOpenAppointmentModal }: { user: User | null; onOpen
             {navItems.map((item) => {
                 const isActive = pathname === item.path;
                 if (item.primary) {
-                    return ( 
-                        <button key={item.label} onClick={onOpenAppointmentModal} className="text-white -mt-8" title="Book Appointment">
+                    const label = appointment ? 'Edit' : 'Book'; // Dynamic label
+                    const title = appointment ? 'Edit Appointment' : 'Book Appointment'; // Dynamic title
+
+                    return (
+                        <button key={item.label} onClick={onOpenAppointmentModal} className="text-white -mt-8" title={title}>
                             <div className="w-16 h-16 bg-red-600 rounded-full flex flex-col items-center justify-center shadow-lg hover:bg-red-700 transition">
                                 {item.icon}
-                                <span className="text-xs font-medium mt-0.5">Book</span>
+                                <span className="text-xs font-medium mt-0.5">{label}</span>
                             </div>
-                        </button> 
+                        </button>
                     );
                 }
-                return ( 
+                return (
                     <button key={item.label} onClick={() => router.push(item.path as string)} className={`flex flex-col items-center justify-center gap-1 flex-1 h-full ${isActive ? 'text-red-600' : 'text-gray-400'}`}>
                         {item.icon}
                         <span className="text-xs font-medium">{item.label}</span>
-                    </button> 
+                    </button>
                 );
             })}
         </nav>
     );
 };
 
+// --- Helper Functions for Campaign Status ---
 const getCampaignStatus = (campaign: Campaign): string => {
-    // This assumes your campaign object has a 'status' field from the database
-    if (campaign.status === "Cancelled") {
-        return "Cancelled";
-    }
-
+    if (campaign.status === "Cancelled") return "Cancelled";
     const today = new Date();
     const campaignDate = new Date(campaign.date);
-
-    // Set times to midnight to compare only the date part
     today.setHours(0, 0, 0, 0);
     campaignDate.setHours(0, 0, 0, 0);
-
-    if (campaignDate < today) {
-        return "Completed";
-    }
-    if (campaignDate.getTime() === today.getTime()) {
-        return "Ongoing";
-    }
+    if (campaignDate < today) return "Completed";
+    if (campaignDate.getTime() === today.getTime()) return "Ongoing";
     return "Upcoming";
 };
-
 const StatusBadge = ({ status }: { status: string }) => {
-    const statusMap: Record<string, string> = {
-        Upcoming: "bg-blue-100 text-blue-800",
-        Ongoing: "bg-green-100 text-green-800",
-        Completed: "bg-gray-100 text-gray-800",
-        Cancelled: "bg-red-100 text-red-800",
-    };
-    const color = statusMap[status] || "bg-gray-100 text-gray-800";
-    return <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${color}`}>{status}</span>;
+    const statusMap: Record<string, string> = {
+        Upcoming: "bg-blue-100 text-blue-800",
+        Ongoing: "bg-green-100 text-green-800",
+        Completed: "bg-gray-100 text-gray-800",
+        Cancelled: "bg-red-100 text-red-800",
+    };
+    const color = statusMap[status] || "bg-gray-100 text-gray-800";
+    return <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${color}`}>{status}</span>;
 };
+
 
 //========================================================//
 // 4. MODALS & FORMS
 //========================================================//
 
-function AppointmentModal({ isOpen, user, onClose, onSave }: { isOpen: boolean; user: User; onClose: () => void; onSave: (payload: any) => void; }) {
-    const [date, setDate] = useState("");
-    const [time, setTime] = useState("");
-    const [location, setLocation] = useState("");
-    const [notes, setNotes] = useState("");
-    const [saving, setSaving] = useState(false);
-
-    if (!isOpen) return null;
-
-    const handleSubmit = async (e?: React.FormEvent) => {
-        e?.preventDefault();
-        if (!user || !date) {
-            Swal.fire("Error", "Please select a date for your appointment.", "error");
-            return;
-        }
-        setSaving(true);
-        await onSave({
-            user_id: user.user_id,
-            donor_name: user.name,
-            date,
-            time: time || null,
-            location: location || null,
-            notes: notes || null,
-        });
-        setSaving(false);
-    };
-
-    return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-[60] p-4">
-            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-                <form onSubmit={handleSubmit} className="relative p-8 md:p-10 overflow-y-auto max-h-[90vh]">
-                    <button type="button" onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon /></button>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Book an Appointment</h2>
-                    <div className="space-y-4">
-                        <InputField label="Your Name" name="donorName">
-                           <input type="text" value={user.name} readOnly disabled className="bg-gray-200 border border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"/>
-                        </InputField>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <InputField label="Date" name="date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
-                            <InputField label="Time (Optional)" name="time"><input type="time" value={time ?? ""} onChange={(e) => setTime(e.target.value)} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
-                        </div>
-                        <InputField label="Location (Optional)" name="location"><input value={location ?? ""} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Red Cross Iligan" className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Notes (Optional)</label>
-                            <textarea name="notes" value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} placeholder="Any special requests or information..." className="bg-gray-50 border border-gray-300 px-3 py-2 rounded-lg w-full h-24 focus:outline-none focus:ring-2 focus:ring-red-500" />
-                        </div>
-                        <div className="flex justify-end gap-3 pt-4">
-                            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
-                            <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 font-semibold text-white transition">{saving ? "Booking..." : "Book Appointment"}</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
-
 function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => void; onSave: (payload: any) => void; }) {
-    // 1. I-add ang state para sa Indigency selection
     const [isIndigency, setIsIndigency] = useState<boolean>(false);
-
     const [form, setForm] = useState({
         hospital_name: user.name,
-        blood_type: "", 
-        blood_component: "", 
+        blood_type: "",
+        blood_component: "",
         units: 1,
-        request_form_file: null as File | null, 
+        request_form_file: null as File | null,
         indigency_file: null as File | null,
-        senior_id_file: null as File | null, 
+        senior_id_file: null as File | null,
         referral_note_file: null as File | null,
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        // 2. I-check ang required fields base sa Indigency selection
+
         let requiredFieldsMissing = false;
         if (!user.user_id || !form.hospital_name || !form.blood_type || !form.blood_component || !form.request_form_file) {
              requiredFieldsMissing = true;
         }
 
         if (requiredFieldsMissing) {
-            Swal.fire("Error", "Please fill all main required fields (Blood Type, Component, Units, and Request Form).", "error"); 
+            Swal.fire("Error", "Please fill all main required fields (Blood Type, Component, Units, and Request Form).", "error");
             return;
         }
 
-        // I-handle ang required files for indigency request
         if (isIndigency && (!form.indigency_file || !form.referral_note_file)) {
             Swal.fire("Error", "For Indigency requests, the Indigency Certificate and Referral Note are required.", "error");
             return;
         }
 
-
         try {
             const uploadFile = async (file: File | null) => {
                 if(!file) return null;
-                // Note: Ang 'public' folder sa Supabase storage kay kasagaran mao na ang default path
                 const filePath = `public/${Date.now()}_${file.name}`;
                 const { error } = await supabase.storage.from("blood_requests").upload(filePath, file);
                 if (error) throw error;
                 return supabase.storage.from("blood_requests").getPublicUrl(filePath).data.publicUrl;
             }
 
-            // Dili na kinahanglan mag-upload sa indigency files kung dili indigency ang request
             const [requestFormUrl, indigencyUrl, seniorIdUrl, referralNoteUrl] = await Promise.all([
                 uploadFile(form.request_form_file),
-                // Conditional upload: upload lang kung Indigency
                 isIndigency ? uploadFile(form.indigency_file) : Promise.resolve(null),
                 isIndigency ? uploadFile(form.senior_id_file) : Promise.resolve(null),
                 isIndigency ? uploadFile(form.referral_note_file) : Promise.resolve(null),
             ]);
 
-            const payload = { 
-                ...form, 
-                user_id: user.user_id, 
-                request_form_file: requestFormUrl, 
-                indigency_file: indigencyUrl, 
-                senior_id_file: seniorIdUrl, 
-                referral_note_file: referralNoteUrl 
+            const payload = {
+                ...form,
+                user_id: user.user_id,
+                request_form_file: requestFormUrl,
+                indigency_file: indigencyUrl,
+                senior_id_file: seniorIdUrl,
+                referral_note_file: referralNoteUrl
             };
             onSave(payload);
         } catch (err: any) {
             Swal.fire("Upload Error", err.message, "error");
         }
     };
-    
-    // Function para i-reset ang optional files if mag-change ang selection
+
     const handleIndigencyChange = (value: string) => {
         const isIndigencyRequest = value === 'Yes';
         setIsIndigency(isIndigencyRequest);
 
-        // I-reset ang optional file states kung dili na Indigency
         if (!isIndigencyRequest) {
-            setForm(prev => ({ 
-                ...prev, 
-                indigency_file: null, 
-                senior_id_file: null, 
-                referral_note_file: null 
+            setForm(prev => ({
+                ...prev,
+                indigency_file: null,
+                senior_id_file: null,
+                referral_note_file: null
             }));
         }
     }
@@ -358,20 +288,19 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                         <InputField label="Requester Name" name="hospital_name">
                             <input type="text" value={form.hospital_name} readOnly disabled className="bg-gray-200 border border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"/>
                         </InputField>
-                        
-                        {/* 3. Dropdown para sa Indigency Selection */}
+
                         <InputField label="Request Type" name="request_type">
-                             <select 
-                                onChange={(e) => handleIndigencyChange(e.target.value)} 
-                                required 
+                             <select
+                                onChange={(e) => handleIndigencyChange(e.target.value)}
+                                required
                                 className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
                             >
                                  <option value="">Select Request Type...</option>
                                  <option value="No">Standard Request</option>
                                  <option value="Yes">Indigency / Low-Income Request</option>
                              </select>
-                         </InputField>
-                        
+                       </InputField>
+
                         <div className="grid grid-cols-2 gap-4">
                             <InputField label="Blood Type" name="blood_type">
                                 <select required value={form.blood_type} onChange={(e) => setForm({ ...form, blood_type: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -382,24 +311,27 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                                 <input type="number" min={1} value={form.units} onChange={(e) => setForm({ ...form, units: Number(e.target.value) })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/>
                             </InputField>
                         </div>
-                        
+
                         <InputField label="Component" name="blood_component">
                             <select required value={form.blood_component} onChange={(e) => setForm({ ...form, blood_component: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
-                                <option value="">Select...</option><option value="Whole Blood">Whole Blood</option><option value="Plasma">Plasma</option><option value="Platelets">Platelets</option>
+                                <option value="">Select...</option>
+                                <option value="Whole Blood">Whole Blood</option>
+                                <option value="Plasma">Plasma</option>
+                                <option value="Platelets">Platelets</option>
+                                <option value="Red Blood Cells">Red Blood Cells (RBCs)</option>
                             </select>
                         </InputField>
-                        
+
                         <InputField label="Request Form (Required)" name="request_form_file">
-                            <input 
-                                type="file" 
-                                required 
-                                accept=".jpg,.jpeg,.png,.pdf" 
-                                onChange={(e) => setForm({ ...form, request_form_file: e.target.files?.[0] || null })} 
+                            <input
+                                type="file"
+                                required
+                                accept=".jpg,.jpeg,.png,.pdf"
+                                onChange={(e) => setForm({ ...form, request_form_file: e.target.files?.[0] || null })}
                                 className="bg-gray-50 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
                             />
                         </InputField>
-                        
-                        {/* 4. Conditional Rendering para sa Indigency Files */}
+
                         {isIndigency && (
                             <div className="border-t pt-4 space-y-4">
                                 <label className="font-semibold text-gray-700">Indigency Document Uploads (All Required)</label>
@@ -426,9 +358,94 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
     );
 }
 
+function AppointmentModal({ isOpen, user, onClose, onSave, existingAppointment }: {
+    isOpen: boolean;
+    user: User;
+    onClose: () => void;
+    onSave: (payload: any) => void;
+    existingAppointment: any | null; // <-- Prop para sa pre-filling
+}) {
+    // I-initialize ang state gamit ang existing data kung naa
+    const [date, setDate] = useState(existingAppointment?.date ? new Date(existingAppointment.date).toISOString().split('T')[0] : "");
+    const [time, setTime] = useState(existingAppointment?.time || "");
+    const [location, setLocation] = useState(existingAppointment?.location || "");
+    const [notes, setNotes] = useState(existingAppointment?.notes || "");
+    const [saving, setSaving] = useState(false);
+
+    // useEffect para mo-update ang form kung mag-usab ang props
+    useEffect(() => {
+        if (existingAppointment) {
+            setDate(existingAppointment.date ? new Date(existingAppointment.date).toISOString().split('T')[0] : "");
+            setTime(existingAppointment.time || "");
+            setLocation(existingAppointment.location || "");
+            setNotes(existingAppointment.notes || "");
+        } else {
+            // I-reset kung bag-o nga appointment
+            setDate("");
+            setTime("");
+            setLocation("");
+            setNotes("");
+        }
+    }, [isOpen, existingAppointment]);
+
+    if (!isOpen) return null;
+
+    const handleSubmit = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!user || !date) {
+            Swal.fire("Error", "Please select a date for your appointment.", "error");
+            return;
+        }
+        setSaving(true);
+        // I-pasa lang ang form data. Ang parent na ang bahala sa logic
+        await onSave({
+            date,
+            time: time || null,
+            location: location || null,
+            notes: notes || null,
+        });
+        setSaving(false);
+    };
+
+    return (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-[60] p-4">
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+                <form onSubmit={handleSubmit} className="relative p-8 md:p-10 overflow-y-auto max-h-[90vh]">
+                    <button type="button" onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon /></button>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                        {existingAppointment ? 'Edit Your Appointment' : 'Book an Appointment'}
+                    </h2>
+                    <div className="space-y-4">
+                        <InputField label="Your Name" name="donorName">
+                           <input type="text" value={user.name} readOnly disabled className="bg-gray-200 border border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"/>
+                        </InputField>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <InputField label="Date" name="date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                            <InputField label="Time (Optional)" name="time"><input type="time" value={time ?? ""} onChange={(e) => setTime(e.target.value)} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                        </div>
+                        <InputField label="Location (Optional)" name="location"><input value={location ?? ""} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Red Cross Iligan" className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">Notes (Optional)</label>
+                            <textarea name="notes" value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} placeholder="Any special requests or information..." className="bg-gray-50 border border-gray-300 px-3 py-2 rounded-lg w-full h-24 focus:outline-none focus:ring-2 focus:ring-red-500" />
+                        </div>
+                        <div className="flex justify-end gap-3 pt-4">
+                            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
+                            <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 font-semibold text-white transition">
+                                {saving
+                                    ? (existingAppointment ? "Updating..." : "Booking...")
+                                    : (existingAppointment ? "Update Appointment" : "Book Appointment")
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
-    // The history now starts empty.
     const [history, setHistory] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [isThinking, setIsThinking] = useState(false);
@@ -437,15 +454,12 @@ const Chatbot = () => {
     const scrollToBottom = () => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); };
     useEffect(scrollToBottom, [history, isThinking]);
 
-    // This useEffect that added the initial message has been REMOVED.
-
     const handleSend = async () => {
         if (!inputValue.trim() || isThinking) return;
 
         const userMessage: ChatMessage = { role: 'user', parts: [{ text: inputValue }] };
-        // On the first send, newHistory will correctly start with the user's message.
         const newHistory = [...history, userMessage];
-        
+
         setHistory(newHistory);
         setInputValue('');
         setIsThinking(true);
@@ -483,20 +497,17 @@ const Chatbot = () => {
 
     return (
         <>
-            <div className={`fixed bottom-35 sm:bottom-24 right-4 sm:right-6 w-80 h-[28rem] bg-white rounded-2xl shadow-xl flex flex-col z-50 transition-all duration-300 ${isOpen? 'opacity-100 translate-y-0': 'opacity-0 translate-y-4 pointer-events-none'}`}>                <div className="bg-red-600 text-white p-3 rounded-t-2xl flex justify-between items-center">
+            <div className={`fixed bottom-35 sm:bottom-24 right-4 sm:right-6 w-80 h-[28rem] bg-white rounded-2xl shadow-xl flex flex-col z-50 transition-all duration-300 ${isOpen? 'opacity-100 translate-y-0': 'opacity-0 translate-y-4 pointer-events-none'}`}>                 <div className="bg-red-600 text-white p-3 rounded-t-2xl flex justify-between items-center">
                     <h3 className="font-bold text-lg">Chat with Haima</h3>
                     <button onClick={() => setIsOpen(false)} className="text-2xl leading-none">&times;</button>
                 </div>
                 <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                    {/* START: Static Welcome Message */}
                     <div className="flex justify-start">
                         <p className="max-w-[85%] py-2 px-3 rounded-2xl text-sm bg-gray-200 text-gray-800 rounded-bl-none">
                             Hello! I am Haima, your virtual assistant. How can I help you with your blood donation questions today?
                         </p>
                     </div>
-                    {/* END: Static Welcome Message */}
 
-                    {/* This now only maps the actual conversation */}
                     {history.map((msg, index) => (
                         <div key={index} className={`flex ${msg.role === 'model' ? 'justify-start' : 'justify-end'}`}>
                             <p className={`max-w-[85%] py-2 px-3 rounded-2xl text-sm ${msg.role === 'model' ? 'bg-gray-200 text-gray-800 rounded-bl-none' : 'bg-red-600 text-white rounded-br-none'}`}>
@@ -519,13 +530,12 @@ const Chatbot = () => {
                 </div>
             </div>
             <button
-  onClick={() => setIsOpen(!isOpen)}
-  className="fixed bottom-20 md:bottom-6 right-6 bg-red-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-semibold hover:bg-red-700 transition-transform hover:scale-105 z-50"
->
-  <ChatIcon />
-  <span className="hidden md:inline">Ask Haima</span>
-</button>
-
+                onClick={() => setIsOpen(!isOpen)}
+                className="fixed bottom-20 md:bottom-6 right-6 bg-red-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-semibold hover:bg-red-700 transition-transform hover:scale-105 z-50"
+            >
+                <ChatIcon />
+                <span className="hidden md:inline">Ask Haima</span>
+            </button>
         </>
     );
 };
@@ -540,13 +550,11 @@ const NotificationBell = ({ user }: { user: User | null }) => {
         if (!user) return;
 
         const setupNotifications = async () => {
-            // Find the user's real UUID to listen for notifications
             const { data: profile } = await supabase.from('users').select('id').eq('user_id', user.user_id).single();
             if (!profile) return;
-            
+
             setAuthUserId(profile.id);
 
-            // Fetch initial notifications
             const { data, error } = await supabase
                 .from('notifications')
                 .select('*')
@@ -564,17 +572,16 @@ const NotificationBell = ({ user }: { user: User | null }) => {
         setupNotifications();
     }, [user]);
 
-    // This effect sets up the real-time listener
     useEffect(() => {
         if (!authUserId) return;
 
         const channel = supabase.channel(`notifications:${authUserId}`)
-            .on('postgres_changes', { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'notifications', 
-                filter: `user_id=eq.${authUserId}` 
-            }, 
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${authUserId}`
+            },
             (payload) => {
                 setNotifications(prev => [payload.new, ...prev]);
                 setUnreadCount(prev => prev + 1);
@@ -601,7 +608,7 @@ const NotificationBell = ({ user }: { user: User | null }) => {
         if (unreadIds.length === 0 || !authUserId) return;
 
         const { error } = await supabase.from('notifications').update({ is_read: true }).in('id', unreadIds);
-        
+
         if (error) {
             console.error("Error marking notifications as read:", error);
         } else {
@@ -612,7 +619,6 @@ const NotificationBell = ({ user }: { user: User | null }) => {
 
     return (
         <>
-            {/* This is the bell icon button */}
             <div className="relative">
                 <button onClick={() => setIsModalOpen(true)} className="relative text-gray-600 hover:text-red-600 transition p-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
@@ -624,9 +630,8 @@ const NotificationBell = ({ user }: { user: User | null }) => {
                     )}
                 </button>
             </div>
-            
-            {/* This renders the modal when isModalOpen is true */}
-            <NotificationModal 
+
+            <NotificationModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 notifications={notifications}
@@ -636,45 +641,9 @@ const NotificationBell = ({ user }: { user: User | null }) => {
     );
 };
 
-//========================================================//
-// 5. CAMPAIGN-SPECIFIC COMPONENTS
-//========================================================//
-
-const CampaignListItem = ({ campaign }: { campaign: Campaign }) => {
-    return (
-        <Card className="flex flex-col md:flex-row gap-6 p-4">
-            {campaign.photo_url && (
-                 <Image
-                    src={campaign.photo_url}
-                    width={200}
-                    height={200}
-                    alt={campaign.title}
-                    className="rounded-xl object-cover w-full md:w-48 h-48 md:h-auto"
-                />
-            )}
-            <div className="flex flex-col justify-between flex-1">
-                <div>
-                    {/* ADD THE STATUS BADGE HERE */}
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="font-bold text-xl text-red-700 pr-4">{campaign.title}</p>
-                        <StatusBadge status={getCampaignStatus(campaign)} />
-                    </div>
-                 <p className="text-sm text-gray-600">{campaign.description}</p>
-                </div>
-                <div className="border-t my-4"></div>
-                    <div className="space-y-2 text-sm text-gray-700">
-                        <p className="flex items-center gap-2"><CalendarIconSvg /> <span>{new Date(campaign.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} | {campaign.time}</span></p>
-                        <p className="flex items-center gap-2"><LocationMarkerIcon /> <span>{campaign.location}</span></p>
-                    </div>
-                </div>
-        </Card>
-    );
-};
-
 function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isOpen: boolean; onClose: () => void; notifications: any[]; markAsRead: () => void; }) {
-    
+
     useEffect(() => {
-        // Mark messages as read when the modal is opened
         if (isOpen) {
             markAsRead();
         }
@@ -685,7 +654,7 @@ function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isO
     const notificationStyles: Record<string, { icon: ReactNode, color: string }> = {
         success: { icon: <CheckCircleIcon />, color: 'green' },
         error: { icon: <XCircleIcon />, color: 'red' },
-        info: { icon: <XCircleIcon />, color: 'blue' },
+        info: { icon: <XCircleIcon />, color: 'blue' }, // Assuming info uses XCircle for consistency
     };
 
     return (
@@ -695,15 +664,16 @@ function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isO
                     <h2 className="text-xl font-bold text-gray-800">Notifications</h2>
                     <button onClick={onClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition"><XIcon /></button>
                 </div>
-                
+
                 <div className="flex-1 overflow-y-auto">
                     {notifications.length > 0 ? (
                         notifications.map(n => {
                             const style = notificationStyles[n.type] || notificationStyles.info;
                             return (
                                 <div key={n.id} className={`relative flex gap-4 p-5 border-b border-gray-100 ${!n.is_read ? 'bg-red-50/50' : 'bg-white'}`}>
+                                    {/* Vertical color bar indicator */}
                                     <div className={`absolute left-0 top-0 bottom-0 w-1 bg-${style.color}-500`}></div>
-                                    <div className={`mt-1 text-${style.color}-500 flex-shrink-0`}>
+                                    <div className={`mt-1 text-${style.color}-500 flex-shrink-0 ml-2`}> {/* Added ml-2 for spacing */}
                                         {style.icon}
                                     </div>
                                     <div className="flex-1">
@@ -729,6 +699,41 @@ function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isO
         </div>
     );
 }
+
+//========================================================//
+// 5. CAMPAIGN-SPECIFIC COMPONENTS
+//========================================================//
+
+const CampaignListItem = ({ campaign }: { campaign: Campaign }) => {
+    return (
+        <Card className="flex flex-col md:flex-row gap-6 p-4">
+            {campaign.photo_url && (
+                 <Image
+                    src={campaign.photo_url}
+                    width={200}
+                    height={200}
+                    alt={campaign.title}
+                    className="rounded-xl object-cover w-full md:w-48 h-48 md:h-auto"
+                />
+            )}
+            <div className="flex flex-col justify-between flex-1">
+                <div>
+                    <div className="flex justify-between items-start mb-2">
+                        <p className="font-bold text-xl text-red-700 pr-4">{campaign.title}</p>
+                        <StatusBadge status={getCampaignStatus(campaign)} />
+                    </div>
+                   <p className="text-sm text-gray-600">{campaign.description}</p>
+                </div>
+                <div className="border-t my-4"></div>
+                    <div className="space-y-2 text-sm text-gray-700">
+                        <p className="flex items-center gap-2"><CalendarIconSvg /> <span>{new Date(campaign.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} | {campaign.time}</span></p>
+                        <p className="flex items-center gap-2"><LocationMarkerIcon /> <span>{campaign.location}</span></p>
+                    </div>
+                </div>
+        </Card>
+    );
+};
+
 
 //========================================================//
 // 6. SKELETON LOADER COMPONENTS
@@ -786,7 +791,7 @@ const CampaignsPageSkeleton = () => (
 );
 
 //========================================================//
-// 7. MAIN PAGE COMPONENT (Campaigns Page)
+// 7. MAIN PAGE COMPONENT (Campaigns Page - Updated)
 //========================================================//
 
 export default function CampaignsPage() {
@@ -796,56 +801,113 @@ export default function CampaignsPage() {
     const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
     const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [latestAppointment, setLatestAppointment] = useState<any | null>(null);
+    const [daysLeft, setDaysLeft] = useState(84);
     const router = useRouter();
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            const { data: { user: authUser } } = await supabase.auth.getUser();
-            if (!authUser) {
-                router.replace("/");
-                return;
-            }
-            const { data: profile } = await supabase.from('users').select('*').eq('id', authUser.id).single();
-            if (!profile) {
-                router.replace("/");
-                return;
-            }
-             setUser({
-                name: profile.name,
-                bloodType: profile.blood_type,
-                profileImage: profile.profile_image_url || '/images/user.png',
-                user_id: profile.user_id,
-            });
-
-            const { data: campaignData, error } = await supabase
-                .from('blood_campaigns')
-                .select('*')
-                .order('date', { ascending: false });
-
-            if (error) {
-                console.error("Error fetching campaigns:", error);
-            } else {
-                setCampaigns(campaignData || []);
-            }
-
-            setLoading(false);
-        };
-        fetchData();
-    }, [router]);
-    
-    const addRequest = async (payload: any) => { 
-        if (!user) { 
-            Swal.fire("Error", "You must be logged in to make a request.", "error"); 
-            return; 
+    const fetchData = async () => {
+        // setLoading(true); // Consider setting loading only if user is null initially
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) {
+            router.replace("/");
+            return;
         }
 
+        // Fetch profile only if user state is null
+        let currentProfile = user;
+        if (!currentProfile) {
+            const { data: profileData } = await supabase.from('users').select('*').eq('id', authUser.id).single();
+            if (!profileData) {
+                router.replace("/");
+                return;
+            }
+            currentProfile = {
+                name: profileData.name,
+                bloodType: profileData.blood_type,
+                profileImage: profileData.profile_image_url || '/images/user.png',
+                user_id: profileData.user_id,
+            };
+            setUser(currentProfile);
+        }
+
+
+        // Fetch campaigns, latest appointment, and last donation (for eligibility)
+        const [
+            { data: campaignData, error: campaignError },
+            { data: appointmentData, error: appointmentError },
+            { data: lastDonationData, error: lastDonationError }
+        ] = await Promise.all([
+            supabase.from('blood_campaigns').select('*').order('date', { ascending: false }),
+            supabase.from('appointments').select('*').eq('user_id', currentProfile.user_id).eq('status', 'Pending').order('date', { ascending: true }).limit(1).single(),
+            supabase.from('blood_inventory').select('date_received').eq('user_id', currentProfile.user_id).order('date_received', { ascending: false }).limit(1).single()
+        ]);
+
+        if (campaignError) console.error("Error fetching campaigns:", campaignError);
+        else setCampaigns(campaignData || []);
+
+        if (appointmentError && appointmentError.code !== 'PGRST116') console.error("Error fetching appointment:", appointmentError);
+        else setLatestAppointment(appointmentData);
+
+        if (lastDonationError && lastDonationError.code !== 'PGRST116') {
+             console.error("Error fetching last donation:", lastDonationError);
+             setDaysLeft(0);
+        } else if (lastDonationData) {
+            const lastDonationDate = new Date(lastDonationData.date_received);
+            const today = new Date();
+            const timeDiff = today.getTime() - lastDonationDate.getTime();
+            const daysSinceLast = Math.floor(timeDiff / (1000 * 3600 * 24));
+            setDaysLeft(Math.max(0, 84 - daysSinceLast));
+        } else {
+            setDaysLeft(0);
+        }
+
+        setLoading(false); // Set loading false after all fetches
+    };
+
+    useEffect(() => {
+        fetchData(); // Initial fetch
+
+        // Realtime subscription
+        const userId = user?.user_id; // Get user_id if available
+        if (!userId) return; // Don't subscribe if user_id is not yet available
+
+        const appointmentChannel = supabase.channel('public:appointments_campaign')
+          .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'appointments', filter: `user_id=eq.${userId}` },
+            (payload) => {
+              console.log('Appointment change received!', payload);
+              fetchData(); // Refetch all data on change
+            }
+          )
+          .subscribe((status, err) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('Connected to appointment channel!');
+            }
+            if (err) {
+              console.error('Appointment subscription error:', err);
+            }
+          });
+
+        // Cleanup function
+        return () => {
+            console.log("Removing appointment channel subscription");
+            supabase.removeChannel(appointmentChannel);
+        };
+    // Re-run effect if router or user_id changes
+    }, [router, user?.user_id]);
+
+
+    const addRequest = async (payload: any) => {
+        if (!user) {
+            Swal.fire("Error", "You must be logged in to make a request.", "error");
+            return;
+        }
         try {
-            const { error } = await supabase.from("blood_requests").insert([{ 
-                ...payload, 
-                user_id: user.user_id, 
-                status: "Pending", 
-                requested_at: new Date().toISOString() 
+            const { error } = await supabase.from("blood_requests").insert([{
+                ...payload,
+                user_id: user.user_id,
+                status: "Pending",
+                requested_at: new Date().toISOString()
             }]);
             if (error) throw error;
             Swal.fire("Success", "Your blood request has been submitted successfully!", "success");
@@ -855,44 +917,73 @@ export default function CampaignsPage() {
         }
     };
 
-    const filteredCampaigns = campaigns.filter(campaign => 
+    const filteredCampaigns = campaigns.filter(campaign =>
         campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         campaign.location.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    
+
+    const saveAppointment = async (formData: any) => {
+        if (!user) {
+            Swal.fire("Error", "You must be logged in.", "error");
+            return;
+        }
+        try {
+            let error;
+            let title: string;
+
+            if (latestAppointment) { // UPDATE
+                const { error: updateError } = await supabase
+                    .from("appointments")
+                    .update({ date: formData.date, time: formData.time, location: formData.location, notes: formData.notes })
+                    .eq('id', latestAppointment.id);
+                error = updateError;
+                title = "Updated!";
+            } else { // INSERT
+                const { error: insertError } = await supabase.from("appointments").insert([
+                    { ...formData, status: "Pending", user_id: user.user_id, donor_name: user.name }
+                ]);
+                error = insertError;
+                title = "Booked!";
+            }
+            if (error) throw error;
+            Swal.fire({ icon: "success", title: title, text: `Your appointment has been ${title === 'Booked!' ? 'booked' : 'updated'}.`, timer: 2000, showConfirmButton: false });
+            setIsAppointmentModalOpen(false);
+            // fetchData(); // Let realtime handle UI update
+        } catch (err: any) {
+             Swal.fire({ icon: "error", title: "Error", text: err.message || "Failed to save appointment." });
+        }
+    };
+
+    const handleOpenAppointmentModal = () => {
+        if (latestAppointment) {
+            setIsAppointmentModalOpen(true); // Open for editing
+        } else if (daysLeft > 0) {
+            Swal.fire({ // Show eligibility info
+                icon: 'info',
+                title: 'Not Yet Eligible',
+                text: `You can book your next appointment in ${daysLeft} days.`,
+                confirmButtonColor: '#DC2626',
+            });
+        } else {
+            setIsAppointmentModalOpen(true); // Open for booking
+        }
+    };
+
     if (loading || !user) {
         return <CampaignsPageSkeleton />;
     }
 
-
-    const saveAppointment = async (payload: any) => {
-            if (!user) {
-                Swal.fire("Error", "You must be logged in to book an appointment.", "error");
-                return;
-            }
-            try {
-                const { error } = await supabase.from("appointments").insert([
-                    { ...payload, status: "Pending" }
-                ]);
-                if (error) throw error;
-                Swal.fire({ icon: "success", title: "Booked!", text: "Your appointment has been successfully booked.", timer: 2000, showConfirmButton: false });
-                setIsAppointmentModalOpen(false);
-            } catch (err: any) {
-                 Swal.fire({ icon: "error", title: "Error", text: err.message || "Failed to book appointment." });
-            }
-        };
-
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                
+
                 <Header user={user} onOpenRequest={() => setIsRequestModalOpen(true)} />
                 <PageHeader title="Blood Campaigns" />
                 <main className="pb-24 md:pb-8">
-                    
+
 
                     <div className="my-4">
-                        <input 
+                        <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -914,18 +1005,29 @@ export default function CampaignsPage() {
                     </div>
                 </main>
             </div>
-            
-            <BottomNav user={user} onOpenAppointmentModal={() => setIsAppointmentModalOpen(true)} />
+
+            <BottomNav
+                user={user}
+                onOpenAppointmentModal={handleOpenAppointmentModal}
+                appointment={latestAppointment} // Pass latest appointment data
+            />
              {isRequestModalOpen && user && (
-                <AddRequestForm 
-                    user={user} 
-                    onClose={() => setIsRequestModalOpen(false)} 
-                    onSave={addRequest} 
+                <AddRequestForm
+                    user={user}
+                    onClose={() => setIsRequestModalOpen(false)}
+                    onSave={addRequest}
                 />
             )}
-            {isAppointmentModalOpen && user && <AppointmentModal isOpen={isAppointmentModalOpen} user={user} onClose={() => setIsAppointmentModalOpen(false)} onSave={saveAppointment} />}
-        <Chatbot />
+
+            {isAppointmentModalOpen && user && <AppointmentModal
+                isOpen={isAppointmentModalOpen}
+                user={user}
+                onClose={() => setIsAppointmentModalOpen(false)}
+                onSave={saveAppointment}
+                existingAppointment={latestAppointment} // Pass latest appointment data
+            />}
+            <Chatbot />
         </div>
-        
+
     );
 }

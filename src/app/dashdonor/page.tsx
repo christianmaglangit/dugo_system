@@ -108,7 +108,12 @@ const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void
     );
 };
 
-const DonationStatusCard = ({ user, daysLeft, onOpenAppointmentModal }: { user: User, daysLeft: number, onOpenAppointmentModal: () => void }) => {
+const DonationStatusCard = ({ user, daysLeft, onOpenAppointmentModal, appointment }: { 
+    user: User, 
+    daysLeft: number, 
+    onOpenAppointmentModal: () => void,
+    appointment: any | null 
+}) => {
     const progress = Math.max(0, ((84 - daysLeft) / 84) * 100);
     const [copied, setCopied] = useState(false);
     const handleCopy = () => {
@@ -116,6 +121,13 @@ const DonationStatusCard = ({ user, daysLeft, onOpenAppointmentModal }: { user: 
         setCopied(true);
         setTimeout(() => setCopied(false), 2000); 
     };
+
+    // Logic para sa button text
+    const buttonText = appointment
+        ? 'Edit Appointment'
+        : daysLeft > 0
+            ? `Eligible in ${daysLeft} days`
+            : 'Book Appointment';
 
     return (
         <div className="md:col-span-1 bg-red-600 text-white rounded-3xl p-6 shadow-lg shadow-red-500/30 flex flex-col justify-between">
@@ -145,7 +157,7 @@ const DonationStatusCard = ({ user, daysLeft, onOpenAppointmentModal }: { user: 
                 onClick={onOpenAppointmentModal}
                 className="w-full mt-2 text-center py-3 bg-white text-red-600 font-bold rounded-xl shadow-md hover:bg-red-50 transition"
             >
-                {daysLeft > 0 ? `Eligible in ${daysLeft} days` : 'Book Appointment'}
+                {buttonText}
             </button>
         </div>
     );
@@ -332,7 +344,11 @@ const CampaignCard = ({ campaign }: { campaign: any | null }) => {
     );
 };
 
-const BottomNav = ({ user, onOpenAppointmentModal }: { user: User | null; onOpenAppointmentModal: () => void }) => {
+const BottomNav = ({ user, onOpenAppointmentModal, appointment }: { 
+    user: User | null; 
+    onOpenAppointmentModal: () => void;
+    appointment: any | null;
+}) => {
     const router = useRouter();
     const pathname = usePathname();
     const navItems = [
@@ -364,11 +380,14 @@ const BottomNav = ({ user, onOpenAppointmentModal }: { user: User | null; onOpen
             {navItems.map((item) => {
                 const isActive = pathname === item.path;
                 if (item.primary) {
+                    const label = appointment ? 'Edit' : 'Book';
+                    const title = appointment ? 'Edit Appointment' : 'Book Appointment';
+
                     return ( 
-                        <button key={item.label} onClick={onOpenAppointmentModal} className="text-white -mt-8" title="Book Appointment">
+                        <button key={item.label} onClick={onOpenAppointmentModal} className="text-white -mt-8" title={title}>
                             <div className="w-16 h-16 bg-red-600 rounded-full flex flex-col items-center justify-center shadow-lg hover:bg-red-700 transition">
                                 {item.icon}
-                                <span className="text-xs font-medium mt-0.5">Book</span>
+                                <span className="text-xs font-medium mt-0.5">{label}</span>
                             </div>
                         </button> 
                     );
@@ -670,7 +689,7 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                                  <option value="No">Standard Request</option>
                                  <option value="Yes">Indigency / Low-Income Request</option>
                              </select>
-                         </InputField>
+                       </InputField>
                         <div className="grid grid-cols-2 gap-4">
                             <InputField label="Blood Type" name="blood_type">
                                 <select required value={form.blood_type} onChange={(e) => setForm({ ...form, blood_type: e.target.value })} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -724,13 +743,39 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
         </div>
     );
 }
-function AppointmentModal({ isOpen, user, onClose, onSave }: { isOpen: boolean; user: User; onClose: () => void; onSave: (payload: any) => void; }) {
-    const [date, setDate] = useState("");
-    const [time, setTime] = useState("");
-    const [location, setLocation] = useState("");
-    const [notes, setNotes] = useState("");
+
+function AppointmentModal({ isOpen, user, onClose, onSave, existingAppointment }: { 
+    isOpen: boolean; 
+    user: User; 
+    onClose: () => void; 
+    onSave: (payload: any) => void;
+    existingAppointment: any | null;
+}) {
+    // I-initialize ang state gamit ang existing data kung naa
+    const [date, setDate] = useState(existingAppointment?.date ? new Date(existingAppointment.date).toISOString().split('T')[0] : "");
+    const [time, setTime] = useState(existingAppointment?.time || "");
+    const [location, setLocation] = useState(existingAppointment?.location || "");
+    const [notes, setNotes] = useState(existingAppointment?.notes || "");
     const [saving, setSaving] = useState(false);
+
+    // useEffect para mo-update ang form kung mag-usab ang props
+    useEffect(() => {
+        if (existingAppointment) {
+            setDate(existingAppointment.date ? new Date(existingAppointment.date).toISOString().split('T')[0] : "");
+            setTime(existingAppointment.time || "");
+            setLocation(existingAppointment.location || "");
+            setNotes(existingAppointment.notes || "");
+        } else {
+            // I-reset kung bag-o nga appointment
+            setDate("");
+            setTime("");
+            setLocation("");
+            setNotes("");
+        }
+    }, [isOpen, existingAppointment]);
+
     if (!isOpen) return null;
+
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!user || !date) {
@@ -738,9 +783,8 @@ function AppointmentModal({ isOpen, user, onClose, onSave }: { isOpen: boolean; 
             return;
         }
         setSaving(true);
+        // I-pasa lang ang form data. Ang parent na ang bahala sa logic
         await onSave({
-            user_id: user.user_id,
-            donor_name: user.name,
             date,
             time: time || null,
             location: location || null,
@@ -748,12 +792,15 @@ function AppointmentModal({ isOpen, user, onClose, onSave }: { isOpen: boolean; 
         });
         setSaving(false);
     };
+
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-[60] p-4">
             <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
                 <form onSubmit={handleSubmit} className="relative p-8 md:p-10 overflow-y-auto max-h-[90vh]">
                     <button type="button" onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon /></button>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Book an Appointment</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                        {existingAppointment ? 'Edit Your Appointment' : 'Book an Appointment'}
+                    </h2>
                     <div className="space-y-4">
                         <InputField label="Your Name" name="donorName">
                            <input type="text" value={user.name} readOnly disabled className="bg-gray-200 border border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"/>
@@ -769,7 +816,12 @@ function AppointmentModal({ isOpen, user, onClose, onSave }: { isOpen: boolean; 
                         </div>
                         <div className="flex justify-end gap-3 pt-4">
                             <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
-                            <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 font-semibold text-white transition">{saving ? "Booking..." : "Book Appointment"}</button>
+                            <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 font-semibold text-white transition">
+                                {saving 
+                                    ? (existingAppointment ? "Updating..." : "Booking...")
+                                    : (existingAppointment ? "Update Appointment" : "Book Appointment")
+                                }
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -780,13 +832,13 @@ function AppointmentModal({ isOpen, user, onClose, onSave }: { isOpen: boolean; 
 
 const BloodSearch = () => {
     const [selectedBloodType, setSelectedBloodType] = useState("");
+    const [selectedComponent, setSelectedComponent] = useState("");
     const [searchResults, setSearchResults] = useState<BloodBag[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [searchPerformed, setSearchPerformed] = useState(false);
-    
     const handleSearch = async () => {
-        if (!selectedBloodType) {
-            Swal.fire("Info", "Please select a blood type to search.", "info");
+        if (!selectedBloodType || !selectedComponent) {
+            Swal.fire("Info", "Please select a blood type AND a component to search.", "info");
             return;
         }
         setIsSearching(true);
@@ -797,6 +849,7 @@ const BloodSearch = () => {
                 .from('blood_inventory')
                 .select('blood_bag_id, type, component, name, date_received')
                 .eq('type', selectedBloodType)
+                .eq('component', selectedComponent) 
                 .eq('status', 'Added to Inventory');
             
             if (error) throw error;
@@ -815,8 +868,7 @@ const BloodSearch = () => {
                 <select 
                     value={selectedBloodType} 
                     onChange={(e) => setSelectedBloodType(e.target.value)}
-                    className="w-full flex-grow px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
+                    className="w-full flex-grow px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500">
                     <option value="">-- Select Blood Type --</option>
                     <option value="A+">A+</option>
                     <option value="A-">A-</option>
@@ -827,9 +879,20 @@ const BloodSearch = () => {
                     <option value="O+">O+</option>
                     <option value="O-">O-</option>
                 </select>
+                <select 
+                    value={selectedComponent} 
+                    onChange={(e) => setSelectedComponent(e.target.value)}
+                    className="w-full flex-grow px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <option value="">-- Select Component --</option>
+                    <option value="Whole Blood">Whole Blood</option>
+                    <option value="Red Blood Cells">Red Blood Cells</option>
+                    <option value="Platelets">Platelets</option>
+                    <option value="Plasma">Plasma</option>
+                </select>
+                
                 <button 
                     onClick={handleSearch}
-                    disabled={isSearching || !selectedBloodType}
+                    disabled={isSearching || !selectedBloodType || !selectedComponent}
                     className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-3 rounded-xl text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                     <SearchIcon />
@@ -842,7 +905,7 @@ const BloodSearch = () => {
                 ) : !searchPerformed ? (
                     <div className="text-center py-12 text-gray-500">
                         <InfoIcon className="mx-auto"/>
-                        <p className="mt-4 font-semibold">Select a blood type to begin your search.</p>
+                        <p className="mt-4 font-semibold">Select a blood type and component to begin.</p>
                     </div>
                 ) : searchResults.length > 0 ? (
                     searchResults.map((bag) => (
@@ -864,8 +927,8 @@ const BloodSearch = () => {
                 ) : (
                     <div className="text-center py-12 text-gray-500">
                         <InfoIcon className="mx-auto"/>
-                        <p className="mt-4 font-semibold">No available '{selectedBloodType}' blood found.</p>
-                        <p className="text-sm">Please try another blood type or check back later.</p>
+                        <p className="mt-4 font-semibold">No available '{selectedBloodType} - {selectedComponent}' blood found.</p>
+                        <p className="text-sm">Please try another combination or check back later.</p>
                     </div>
                 )}
             </div>
@@ -949,7 +1012,7 @@ export default function ResponsiveDonorDashboard() {
     const fetchData = async () => {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) {
-            router.replace("/"); 
+            router.replace("/");
             return;
         }
 
@@ -965,6 +1028,7 @@ export default function ResponsiveDonorDashboard() {
             return;
         }
 
+        // Set user state only once if it's null
         if(!user) {
             setUser({
                 name: profile.name,
@@ -973,41 +1037,66 @@ export default function ResponsiveDonorDashboard() {
                 user_id: profile.user_id,
             });
         }
-        
+
+        // --- SECTION NGA GI-USAB ---
+
+        // 1. Fetch ALL donations with their latest journey stage
+        const { data: donations, error: donationsError } = await supabase
+            .from('blood_inventory')
+            .select(`
+                *,
+                blood_journey ( stage )
+            `)
+            .eq('user_id', profile.user_id)
+            .order('date_received', { ascending: false });
+
+        // 2. Fetch latest appointment, campaign, request (concurrently)
         const [
-            { data: donations, count },
             { data: appointment },
             { data: campaign },
             { data: request }
         ] = await Promise.all([
-            supabase.from('blood_inventory').select('*, blood_journey(stage)', { count: 'exact' }).eq('user_id', profile.user_id).order('date_received', { ascending: false }),
             supabase.from('appointments').select('*').eq('user_id', profile.user_id).eq('status', 'Pending').order('date', { ascending: true }).limit(1).single(),
             supabase.from('blood_campaigns').select('*').gte('date', new Date().toISOString()).order('created_at', { ascending: false }).limit(1).single(),
             supabase.from('blood_requests').select('*').eq('user_id', profile.user_id).order('requested_at', { ascending: false }).limit(1).single()
         ]);
 
-        if (donations && donations.length > 0) {
+        // 3. Process donations para sa stats
+        if (donationsError) {
+            console.error("Error fetching donations:", donationsError);
+            setDonationStats({ livesSaved: 0, lastDonation: null, daysLeft: 0 }); // Default sa error
+            setRecentDonation(null);
+        } else if (donations && donations.length > 0) {
             const lastDonationDate = new Date(donations[0].date_received);
             const today = new Date();
             const timeDiff = today.getTime() - lastDonationDate.getTime();
             const daysSinceLast = Math.floor(timeDiff / (1000 * 3600 * 24));
             const daysLeft = Math.max(0, 84 - daysSinceLast);
-            
+
+            // BAG-O NGA CALCULATION PARA SA LIVES SAVED
+            const transfusedCount = donations.filter(d =>
+                Array.isArray(d.blood_journey) && // Check kung array ba
+                d.blood_journey.length > 0 &&      // Check kung naay sulod
+                d.blood_journey[0].stage === 5     // Check kung ang stage kay 5 (Transfused)
+            ).length;
+
             setDonationStats({
-                livesSaved: (count || 0) * 3,
+                livesSaved: transfusedCount, // Gigamit na ang bag-ong count
                 lastDonation: donations[0].date_received,
                 daysLeft: daysLeft,
             });
-            setRecentDonation(donations[0]);
+            setRecentDonation(donations[0]); // Ang recent donation mao ra gihapon
         } else {
+            // No donations yet
             setDonationStats({ livesSaved: 0, lastDonation: null, daysLeft: 0 });
             setRecentDonation(null);
         }
-        
+
+        // --- END SA SECTION NGA GI-USAB ---
+
         setLatestAppointment(appointment);
         setUpcomingCampaign(campaign);
         setRecentRequest(request);
-        
         setLoading(false);
     };
 
@@ -1045,34 +1134,61 @@ export default function ResponsiveDonorDashboard() {
         }
     };
 
-    const saveAppointment = async (payload: any) => {
+    const saveAppointment = async (formData: any) => {
         if (!user) {
-            Swal.fire("Error", "You must be logged in to book an appointment.", "error");
+            Swal.fire("Error", "You must be logged in.", "error");
             return;
         }
         try {
-            const { error } = await supabase.from("appointments").insert([
-                { ...payload, status: "Pending" }
-            ]);
+            let error;
+            let title: string;
+
+            if (latestAppointment) {
+                // UPDATE LOGIC
+                const { error: updateError } = await supabase
+                    .from("appointments")
+                    .update({ 
+                        date: formData.date,
+                        time: formData.time,
+                        location: formData.location,
+                        notes: formData.notes
+                    })
+                    .eq('id', latestAppointment.id);
+                error = updateError;
+                title = "Updated!";
+            } else {
+                // INSERT LOGIC
+                const { error: insertError } = await supabase.from("appointments").insert([
+                    { ...formData, status: "Pending", user_id: user.user_id, donor_name: user.name }
+                ]);
+                error = insertError;
+                title = "Booked!";
+            }
+            
             if (error) throw error;
-            Swal.fire({ icon: "success", title: "Booked!", text: "Your appointment has been successfully booked.", timer: 2000, showConfirmButton: false });
+            
+            Swal.fire({ icon: "success", title: title, text: `Your appointment has been ${title === 'Booked!' ? 'booked' : 'updated'}.`, timer: 2000, showConfirmButton: false });
             setIsAppointmentModalOpen(false);
+            
         } catch (err: any) {
-             Swal.fire({ icon: "error", title: "Error", text: err.message || "Failed to book appointment." });
+             Swal.fire({ icon: "error", title: "Error", text: err.message || "Failed to save appointment." });
         }
     };
     
     const handleOpenAppointmentModal = () => {
-      if (donationStats.daysLeft > 0) {
-        Swal.fire({
-          icon: 'info',
-          title: 'Not Yet Eligible',
-          text: `You can book your next appointment in ${donationStats.daysLeft} days.`,
-          confirmButtonColor: '#DC2626',
-        });
-      } else {
-        setIsAppointmentModalOpen(true);
-      }
+        if (latestAppointment) {
+            setIsAppointmentModalOpen(true);
+        } else if (donationStats.daysLeft > 0) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Not Yet Eligible',
+                text: `You can book your next appointment in ${donationStats.daysLeft} days.`,
+                confirmButtonColor: '#DC2626',
+            });
+        } else {
+            // Case 3: Wala pay appointment, ug ELIGIBLE
+            setIsAppointmentModalOpen(true);
+        }
     };
 
     if (loading || !user) {
@@ -1090,9 +1206,8 @@ export default function ResponsiveDonorDashboard() {
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <Header user={user} onOpenRequest={() => setIsRequestModalOpen(true)} />
                 <main className="pb-24 md:pb-8">
-                    {/* --- MOBILE LAYOUT --- */}
                     <div className="md:hidden flex flex-col gap-8">
-                        <DonationStatusCard user={user} daysLeft={donationStats.daysLeft} onOpenAppointmentModal={handleOpenAppointmentModal} />
+                        <DonationStatusCard user={user} daysLeft={donationStats.daysLeft} onOpenAppointmentModal={handleOpenAppointmentModal} appointment={latestAppointment} />
                         <BloodJourneyTracker donation={recentDonation} />
                         <BloodSearch />
                         <YourImpact livesSaved={donationStats.livesSaved} bloodType={user.bloodType} lastDonation={donationStats.lastDonation} appointment={latestAppointment} />
@@ -1100,11 +1215,9 @@ export default function ResponsiveDonorDashboard() {
                         <CampaignCard campaign={upcomingCampaign} />
                         <RecentRequestCard request={recentRequest} />
                     </div>
-
-                    {/* --- DESKTOP LAYOUT --- */}
                     <div className="hidden md:block">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <DonationStatusCard user={user} daysLeft={donationStats.daysLeft} onOpenAppointmentModal={handleOpenAppointmentModal} />
+                            <DonationStatusCard user={user} daysLeft={donationStats.daysLeft} onOpenAppointmentModal={handleOpenAppointmentModal} appointment={latestAppointment} />
                             <YourImpact livesSaved={donationStats.livesSaved} bloodType={user.bloodType} lastDonation={donationStats.lastDonation} appointment={latestAppointment} />
                         </div>
                         <div className="mt-8">
@@ -1122,11 +1235,18 @@ export default function ResponsiveDonorDashboard() {
                 </main>
             </div>
             
-            <BottomNav user={user} onOpenAppointmentModal={handleOpenAppointmentModal} />            {isRequestModalOpen && <AddRequestForm user={user} onClose={() => setIsRequestModalOpen(false)} onSave={addRequest} />}
-            {isAppointmentModalOpen && user && <AppointmentModal isOpen={isAppointmentModalOpen} user={user} onClose={() => setIsAppointmentModalOpen(false)} onSave={saveAppointment} />}
+            <BottomNav user={user} onOpenAppointmentModal={handleOpenAppointmentModal} appointment={latestAppointment} />            
+            {isRequestModalOpen && <AddRequestForm user={user} onClose={() => setIsRequestModalOpen(false)} onSave={addRequest} />}
+            
+            {isAppointmentModalOpen && user && <AppointmentModal 
+                isOpen={isAppointmentModalOpen} 
+                user={user} 
+                onClose={() => setIsAppointmentModalOpen(false)} 
+                onSave={saveAppointment}
+                existingAppointment={latestAppointment}
+            />}
+            
             <Chatbot />
         </div>
     );
 }
-
-

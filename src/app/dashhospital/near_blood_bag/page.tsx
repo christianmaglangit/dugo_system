@@ -117,7 +117,7 @@ interface BloodInventory {
   status: string;
   date_received: string;
   added_by: string | null;
-  name: string | null; // This will be populated
+  name: string | null; 
 }
 
 export default function NearBloodBagPage() {
@@ -127,18 +127,36 @@ export default function NearBloodBagPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
   useEffect(() => {
     const fetchBloodData = async () => {
       setLoading(true);
       
-      // ✅ I-kuha ang date karon para sa filter
       const today = new Date().toISOString(); 
+      const { data: { user } } = await supabase.auth.getUser();
 
+      if (!user) {
+        console.error("No user logged in.");
+        setLoading(false);
+        return;
+      }
+      const { data: profile, error: profileError } = await supabase
+        .from("users")
+        .select("user_id")
+        .eq("email", user.email)
+        .single();
+
+      if (profileError || !profile) {
+        console.error("Error fetching user profile:", profileError);
+        setLoading(false);
+        return; 
+      }
+
+      const loggedInUserId = profile.user_id;
       const { data: inventoryData, error: inventoryError } = await supabase
         .from("blood_inventory")
         .select("*")
-        .gt("expiration_date", today) // ✅ IDUGANG KINI NGA LINYA
+        .gt("expiration_date", today)
+        .neq("added_by", loggedInUserId) 
         .order("date_received", { ascending: false });
 
       if (inventoryError) {
@@ -146,14 +164,13 @@ export default function NearBloodBagPage() {
         setLoading(false);
         return;
       }
-      
       const { data: usersData, error: usersError } = await supabase
         .from("users")
         .select("user_id, name");
 
       if (usersError) {
         console.error("Error fetching users:", usersError);
-        setBloodData(inventoryData || []); // Use data even if user fetch fails
+        setBloodData(inventoryData || []);
         setLoading(false);
         return;
       }
@@ -178,7 +195,8 @@ export default function NearBloodBagPage() {
       (blood.type?.toLowerCase() || "").includes(term) ||
       (blood.blood_bag_id?.toLowerCase() || "").includes(term) ||
       (blood.added_by?.toLowerCase() || "").includes(term) ||
-      (blood.name?.toLowerCase() || "").includes(term)
+      (blood.name?.toLowerCase() || "").includes(term) ||
+      (blood.component?.toLowerCase() || "").includes(term) 
     );
   });
   
@@ -221,17 +239,17 @@ export default function NearBloodBagPage() {
                   <thead className="bg-gray-50">
                     <tr className="text-left text-gray-500 uppercase text-xs font-semibold">
                       <th className="p-4">Blood Bag ID</th>
-                      <th className="p-4">Name</th>
+                      <th className="p-4">Location</th>
                       <th className="p-4 text-center">Blood Type</th>
                       <th className="p-4">Component</th>
                       <th className="p-4 text-center">Units</th>
                       <th className="p-4">Expiration Date</th>
-                      <th className="p-4 text-left">Location</th>
+                      <th className="p-4 text-left">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {loading ? (<tr><td colSpan={7} className="text-center p-8 text-gray-500">Loading...</td></tr>) : 
-                    filteredData.length === 0 ? (<tr><td colSpan={7} className="text-center p-8 text-gray-500">No records found.</td></tr>) : 
+                    filteredData.length === 0 ? (<tr><td colSpan={7} className="text-center p-8 text-gray-500">No nearby records found.</td></tr>) : 
                     (
                         filteredData.map((blood) => (
                           <tr key={blood.id} className="hover:bg-gray-50">

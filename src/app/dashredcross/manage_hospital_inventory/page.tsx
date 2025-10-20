@@ -127,6 +127,7 @@ interface BloodInventory {
   date_received: string;
   blood_bag_id: string;
   added_by: string | null;
+  name: string | null;
 }
 
 export default function HospitalBloodInventoryPage() {
@@ -149,13 +150,14 @@ export default function HospitalBloodInventoryPage() {
   }, []);
   
   const filteredData = bloodData.filter((blood) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      blood.type.toLowerCase().includes(term) ||
-      (blood.added_by && blood.added_by.toLowerCase().includes(term)) ||
-      (blood.blood_bag_id && blood.blood_bag_id.toLowerCase().includes(term))
-    );
-  });
+    const term = searchTerm.toLowerCase();
+    return (
+      blood.type.toLowerCase().includes(term) ||
+      (blood.added_by && blood.added_by.toLowerCase().includes(term)) ||
+      (blood.blood_bag_id && blood.blood_bag_id.toLowerCase().includes(term)) ||
+      (blood.name && blood.name && blood.name.toLowerCase().includes(term))
+    );
+  });
   
   // --- Calculate stats for cards ---
   const totalUnits = filteredData.reduce((sum, item) => sum + item.units, 0);
@@ -187,7 +189,7 @@ export default function HospitalBloodInventoryPage() {
                 <div className="w-full md:w-auto md:flex-grow">
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z" /></svg></span>
-                    <input type="text" placeholder="Search by type, hospital, or blood bag ID..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full dark:text-gray-700 pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400"/>
+                    <input type="text" placeholder="Search by Hospital, Bag ID, Donor ID, or Type..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full dark:text-gray-700 pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400"/>
                   </div>
                 </div>
               </div>
@@ -198,6 +200,7 @@ export default function HospitalBloodInventoryPage() {
                     <tr className="text-left text-gray-500 uppercase text-xs font-semibold">
                       <th className="p-4">Blood Bag ID</th>
                       <th className="p-4">Hospital ID</th>
+                      <th className="p-4">Hospital Name</th>
                       <th className="p-4 text-center">Type</th>
                       <th className="p-4">Component</th>
                       <th className="p-4 text-center">Units</th>
@@ -207,13 +210,14 @@ export default function HospitalBloodInventoryPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {loading ? (<tr><td colSpan={8} className="text-center p-8 text-gray-500">Loading...</td></tr>) : 
-                    filteredData.length === 0 ? (<tr><td colSpan={8} className="text-center p-8 text-gray-500">No records found.</td></tr>) : 
+                    {loading ? (<tr><td colSpan={9} className="text-center p-8 text-gray-500">Loading...</td></tr>) : 
+                    filteredData.length === 0 ? (<tr><td colSpan={9} className="text-center p-8 text-gray-500">No records found.</td></tr>) : 
                     (
                         filteredData.map((blood) => (
                           <tr key={blood.id} className="hover:bg-gray-50">
                             <td className="p-4 font-mono dark:text-gray-700 text-gray-700">{blood.blood_bag_id}</td>
                             <td className="p-4 font-mono dark:text-gray-700 text-gray-700">{blood.added_by}</td>
+                            <td className="p-4 dark:text-gray-700 text-gray-700 font-medium">{blood.name || 'N/A'}</td>
                             <td className="p-4 text-center dark:text-gray-700 font-semibold text-red-600">{blood.type}</td>
                             <td className="p-4 dark:text-gray-700 text-gray-700">{blood.component}</td>
                             <td className="p-4 text-center dark:text-gray-700 font-semibold">{blood.units}</td>

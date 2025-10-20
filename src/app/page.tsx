@@ -1,27 +1,52 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from "react";
 import SignupModal from "@/app/homecomponents/SignupModal";
 import LoginModal from "@/app/homecomponents/LoginModal";
+import UpdatePasswordModal from "@/app/homecomponents/UpdatePasswordModal"; 
 import { Menu, X } from 'lucide-react';
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient"; 
 
 export default function HomePage() {
-  const [modalType, setModalType] = useState<'signup' | 'login' | null>(null);
+  const [modalType, setModalType] = useState<'signup' | 'login' | 'updatePassword' | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
+
+  useEffect(() => {
+    console.log("HomePage: Nag-attach og auth listener...");
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("SUPABASE AUTH EVENT:", event);
+
+        if (event === "PASSWORD_RECOVERY") {
+          console.log("PASSWORD_RECOVERY event nadawat! Ga-abli sa modal...");
+          setModalType('updatePassword');
+        }
+
+        if (event === "SIGNED_IN" && session?.user?.recovery_sent_at) {
+            console.log("SIGNED_IN event naay recovery info. Ga-abli sa modal...");
+            setModalType('updatePassword');
+        }
+      }
+    );
+
+    return () => {
+      console.log("HomePage: Gikuha ang auth listener.");
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
+
   const handleLoginSuccess = (role: string) => {
-    setModalType(null); // close modal
-
-    // redirect based on user role
-    if(role === "donor") router.push("/dashdonor");
-    else if(role === "hospital") router.push("/dashhospital");
-    else if(role === "redcross") router.push("/dashredcross");
-    else router.push("/"); // fallback
+    setModalType(null); 
+    if (role === "donor") router.push("/dashdonor");
+    else if (role === "hospital") router.push("/dashhospital");
+    else if (role === "redcross") router.push("/dashredcross");
+    else router.push("/"); 
   }
-
   const renderAuthButtons = () => (
     <>
       <li>
@@ -43,7 +68,6 @@ export default function HomePage() {
     </>
   );
 
-  // Slideshow
   const slides = [
     { image: "/images/homepage/homepage1.png", text: "Connecting donors, saving lives. Your journey to make a difference starts here." },
     { image: "/images/homepage/homepage3.png", text: "Be a Hero. Donate Blood. Create a ripple of hope." },
@@ -63,7 +87,7 @@ export default function HomePage() {
       setCurrentIndex(prev => prev === slides.length - 1 ? 0 : prev + 1);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, []); // Kini para sa slideshow
 
   return (
     <div className="bg-gray-50">
@@ -71,11 +95,11 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
           <div className="flex align-middle">
             <button
-            className="md:hidden p-2 pr-3 rounded-lg hover:bg-gray-100 transition"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <Menu size={24} className="text-gray-700" />
-          </button>
+              className="md:hidden p-2 pr-3 rounded-lg hover:bg-gray-100 transition"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <Menu size={24} className="text-gray-700" />
+            </button>
             <div>
               <div className="text-3xl md:text-2xl lg:text-3xl font-extrabold text-red-600">DUGO</div>
               <div className="text-xs text-gray-500">Donor Utility for Giving and Organizing</div>
@@ -86,23 +110,23 @@ export default function HomePage() {
       </nav>
       {isMenuOpen && (
         <div className={`md:hidden fixed inset-0 z-[100] transition-opacity duration-300 ease-in-out
-                      ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-            <div 
-                className="absolute inset-0 bg-black/50"
-                onClick={() => setIsMenuOpen(false)}
-            ></div>
-            <div className={`relative w-3/4 max-w-sm h-full bg-white p-4 shadow-xl 
-                          transition-transform duration-300 ease-in-out
-                          ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex justify-end mb-8">
-                    <button onClick={() => setIsMenuOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 transition">
-                        <X size={24} className="text-gray-700" />
-                    </button>
-                </div>
-                <ul className="flex flex-col items-center space-y-4">
-                    {renderAuthButtons()}
-                </ul>
+                       ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsMenuOpen(false)}
+          ></div>
+          <div className={`relative w-3/4 max-w-sm h-full bg-white p-4 shadow-xl 
+                           transition-transform duration-300 ease-in-out
+                           ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div className="flex justify-end mb-8">
+              <button onClick={() => setIsMenuOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 transition">
+                <X size={24} className="text-gray-700" />
+              </button>
             </div>
+            <ul className="flex flex-col items-center space-y-4">
+              {renderAuthButtons()}
+            </ul>
+          </div>
         </div>
       )}
       <div className="relative w-full h-[70vh] md:h-[calc(100vh-80px)] flex items-center justify-center text-center text-white pt-[76px] overflow-hidden">
@@ -118,7 +142,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
         </div>
         <div className="relative z-10 max-w-3xl p-4 animate-fade-in-up">
-          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight" style={{textShadow: '0 2px 10px rgba(0,0,0,0.5)'}}>{slides[currentIndex].text}</h1>
+          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{slides[currentIndex].text}</h1>
           <a href="#" onClick={() => setModalType('signup')} className="mt-8 inline-block px-8 py-3 bg-red-600 text-white font-semibold rounded-lg shadow-lg hover:bg-red-700 transform hover:scale-105 transition-all duration-300">
             Become a Donor
           </a>
@@ -142,11 +166,11 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <div key={index} className="bg-gray-50 rounded-2xl p-6 text-center shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-                  <div className="flex justify-center items-center h-20 w-20 bg-white rounded-full mx-auto shadow-md">
-                    <Image src={feature.icon} alt={feature.title} width={48} height={48} />
-                  </div>
-                  <h3 className="mt-6 font-bold text-lg text-gray-800">{feature.title}</h3>
-                  <p className="mt-2 text-sm text-gray-600">{feature.description}</p>
+                <div className="flex justify-center items-center h-20 w-20 bg-white rounded-full mx-auto shadow-md">
+                  <Image src={feature.icon} alt={feature.title} width={48} height={48} />
+                </div>
+                <h3 className="mt-6 font-bold text-lg text-gray-800">{feature.title}</h3>
+                <p className="mt-2 text-sm text-gray-600">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -163,6 +187,14 @@ export default function HomePage() {
           onClose={() => setModalType(null)}
           onLoginSuccess={handleLoginSuccess}
           onSwitchToSignup={() => setModalType('signup')}
+        />
+      )}
+      {modalType === 'updatePassword' && (
+        <UpdatePasswordModal
+          onClose={() => {
+            setModalType(null);
+            router.replace('/', { scroll: false }); 
+          }}
         />
       )}
     </div>

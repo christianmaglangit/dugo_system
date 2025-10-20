@@ -22,6 +22,8 @@ const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-
 const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const QrCodeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h-2m-2-2v2m-2-2h2m-2-2v2m-2-2h2m-2-2v2M6 16h2m2-2v2m2-2h-2m2-2v2m2-2h-2m2-2v2M12 6h.01M12 18h.01M6 12h.01M18 12h.01M6 6h.01M18 6h.01M18 18h.01M6 18h.01" /></svg>;
 const DeleteIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>;
+const SearchIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg>;
+
 
 //========================================================//
 // 2. CHILD COMPONENTS
@@ -85,6 +87,7 @@ const StatusBadge = ({ status, expiration_date }: { status: string, expiration_d
         Available: "bg-green-100 text-green-800",
         Expired: "bg-red-100 text-red-800",
         Used: "bg-gray-100 text-gray-800",
+        "Received at Hospital": "bg-blue-100 text-blue-800",
     };
     const color = statusMap[effectiveStatus] || "bg-gray-100 text-gray-800";
     return <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${color}`}>{effectiveStatus}</span>;
@@ -205,6 +208,7 @@ export default function ManageInventory() {
     const [donors, setDonors] = useState<any[]>([]);
     const [search, setSearch] = useState("");
     const [addModalOpen, setAddModalOpen] = useState(false);
+    const [mainSearchQuery, setMainSearchQuery] = useState("");
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -292,13 +296,12 @@ export default function ManageInventory() {
         }
     };
 
-    // ✅ MODIFIED PDF EXPORT FUNCTION
     const exportPDF = () => {
         const doc = new jsPDF();
         const tableColumn = ["Bag ID", "Donor ID", "Type", "Component", "Units", "Expiration Date", "Status"];
         const tableRows: any[] = [];
 
-        bloodStocks.forEach(stock => {
+        filteredBloodStocks.forEach(stock => {
             // Replicate the logic from StatusBadge
             const isExpired = new Date(stock.expiration_date) < new Date();
             const effectiveStatus = isExpired ? "Expired" : stock.status;
@@ -372,8 +375,20 @@ export default function ManageInventory() {
         }
     }, [form.date_received, form.component]);
 
+    // Logic to filter blood stocks based on the main search query
+    const filteredBloodStocks = bloodStocks.filter((stock) => {
+        const query = mainSearchQuery.toLowerCase();
+        if (!query) return true; // Show all if search is empty
+
+        return (
+            stock.blood_bag_id.toLowerCase().includes(query) ||
+            stock.type.toLowerCase().includes(query) ||
+            stock.component.toLowerCase().includes(query)
+        );
+    });
+
     const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
-    const summaryData = bloodTypes.map((type) => ({ type, totalUnits: bloodStocks.filter((b) => b.type === type).reduce((sum, b) => sum + b.units, 0) }));
+    const summaryData = bloodTypes.map((type) => ({ type, totalUnits: filteredBloodStocks.filter((b) => b.type === type && (new Date(b.expiration_date) >= new Date()) && b.status !== 'Used').reduce((sum, b) => sum + b.units, 0) }));
     const openQrModal = (stock: any) => { setSelectedQr(stock.qr_data); setQrModalOpen(true); };
     const closeQrModal = () => { setQrModalOpen(false); setSelectedQr(""); };
     const printQr = () => {
@@ -398,8 +413,8 @@ export default function ManageInventory() {
                 <main className="mt-20 p-4 md:p-8">
                     <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 ">
-                           <button onClick={exportPDF} className="w-full md:w-auto px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition">Export PDF</button>
-                           <button onClick={() => setAddModalOpen(true)} className="w-full md:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow-sm transition">+ New Stock</button>
+                            <button onClick={exportPDF} className="w-full md:w-auto px-4  py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-sm transition">Export PDF</button>
+                            <button onClick={() => setAddModalOpen(true)} className="w-full md:w-auto px-4  py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow-sm transition">+ New Stock</button>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 mb-8" id="inventory-summary">
@@ -407,13 +422,31 @@ export default function ManageInventory() {
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-3 bg-white rounded-2xl shadow-lg p-6" id="inventory-table">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4">All Blood Stocks</h3>
+                            <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                                <h3 className="text-lg font-semibold text-gray-800">All Blood Stocks</h3>
+                                <div className="relative w-full md:w-1/2 lg:w-1/3">
+                                    <input
+                                        type="text"
+                                        placeholder="Search by Bag ID, Type, or Component..."
+                                        value={mainSearchQuery}
+                                        onChange={(e) => setMainSearchQuery(e.target.value)}
+                                        className="bg-gray-50 border border-gray-300 dark:text-gray-700 px-3 h-11 rounded-lg w-full pl-10 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    />
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                        <SearchIcon />
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Table */}
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm min-w-[1000px]">
                                     <thead className="bg-gray-50"><tr className="text-left text-gray-500 uppercase text-xs font-semibold"><th className="p-4">Bag ID</th><th className="p-4">Donor ID</th><th className="p-4 text-center">Type</th><th className="p-4">Component</th><th className="p-4 text-center">Units</th><th className="p-4">Expiration</th><th className="p-4 text-center">Status</th><th className="p-4 text-center">Actions</th></tr></thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        {loading ? (<tr><td colSpan={8} className="text-center p-8 text-gray-500">Loading...</td></tr>) : 
-                                        bloodStocks.map((b) => (
+                                        {loading ? (
+                                        <tr><td colSpan={8} className="text-center p-8 text-gray-500">Loading...</td></tr>
+                                    ) : filteredBloodStocks.length > 0 ? (
+                                        filteredBloodStocks.map((b) => (
                                             <tr key={b.id} className="hover:bg-gray-50">
                                                 <td className="p-4 text-gray-700">{b.blood_bag_id}</td>
                                                 <td className="p-4 text-gray-700">{b.user_id}</td>
@@ -427,7 +460,10 @@ export default function ManageInventory() {
                                                     <button onClick={() => deleteInventory(b.id)} className="flex items-center gap-1 bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded text-white text-xs font-semibold transition"><DeleteIcon/> Delete</button>
                                                 </td>
                                             </tr>
-                                        ))}
+                                        ))
+                                    ) : (
+                                        <tr><td colSpan={8} className="text-center p-8 text-gray-500">No stocks found matching your search.</td></tr>
+                                    )}
                                     </tbody>
                                 </table>
                             </div>

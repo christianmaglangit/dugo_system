@@ -193,8 +193,7 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
         <div className="relative p-8 md:p-10 overflow-y-auto max-h-[90vh]">
           <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon/></button>
           <h2 className="text-2xl font-bold text-gray-800 mb-6">{isEditing ? "Edit User Details" : "Create New User"}</h2>
-          
-          <div className="space-y-4">
+          <div className="space-y-4 dark:text-gray-700">
               {!isEditing && (
                   <>
                       <InputField name="name" label="Full Name" placeholder="Juan Dela Cruz" value={formData.name} onChange={handleChange} />
@@ -224,9 +223,15 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
                       <InputField name="contact" label="Contact" placeholder="09xx..." value={formData.contact} onChange={handleChange} />
                       <InputField name="address" label="Address" placeholder="City, etc." value={formData.address} onChange={handleChange} />
                       <InputField name="blood_type" label="Blood Type" value={formData.blood_type} onChange={handleChange}>
-                          <option value="">Select...</option><option value="A+">A+</option><option value="A-">A-</option>
-                          <option value="B+">B+</option><option value="B-">B-</option><option value="O+">O+</option><option value="O-">O-</option>
-                          <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                          <option value="Unknown">Don&apos;t know yet</option>
+                          <option value="A+">A+</option>
+                          <option value="A-">A-</option>
+                          <option value="B+">B+</option>
+                          <option value="B-">B-</option>
+                          <option value="O+">O+</option>
+                          <option value="O-">O-</option>
+                          <option value="AB+">AB+</option>
+                          <option value="AB-">AB-</option>
                       </InputField>
                   </div>
               )}
@@ -267,7 +272,6 @@ export default function ManageUsers() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [userName, setUserName] = useState("");
-    const router = useRouter();
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -300,14 +304,11 @@ export default function ManageUsers() {
         setUsers(usersWithDonations as UserAccount[]);
         setLoading(false);
     };
-
     useEffect(() => { fetchUsers(); }, []);
-
     useEffect(() => {
         const lower = searchQuery.toLowerCase();
         setFilteredUsers(users.filter(u => u.name.toLowerCase().includes(lower) || (u.email?.toLowerCase().includes(lower))));
     }, [searchQuery, users]);
-
     const handleDelete = async (id: string, userId: string, role: string) => {
         const result = await Swal.fire({ title: "Are you sure?", text: "This user will be deleted permanently!", icon: "warning", showCancelButton: true, confirmButtonColor: "#dc2626", cancelButtonColor: "#6b7280", confirmButtonText: "Yes, delete it!", });
         if (result.isConfirmed) {
@@ -333,8 +334,6 @@ export default function ManageUsers() {
         setEditingUser(null);
         setAddingUser(false);
     };
-
-    // --- NEW FUNCTION TO EXPORT PDF ---
     const handleExportPDF = async () => {
         const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         const currentMonth = new Date().getMonth();
