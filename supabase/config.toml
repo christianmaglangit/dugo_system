@@ -1,0 +1,11 @@
+[functions.predictive-demand-forecast]
+enabled = true
+verify_jwt = true
+import_map = "./functions/predictive-demand-forecast/deno.json"
+entrypoint = "./functions/predictive-demand-forecast/index.ts"
+
+[functions.update-historical-data]
+enabled = true
+verify_jwt = true
+import_map = "./functions/update-historical-data/deno.json"
+entrypoint = "./functions/update-historical-data/index.ts"

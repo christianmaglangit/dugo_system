@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useEffect, FC, ReactNode } from "react";
+import { useState, useEffect, FC, ReactNode } from "react"; // useRef removed
 import { supabase } from "@/lib/supabaseClient";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, BarChart, Bar } from "recharts";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import jsPDF from 'jspdf';
+// html2canvas import removed
+import autoTable from 'jspdf-autotable';
 
 //========================================================//
-// 1. ICONS                                               //
+// 1. ICONS (No changes)                                  //
 //========================================================//
 const DashboardIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>;
 const InventoryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>;
@@ -22,9 +25,8 @@ const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-
 const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 
 //========================================================//
-// 2. CHILD COMPONENTS                                    //
+// 2. CHILD COMPONENTS (No changes)                       //
 //========================================================//
-
 function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const pathname = usePathname();
   const links = [
@@ -94,7 +96,7 @@ const StatCard = ({ title, value, change, icon }: {title: string, value: string,
             <div>
                 <p className="text-sm font-semibold text-gray-500">{title}</p>
                 <p className="text-3xl font-bold text-gray-800 mt-1">{value}</p>
-                {change && <p className="text-xs text-green-600 mt-1">{change}</p>}
+                {change && <p className={`text-xs mt-1 ${change.startsWith("Need") || change.startsWith("Short") ? "text-red-600" : "text-green-600"}`}>{change}</p>}
             </div>
             <div className="p-3 bg-red-100 text-red-600 rounded-lg">
                 {icon}
@@ -102,94 +104,347 @@ const StatCard = ({ title, value, change, icon }: {title: string, value: string,
         </div>
     </Card>
 );
+interface MonthlyTrendData { month: string; demand: number; supply: number; }
+interface SupplyForecastData { type: string; needed: number; available: number; shortfall: number; }
+interface DemandForecastData { type: string; predicted_demand: number; }
 
 //========================================================//
-// 3. MAIN PAGE COMPONENT                                 //
+// 3. MAIN PAGE COMPONENT (Simplified PDF Export)         //
 //========================================================//
 export default function PredictiveReportsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
+  const [monthlyTrendData, setMonthlyTrendData] = useState<MonthlyTrendData[]>([]);
+  const [supplyForecast, setSupplyForecast] = useState<SupplyForecastData[]>([]);
+  const [demandForecast, setDemandForecast] = useState<DemandForecastData[]>([]);
+  const [totalShortfall, setTotalShortfall] = useState(0);
+  const [mostNeeded, setMostNeeded] = useState({ type: 'N/A', shortfall: 0 });
+  const [nextMonthName, setNextMonthName] = useState('');
 
-  const [demandData] = useState([
-    { month: "Jan", demand: 120, supply: 100 },
-    { month: "Feb", demand: 140, supply: 130 },
-    { month: "Mar", demand: 160, supply: 150 },
-    { month: "Apr", demand: 180, supply: 170 },
-    { month: "May", demand: 200, supply: 190 },
-    { month: "Jun", demand: 220, supply: 210 },
-  ]);
+  const [isExporting, setIsExporting] = useState(false);
 
-  const [bloodTypeData] = useState([
-    { type: "A+", needed: 80, available: 70 },
-    { type: "O+", needed: 100, available: 90 },
-    { type: "B+", needed: 60, available: 55 },
-    { type: "AB+", needed: 30, available: 25 },
-    { type: "A-", needed: 20, available: 15 },
-    { type: "O-", needed: 25, available: 18 },
-    { type: "B-", needed: 15, available: 10 },
-    { type: "AB-", needed: 10, available: 8 },
-  ]);
+  useEffect(() => {
+    const now = new Date();
+    const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const formatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' });
+    setNextMonthName(formatter.format(nextMonthDate));
+  }, []);
 
-  // --- Calculate Insights ---
-  const totalShortfall = bloodTypeData.reduce((acc, item) => acc + (item.needed - item.available), 0);
-  const mostNeeded = bloodTypeData.reduce((max, item) => (item.needed - item.available > max.shortfall ? { type: item.type, shortfall: item.needed - item.available } : max), { type: 'N/A', shortfall: 0 });
+  useEffect(() => {
+    async function fetchPredictiveData() {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data: trendData, error: trendError } = await supabase.rpc('get_historical_trends');
+        if (trendError) throw new Error(`Error fetching historical trends: ${trendError.message}`);
+        const formattedTrendData = trendData.map((d: any) => ({ month: d.month_text, demand: d.demand, supply: d.supply })).reverse();
+        setMonthlyTrendData(formattedTrendData);
+
+        const { data: predictedSupply, error: supplyError } = await supabase.rpc('get_monthly_supply_forecast');
+        if (supplyError) throw new Error(`Error fetching predicted supply: ${supplyError.message}`);
+
+        const { data: inventoryData, error: inventoryError } = await supabase.rpc('get_current_inventory_by_type');
+        if (inventoryError) throw new Error(`Error fetching current inventory: ${inventoryError.message}`);
+
+        const allBloodTypes = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
+        const combinedSupplyData = allBloodTypes.map(type => {
+          const prediction = predictedSupply.find((p: any) => p.blood_type === type);
+          const inventory = inventoryData.find((i: any) => i.blood_type === type);
+          const needed = prediction ? prediction.predicted_supply : 0;
+          const available = inventory ? inventory.current_available : 0;
+          const shortfall = Math.max(0, needed - available);
+          return { type, needed, available, shortfall };
+        });
+        setSupplyForecast(combinedSupplyData);
+
+        const { data: predictedDemand, error: demandError } = await supabase.functions.invoke('predictive-demand-forecast');
+        if (demandError) throw new Error(`Error fetching predicted demand: ${demandError.message}`);
+        setDemandForecast(predictedDemand as DemandForecastData[]);
+
+        const total = combinedSupplyData.reduce((acc, item) => acc + item.shortfall, 0);
+        setTotalShortfall(total);
+        const most = combinedSupplyData.reduce((max, item) => (item.shortfall > max.shortfall ? item : max), { type: 'N/A', shortfall: 0 });
+        setMostNeeded({ type: most.type, shortfall: most.shortfall });
+
+      } catch (err: any) {
+        console.error("Error fetching data:", err);
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPredictiveData();
+  }, []);
+
+  const handleExportPDF = () => {
+    setIsExporting(true);
+    setError(null);
+    if (loading || supplyForecast.length === 0 || demandForecast.length === 0 || monthlyTrendData.length === 0) {
+        setError({ message: "Data is still loading or unavailable for export." });
+        setIsExporting(false); 
+        return;
+    }
+
+
+    try {
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const margin = 15;
+        let currentY = margin;
+
+        pdf.setFontSize(18);
+        pdf.text(`DUGO Predictive Report`, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 8;
+        pdf.setFontSize(14);
+        pdf.text(`Forecast for ${nextMonthName}`, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 12;
+        pdf.setFontSize(12);
+        pdf.text("Key Insights:", margin, currentY);
+        currentY += 6;
+        pdf.setFontSize(10);
+        pdf.text(`- Predicted Supply Shortfall: ${totalShortfall} Units (vs. Target for ${nextMonthName})`, margin + 5, currentY); currentY += 5;
+        pdf.text(`- Top Priority Collection: Type ${mostNeeded.type} (${mostNeeded.shortfall > 0 ? `Need ${mostNeeded.shortfall} more units` : "Sufficient"})`, margin + 5, currentY); currentY += 5;
+        const highestDemand = demandForecast.length > 0 ? demandForecast[0] : null;
+        pdf.text(`- Highest Predicted Demand: ${highestDemand ? highestDemand.type : 'N/A'} (Est: ${highestDemand ? highestDemand.predicted_demand : 0} units)`, margin + 5, currentY); currentY += 10;
+         const addTable = (title: string, head: any[], body: any[], addTotalRow: boolean = false, totalColumns: number[] = []) => {
+            let finalY = currentY;
+            const titleSpace = 6;
+            const tableHeaderSpace = 10;
+             if (currentY + titleSpace + tableHeaderSpace > pageHeight - margin) {
+                 pdf.addPage();
+                 currentY = margin;
+             }
+             pdf.setFontSize(12);
+             pdf.text(title, margin, currentY);
+             currentY += titleSpace;
+             let totalRow: any[] | null = null;
+             if (addTotalRow && body.length > 0) {
+                 totalRow = ['Total', ...Array(head[0].length - 1).fill(0)]; 
+                 body.forEach(row => {
+                     totalColumns.forEach(colIndex => {
+                         if (colIndex > 0 && colIndex < head[0].length) { 
+                             totalRow![colIndex] += row[colIndex] || 0; 
+                         }
+                     });
+                 });
+             }
+
+             autoTable(pdf, {
+                 startY: currentY,
+                 head: head,
+                 body: body,
+                 foot: totalRow ? [totalRow] : undefined, 
+                 footStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold' }, 
+                 theme: 'grid',
+                 headStyles: { fillColor: [239, 68, 68] }, 
+                 margin: { left: margin, right: margin },
+                 didDrawPage: (data) => {
+                     finalY = data.cursor?.y ?? currentY; 
+                 }
+             });
+             currentY = finalY + 10;
+         };
+         addTable(
+             `Supply Forecast Data for ${nextMonthName}`,
+             [['Blood Type', 'Predicted Target', 'Currently Available', 'Shortfall']],
+             supplyForecast.map(item => [item.type, item.needed, item.available, item.shortfall]),
+             true, 
+             [1, 2, 3] 
+         );
+         addTable(
+             `Demand Forecast Data for ${nextMonthName}`,
+             [['Component', 'Predicted Demand']],
+             demandForecast.map(item => [item.type, item.predicted_demand]),
+             true, 
+             [1]
+         );
+
+         addTable(
+             `Historical Trend Data (Last 12 Months)`,
+             [['Month', 'Demand', 'Supply']],
+             monthlyTrendData.map(item => [item.month, item.demand, item.supply])
+         );
+
+        const rec1 = `- ${mostNeeded.shortfall > 0 ? `Focus collection efforts on Type ${mostNeeded.type} donors. You are predicted to be ${mostNeeded.shortfall} units short of the target.` : "All blood types are predicted to be at or above the supply target. Maintain regular collection drives."}`;
+        const rec2 = `- ${demandForecast.length > 0 ? `Prepare for high demand of ${demandForecast[0].type}. Ensure component preparation is prioritized, as it's predicted to be the most requested item.` : ''}`;
+        const rec3 = `- Review the 12-month trend to identify seasonal peaks in demand and plan major campaigns around those months.`;
+        const maxWidth = pageWidth - 2 * margin - 5; 
+        const splitText = (text: string) => pdf.splitTextToSize(text, maxWidth);
+        const estimateLines = (text: string) => text ? splitText(text).length : 0;
+        const lineHeight = 4; 
+        const headerHeight = 6;
+        const spacing = 2; 
+        const estimatedRecHeight = headerHeight +
+                                   (estimateLines(rec1) * lineHeight) + spacing +
+                                   (estimateLines(rec2) * lineHeight) + spacing +
+                                   (estimateLines(rec3) * lineHeight);
+
+        // Check if recommendations fit on the current page
+        if (currentY + estimatedRecHeight > pageHeight - margin) {
+            pdf.addPage();
+            currentY = margin;
+        }
+
+        pdf.setFontSize(12);
+        pdf.text(`Actionable Recommendations for ${nextMonthName}:`, margin, currentY);
+        currentY += headerHeight;
+        pdf.setFontSize(10);
+
+        // Add recommendation text line by line
+        splitText(rec1).forEach((line: string) => { pdf.text(line, margin + 5, currentY); currentY += lineHeight; });
+        currentY += spacing;
+        if (rec2.length > 2) { // Only add if rec2 has content
+            splitText(rec2).forEach((line: string) => { pdf.text(line, margin + 5, currentY); currentY += lineHeight; });
+            currentY += spacing;
+        }
+        splitText(rec3).forEach((line: string) => { pdf.text(line, margin + 5, currentY); currentY += lineHeight; });
+
+        // --- Save PDF ---
+        pdf.save(`DUGO_Predictive_Report_${nextMonthName.replace(/ /g, '_')}.pdf`);
+
+    } catch (exportError) {
+        console.error("Error exporting simplified PDF:", exportError);
+        if (exportError instanceof Error) {
+            setError({ message: `PDF Export Failed: ${exportError.message}. Check browser console for details.` });
+        } else {
+             setError({ message: "An unknown error occurred during PDF export." });
+        }
+    } finally {
+        setIsExporting(false);
+    }
+  };
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <BloodbankSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 w-full transition-all duration-300 md:ml-72">
         <BloodbankHeader toggleSidebar={toggleSidebar} />
-        <main className="mt-20 p-4 md:p-8">
-            {/* --- Key Insights Row --- */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <StatCard title="Predicted 6-Month Shortfall" value={`${totalShortfall} Units`} icon={<UsersIcon/>} />
-                <StatCard title="Most Needed Blood Type" value={mostNeeded.type} change={`Short by ${mostNeeded.shortfall} units`} icon={<InventoryIcon/>} />
-                <StatCard title="Supply Trend" value="Increasing" change="+5% MoM" icon={<ReportIcon/>} />
-            </div>
+        {/* Main element - No ref needed */}
+        <main id="report-content-area" className="mt-20 p-4 md:p-8">
 
-            {/* --- Charts Row --- */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* --- Export Button Section --- */}
+          {!loading && !error && (
+            <div className="mb-6 flex justify-end">
+              <button
+                onClick={handleExportPDF}
+                disabled={isExporting || loading} // Disable if exporting or still loading initial data
+                className={`bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-semibold transition shadow-sm flex items-center gap-2 ${(isExporting || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isExporting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm5 1a1 1 0 00-1 1v6a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Export as PDF (Data Only)
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+          {/* --- End of Export Button Section --- */}
+
+
+          {/* --- Loading and Error States --- */}
+          {loading && (
+            <div className="flex justify-center items-center h-64 p-6 bg-white rounded-2xl shadow-lg">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+                <p className="text-lg font-semibold text-gray-600 ml-4">Loading Predictive Data...</p>
+            </div>
+          )}
+          {error && (
+            <Card className="bg-red-50 border border-red-200">
+                <h2 className="text-xl font-bold text-red-700 mb-2">Failed to Load or Export Data</h2>
+                <p className="text-red-600 font-mono bg-red-100 p-2 rounded">{error.message}</p>
+                 <p className="text-gray-600 mt-2 text-sm">
+                    Please check your Supabase setup (tables, functions, RLS) and browser console for more details if exporting failed.
+                </p>
+            </Card>
+          )}
+
+          {/* --- Main Content --- */}
+          {!loading && !error && (
+            <>
+              {/* Key Insights Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                 <StatCard title="Predicted Supply Shortfall" value={`${totalShortfall} Units`} change={`vs. Target for ${nextMonthName}`} icon={<UsersIcon/>} />
+                 <StatCard title="Top Priority Collection" value={mostNeeded.type} change={mostNeeded.shortfall > 0 ? `Need ${mostNeeded.shortfall} more units` : "Sufficient"} icon={<InventoryIcon/>} />
+                 <StatCard title="Highest Predicted Demand" value={demandForecast.length > 0 ? demandForecast[0].type : "N/A"} change={`Est: ${demandForecast.length > 0 ? demandForecast[0].predicted_demand : 0} units for ${nextMonthName}`} icon={<ReportIcon/>} />
+              </div>
+
+              {/* Charts Row - Displayed on page, not exported */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 <Card>
-                    <h2 className="text-xl font-bold text-gray-800 mb-1">Monthly Forecast</h2>
-                    <p className="text-sm text-gray-500 mb-4">Predicted demand vs. supply for the next 6 months.</p>
+                  <div className="bg-white p-2 dark:text-gray-700">
+                    <h2 className="text-xl font-bold text-gray-800 mb-1">Supply Forecast (Collection)</h2>
+                    <p className="text-sm text-gray-500 mb-4">Predicted Supply Target vs. Current Inventory for <strong>{nextMonthName}</strong></p>
                     <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={demandData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" fontSize={12} />
-                        <YAxis fontSize={12} />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="demand" name="Predicted Demand" stroke="#ef4444" strokeWidth={2} />
-                        <Line type="monotone" dataKey="supply" name="Predicted Supply" stroke="#22c55e" strokeWidth={2} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                </Card>
-                <Card>
-                    <h2 className="text-xl font-bold text-gray-800 mb-1">Urgency by Blood Type</h2>
-                    <p className="text-sm text-gray-500 mb-4">Comparison of needed vs. available units.</p>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={bloodTypeData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="type" fontSize={12} />
-                        <YAxis fontSize={12} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="needed" fill="#ef4444" name="Predicted Need" />
-                        <Bar dataKey="available" fill="#a3a3a3" name="Currently Available" />
+                      <BarChart data={supplyForecast} margin={{ top: 5, right: 20, bottom: 5, left: -10 }}>
+                          <CartesianGrid strokeDasharray="3 3" /> <XAxis dataKey="type" fontSize={12} /> <YAxis fontSize={12} /> <Tooltip /> <Legend />
+                          <Bar dataKey="needed" fill="#ef4444" name="Predicted Supply (Target)" /> <Bar dataKey="available" fill="#a3a3a3" name="Currently Available" />
                       </BarChart>
                     </ResponsiveContainer>
+                  </div>
                 </Card>
-            </div>
+                <Card>
+                  <div className="bg-white p-2 dark:text-gray-700">
+                    <h2 className="text-xl font-bold text-gray-800 mb-1">Demand Forecast (Issuance)</h2>
+                    <p className="text-sm text-gray-500 mb-4">Predicted demand by component for <strong>{nextMonthName}</strong>.</p>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={demandForecast} margin={{ top: 5, right: 20, bottom: 5, left: -10 }}>
+                          <CartesianGrid strokeDasharray="3 3" /> <XAxis dataKey="type" fontSize={12} /> <YAxis fontSize={12} /> <Tooltip /> <Legend />
+                          <Bar dataKey="predicted_demand" fill="#3b82f6" name="Predicted Demand" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+              </div>
 
-            {/* --- Recommendations Card --- */}
-            <Card>
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Actionable Recommendations</h2>
-                <ul className="space-y-3 list-disc list-inside text-gray-700">
-                    <li>Launch a targeted campaign for **{mostNeeded.type} donors** to address the immediate predicted shortfall of **{mostNeeded.shortfall} units**.</li>
-                    <li>Increase general collection efforts in **April-June** where the demand-supply gap is projected to be largest.</li>
-                    <li>Notify affiliated hospitals about the potential upcoming shortage of **B-** and **AB-** blood types.</li>
-                </ul>
-            </Card>
+              {/* Historical Trend Line Chart - Displayed on page, not exported */}
+              <Card className="mb-8">
+                <div className="bg-white p-2">
+                  <h2 className="text-xl font-bold text-gray-800 mb-1">12-Month Historical Trend</h2>
+                  <p className="text-sm text-gray-500 mb-4">Historical demand vs. supply from your data.</p>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={monthlyTrendData} margin={{ top: 5, right: 20, bottom: 5, left: -10 }}>
+                        <CartesianGrid strokeDasharray="3 3" /> <XAxis dataKey="month" fontSize={12} /> <YAxis fontSize={12} /> <Tooltip /> <Legend />
+                        <Line type="monotone" dataKey="demand" name="Historical Demand" stroke="#ef4444" strokeWidth={2} dot={false} /> <Line type ="monotone" dataKey="supply" name="Historical Supply" stroke="#22c55e" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+
+              {/* Recommendations Card */}
+              <Card>
+                 <h2 className="text-xl font-bold text-gray-800 mb-4">Actionable Recommendations for {nextMonthName}</h2>
+                 <ul className="space-y-3 list-disc list-inside text-gray-700">
+                   <li>
+                     {mostNeeded.shortfall > 0
+                         ? <>Focus collection efforts on <strong>Type {mostNeeded.type} donors</strong>. You are predicted to be <strong>{mostNeeded.shortfall} units</strong> short of the target.</>
+                         : "All blood types are predicted to be at or above the supply target. Maintain regular collection drives."
+                     }
+                   </li>
+                   <li>
+                     {demandForecast.length > 0 &&
+                         <>Prepare for high demand of <strong>{demandForecast[0].type}</strong>. Ensure component preparation is prioritized, as it's predicted to be the most requested item.</>
+                     }
+                   </li>
+                   <li>Review the 12-month trend to identify seasonal peaks in demand (e.g., months where the red line is highest) and plan major campaigns around those months.</li>
+                 </ul>
+              </Card>
+            </>
+          )}
+
         </main>
       </div>
     </div>

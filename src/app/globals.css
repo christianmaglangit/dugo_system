@@ -24,3 +24,65 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Add this to your global CSS file for PDF export workaround */
+.pdf-export-styles {
+  background-color: #ffffff !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+.pdf-export-styles * {
+  /* Force simple text/fill colors */
+  color: #333333 !important; /* Dark Gray */
+  fill: #333333 !important; /* Dark Gray for SVG text */
+
+  /* Force simple border colors */
+  border-color: #cccccc !important; /* Light Gray */
+  stroke: #cccccc !important; /* Light Gray for SVG lines/borders */
+
+  /* Reset backgrounds */
+  background-color: transparent !important;
+  background-image: none !important;
+
+  /* Remove shadows */
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+
+  /* Force basic font */
+  font-family: Arial, sans-serif !important;
+}
+
+/* Ensure the chart container background remains white */
+.pdf-export-styles div[ref*="ChartRef"] { /* Target divs with refs */
+    background-color: #ffffff !important;
+}
+
+/* Specifically target common chart elements */
+.pdf-export-styles .recharts-cartesian-axis-tick-value tspan,
+.pdf-export-styles .recharts-legend-item-text,
+.pdf-export-styles .recharts-tooltip-item {
+   fill: #333333 !important;
+   color: #333333 !important;
+}
+
+.pdf-export-styles .recharts-cartesian-grid line {
+    stroke: #dddddd !important; /* Lighter Grid */
+}
+
+/* Force basic bar/line colors (Example: grayscale) */
+.pdf-export-styles .recharts-bar path {
+  fill: #999999 !important; /* Medium Gray for bars */
+  stroke: #666666 !important; /* Darker Gray border */
+}
+.pdf-export-styles .recharts-line path {
+   stroke: #666666 !important; /* Darker Gray for lines */
+   stroke-width: 1 !important;
+}
+
+/* Hide tooltips completely */
+.pdf-export-styles .recharts-tooltip-wrapper {
+    display: none !important;
+    visibility: hidden !important;
+}
