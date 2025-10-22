@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, FC, ReactNode } from "react"; // useRef removed
+import { useState, useEffect, FC, ReactNode } from "react"; 
 import { supabase } from "@/lib/supabaseClient";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, BarChart, Bar } from "recharts";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import jsPDF from 'jspdf';
-// html2canvas import removed
 import autoTable from 'jspdf-autotable';
 
 //========================================================//
