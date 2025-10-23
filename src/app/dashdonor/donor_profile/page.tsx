@@ -1049,7 +1049,7 @@ export default function ProfilePage() {
     const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
     const [latestAppointment, setLatestAppointment] = useState<any | null>(null);
     const [daysLeft, setDaysLeft] = useState(84); // Default eligibility
-
+    const router = useRouter();
     const fetchUserData = async () => {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) {
@@ -1207,15 +1207,10 @@ export default function ProfilePage() {
                  if (status === 'SUBSCRIBED') console.log(`Profile connected to inventory/journey channel!`);
                  if(err) console.error(`Profile inventory/journey subscription error:`, err);
              });
-
-
-        // Cleanup function
         return () => {
             console.log("Removing profile channels subscriptions");
-            supabase.removeChannel(appointmentChannel);
-            supabase.removeChannel(inventoryAndJourneyChannel);
         };
-    }, [router, user?.user_id]); // Depend on user_id to re-subscribe if it changes
+    }, [router, user?.user_id]); 
 
 
     const addRequest = async (payload: any) => {
@@ -1276,9 +1271,9 @@ export default function ProfilePage() {
         if (!authUser || !user) throw new Error("User not authenticated");
 
         try {
-            // Update the 'users' table
-            const { error } = await supabase.from('users').update(profileUpdates).eq('id', authUser.id);
-            if (error) throw error;
+       // Update the 'users' table
+       const { error: updateError } = await supabase.from('users').update(profileUpdates).eq('id', authUser.id); // Rename to updateError
+       if (updateError) throw updateError;
 
             // Optimistically update the local user state
             // Keep existing stats, only update profile fields
@@ -1295,10 +1290,9 @@ export default function ProfilePage() {
 
             // Swal.fire("Success", "Your profile has been updated.", "success"); // Message handled by modal now
 
-        } catch (error: any) {
-             // This error will be caught and displayed by the modal's handleSubmit
-             console.error("Error in handleSaveProfile:", error);
-             throw error; // Re-throw to let the modal handle the message
+        } catch (error: any) { // Keep this catch block
+        console.error("Error in handleSaveProfile:", error);
+        throw error;
         }
     };
 
