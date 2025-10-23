@@ -588,7 +588,7 @@ const handleExportPDF = async () => {
                                                     <td className="p-4"><div className="font-semibold text-gray-800">{r.users?.name || r.hospital_name}</div><div className="text-gray-500 font-mono text-xs">{r.user_id || 'N/A'}</div></td>
                                                     <td className="p-4 text-center"><div className="font-bold text-red-600">{r.blood_type}</div></td>
                                                     <td className="p-4 text-center"><div className="text-gray-500 text-xs">{r.blood_component}</div></td>
-                                                    <td className="p-4 text-center font-semibold">{r.units}</td>
+                                                    <td className="p-4 text-gray-600 text-center font-semibold">{r.units}</td>
                                                     <td className="p-4 text-center">
                                                         {r.indigency_file ? (
                                                             <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700">INDIGENCY</span>

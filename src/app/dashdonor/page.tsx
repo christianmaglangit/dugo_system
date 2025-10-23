@@ -74,7 +74,7 @@ const InputField: FC<{ label: string, name: string, children: ReactNode }> = ({ 
 const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void }) => {
     const router = useRouter();
     return (
-        <Card className="p-4 mt-4 mb-4">
+        <Card className="p-4 mb-4">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-red-600">
@@ -130,7 +130,7 @@ const DonationStatusCard = ({ user, daysLeft, onOpenAppointmentModal, appointmen
             : 'Book Appointment';
 
     return (
-        <div className="md:col-span-1 bg-red-600 text-white rounded-3xl p-6 shadow-lg shadow-red-500/30 flex flex-col justify-between">
+        <div className="md:col-span-1 bg-gradient-to-br from-red-500 to-red-700 text-white rounded-3xl p-6 shadow-xl shadow-red-500/40 flex flex-col justify-between">
             <div className="text-center">
                 <p className="text-red-200">Welcome back,</p>
                 <h2 className="text-2xl font-bold capitalize">{user.name}</h2>
@@ -155,7 +155,7 @@ const DonationStatusCard = ({ user, daysLeft, onOpenAppointmentModal, appointmen
             </div>
             <button
                 onClick={onOpenAppointmentModal}
-                className="w-full mt-2 text-center py-3 bg-white text-red-600 font-bold rounded-xl shadow-md hover:bg-red-50 transition"
+                className="w-full mt-2 text-center py-3 bg-white text-red-600 font-bold rounded-xl shadow-lg hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
             >
                 {buttonText}
             </button>
@@ -264,7 +264,7 @@ const BloodJourneyTracker = ({ donation }: { donation: any | null }) => {
                     <div className="absolute top-8 left-0 w-full h-2 bg-gray-200 rounded-full">
                         <div 
                             className="absolute top-0 left-0 h-2 bg-red-600 rounded-full transition-all duration-500" 
-                            style={{ width: currentStage > 1 ? `${((currentStage - 1) / (stages.length - 1)) * 100}%` : '0%' }}
+                            style={{ width: currentStage === 5 ? '100%' : (currentStage > 0 ? `${(20 * (currentStage - 1)) + 10}%` : '0%') }}
                         ></div>
                     </div>
                     <div className="relative flex justify-between">
@@ -906,7 +906,7 @@ const BloodSearch = () => {
                 <button
                     onClick={handleSearch}
                     disabled={isSearching || !selectedBloodType || !selectedComponent}
-                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-3 rounded-xl text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-3 rounded-xl text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg shadow-red-500/30 transform transition-all duration-300 hover:scale-105 font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                     <SearchIcon />
                     <span>{isSearching ? "Searching..." : "Search"}</span>
@@ -945,7 +945,7 @@ const BloodSearch = () => {
                          <p className="text-sm">Please try another combination or check back later.</p>
                      </div>
                  )}
-             </div>
+            </div>
         </Card>
     );
 };
@@ -1090,7 +1090,7 @@ export default function ResponsiveDonorDashboard() {
             // BAG-O NGA CALCULATION PARA SA LIVES SAVED
             const transfusedCount = donations.filter(d =>
                 Array.isArray(d.blood_journey) && // Check kung array ba
-                d.blood_journey.length > 0 &&      // Check kung naay sulod
+                d.blood_journey.length > 0 &&     // Check kung naay sulod
                 d.blood_journey[0].stage === 5     // Check kung ang stage kay 5 (Transfused)
             ).length;
 

@@ -90,7 +90,7 @@ const DonationCard: FC<{ donation: Donation }> = ({ donation }) => (
 const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void }) => {
     const router = useRouter();
     return (
-        <Card className="p-4 mt-4 mb-4">
+        <Card className="p-4 mb-4">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-red-600">DUGO</h1>
