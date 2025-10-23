@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { FiEye, FiSlash } from 'react-icons/fi';
@@ -18,17 +18,34 @@ function capitalizeWords(str: string) {
     .join(" ");
 }
 
-const InputField = ({ name, label, placeholder, value, onChange, type = "text", required = true, children }: any) => (
-    <div>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
-      {children ? (
-        <select id={name} name={name} value={value} onChange={onChange} required={required} className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
-          {children}
-        </select>
-      ) : (
-        <input id={name} type={type} name={name} placeholder={placeholder} value={value} onChange={onChange} required={required} className="bg-gray-50 border text-black border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
-      )}
-    </div>
+// Updated InputField component to accept {...props} like 'min' and 'className'
+const InputField = ({ name, label, placeholder, value, onChange, type = "text", required = true, children, ...props }: any) => (
+  <div>
+    <label htmlFor={name} className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
+    {children ? (
+      <select
+        id={name}
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        {...props} // <-- Passes props (like className)
+      >
+        {children}
+      </select>
+    ) : (
+      <input
+        id={name}
+        type={type}
+        name={name}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required={required}
+        {...props} // <-- Passes props (like className, min)
+      />
+    )}
+  </div>
 );
 
 
@@ -45,17 +62,48 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
     confirmPassword: ""
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({
+    age: "",
+    confirmPassword: ""
+  });
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setForm({ ...form, [e.target.name]: e.target.value });
+
+    if (name === "age" && errors.age) {
+      setErrors(prev => ({ ...prev, age: "" }));
+    }
+    if ((name === "password" || name === "confirmPassword") && errors.confirmPassword) {
+      setErrors(prev => ({ ...prev, confirmPassword: "" }));
+    }
   };
 
+  // <-- MODIFIED: Replaced alerts with error state logic
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // --- NEW VALIDATION BLOCK ---
+    const newErrors = { age: "", confirmPassword: "" };
+    let hasError = false;
+
+    // 1. Age Check
+    const age = parseInt(form.age);
+    if (isNaN(age) || age < 18) {
+      newErrors.age = "You must be 18 years old or older to register.";
+      hasError = true;
+    }
+
+    // 2. Password Match Check
     if (form.password !== form.confirmPassword) {
-      return alert("Passwords do not match!");
+      newErrors.confirmPassword = "Passwords do not match!";
+      hasError = true;
+    }
+
+    setErrors(newErrors);
+    if (hasError) {
+      return; 
     }
 
     setLoading(true);
@@ -69,6 +117,7 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
       setLoading(false);
       return alert(signUpError?.message || "Signup failed");
     }
+
     let newUserId = "";
     let isUnique = false;
     const year = new Date().getFullYear();
@@ -79,21 +128,18 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
         .from("users")
         .select("user_id")
         .eq("user_id", potentialId)
-        .maybeSingle(); // Use maybeSingle to get one or null
+        .maybeSingle(); 
 
       if (checkError) {
         setLoading(false);
         return alert("Error checking for unique user ID: " + checkError.message);
       }
-
-      // If no user is found, the ID is unique
+      
       if (!existingUser) {
         newUserId = potentialId;
         isUnique = true;
       }
-      // If a user IS found, the loop will run again to get a new number
     }
-    // --- END OF NEW LOGIC ---
 
     const defaultProfilePictureUrl = "https://hvozenqnulekdgxpphfb.supabase.co/storage/v1/object/public/profile_pictures/DefaultProfilePic.png";
 
@@ -140,7 +186,21 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
             <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1">Full Name</label>
             <input name="name" placeholder="Juan Dela Cruz" value={form.name} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"  />
             <div className="grid grid-cols-2 text-black gap-4">
-                <InputField name="age" label="Age" type="number" placeholder="e.g., 25" value={form.age} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/>
+                <div>
+                  <InputField 
+                    name="age" 
+                    label="Age" 
+                    type="number" 
+                    placeholder="e.g., 25" 
+                    value={form.age} 
+                    onChange={handleChange} 
+                    className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                    min={18} 
+                  />
+                  {errors.age && (
+                    <p className="text-red-500 text-xs mt-1">{errors.age}</p>
+                  )}
+                </div>
                 <InputField name="gender" label="Gender" value={form.gender} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-black px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                     <option value="">Select...</option>
                     <option value="Male">Male</option>
@@ -184,7 +244,7 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
                     aria-label={showPassword ? 'Itago ang password' : 'Ipakita ang password'}
                   >
                     {showPassword ? (
-                      <FiSlash className="h-5 w-5" /> // <-- Gi-ilisan gikan sa FiEyeSlash
+                      <FiSlash className="h-5 w-5" /> 
                     ) : (
                       <FiEye className="h-5 w-5" />
                     )}
@@ -210,12 +270,16 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
                     }
                   >
                     {showConfirmPassword ? (
-                      <FiSlash className="h-5 w-5" /> // <-- Gi-ilisan gikan sa FiEyeSlash
+                      <FiSlash className="h-5 w-5" />
                     ) : (
                       <FiEye className="h-5 w-5" />
                     )}
                   </button>
                 </div>
+                
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-xs -mt-3 ml-1">{errors.confirmPassword}</p>
+                )}
             </div>
 
             <button type="submit" disabled={loading} className={`w-full py-3 mt-4 rounded-lg text-white font-semibold transition ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}>

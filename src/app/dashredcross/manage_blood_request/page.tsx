@@ -201,10 +201,13 @@ function AddRequestForm({ onClose, onSave, }: { onClose: () => void; onSave: (pa
                             <InputField label="Component" name="blood_component">
                                 <select value={form.blood_component} onChange={(e) => setForm({ ...form, blood_component: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <option value="">Select...</option>
-                                    <option value="White Blood Cells">White Blood Cells (WBCs)</option>
-                                    <option value="Plasma">Plasma</option>
-                                    <option value="Platelets">Platelets</option>
-                                    <option value="Red Blood Cells">Red Blood Cells (RBCs)</option>
+                                    <option value="WB">Whole Blood (WB)</option>
+                                    <option value="PRBC">Packed Red Blood Cells (PRBC)</option>
+                                    <option value="PC">Platelet Concentrate (PC)</option>
+                                    <option value="FFP">Fresh Frozen Plasma (FFP)</option>
+                                    <option value="PRP">Platelet-Rich Plasma (PRP)</option>
+                                    <option value="CRYO">Cryoprecipitate (CRYO)</option>
+                                    <option value="APH">Apheresis (APH)</option>
                                 </select>
                             </InputField>
                         </div>

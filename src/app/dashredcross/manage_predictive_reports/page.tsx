@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FC, ReactNode } from "react"; 
+import { useState, useEffect, FC, ReactNode } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, BarChart, Bar } from "recharts";
 import Link from "next/link";
@@ -22,6 +22,8 @@ const ScanIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-
 const HospitalIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 2.75a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" /><path fillRule="evenodd" d="M2 10a8 8 0 1116 0 8 8 0 01-16 0zm8-7a7 7 0 100 14 7 7 0 000-14z" clipRule="evenodd" /></svg>;
 const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>;
 const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
+const ExportIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm5 1a1 1 0 00-1 1v6a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>;
+const LoadingIcon = () => <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
 
 //========================================================//
 // 2. CHILD COMPONENTS (No changes)                       //
@@ -103,17 +105,22 @@ const StatCard = ({ title, value, change, icon }: {title: string, value: string,
         </div>
     </Card>
 );
+
+// --- Define Types for our data ---
 interface MonthlyTrendData { month: string; demand: number; supply: number; }
 interface SupplyForecastData { type: string; needed: number; available: number; shortfall: number; }
 interface DemandForecastData { type: string; predicted_demand: number; }
+interface PastSupplyPrediction { blood_type: string; predicted_units: number; }
+interface PastDemandPrediction { component_type: string; predicted_units: number; }
+
 
 //========================================================//
-// 3. MAIN PAGE COMPONENT (Simplified PDF Export)         //
+// 3. MAIN PAGE COMPONENT (Includes Past Predictions)     //
 //========================================================//
 export default function PredictiveReportsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Loading state for current prediction
   const [error, setError] = useState<any>(null);
   const [monthlyTrendData, setMonthlyTrendData] = useState<MonthlyTrendData[]>([]);
   const [supplyForecast, setSupplyForecast] = useState<SupplyForecastData[]>([]);
@@ -121,7 +128,11 @@ export default function PredictiveReportsPage() {
   const [totalShortfall, setTotalShortfall] = useState(0);
   const [mostNeeded, setMostNeeded] = useState({ type: 'N/A', shortfall: 0 });
   const [nextMonthName, setNextMonthName] = useState('');
-
+  const [availablePredictionMonths, setAvailablePredictionMonths] = useState<string[]>([]);
+  const [selectedPredictionMonth, setSelectedPredictionMonth] = useState<string>('');
+  const [pastSupplyPrediction, setPastSupplyPrediction] = useState<PastSupplyPrediction[]>([]);
+  const [pastDemandPrediction, setPastDemandPrediction] = useState<PastDemandPrediction[]>([]);
+  const [loadingPastPrediction, setLoadingPastPrediction] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
@@ -158,9 +169,15 @@ export default function PredictiveReportsPage() {
         });
         setSupplyForecast(combinedSupplyData);
 
-        const { data: predictedDemand, error: demandError } = await supabase.functions.invoke('predictive-demand-forecast');
-        if (demandError) throw new Error(`Error fetching predicted demand: ${demandError.message}`);
-        setDemandForecast(predictedDemand as DemandForecastData[]);
+         const { data: predictedDemandData, error: demandError } = await supabase.rpc(
+            'get_monthly_demand_forecast'
+         );
+         if (demandError) throw new Error(`Error fetching predicted demand: ${demandError.message}`);
+         const formattedDemandData = predictedDemandData.map((d: any) => ({
+             type: d.component_type,
+             predicted_demand: d.predicted_demand
+         })).sort((a: DemandForecastData, b: DemandForecastData) => b.predicted_demand - a.predicted_demand);
+         setDemandForecast(formattedDemandData);
 
         const total = combinedSupplyData.reduce((acc, item) => acc + item.shortfall, 0);
         setTotalShortfall(total);
@@ -168,7 +185,7 @@ export default function PredictiveReportsPage() {
         setMostNeeded({ type: most.type, shortfall: most.shortfall });
 
       } catch (err: any) {
-        console.error("Error fetching data:", err);
+        console.error("Error fetching current prediction data:", err);
         setError(err);
       } finally {
         setLoading(false);
@@ -177,214 +194,198 @@ export default function PredictiveReportsPage() {
     fetchPredictiveData();
   }, []);
 
+  useEffect(() => {
+    async function fetchAvailableMonths() {
+        const { data, error } = await supabase
+            .from('predicted_supply_history')
+            .select('prediction_for_month')
+            .order('prediction_for_month', { ascending: false });
+
+        if (error) {
+            console.error("Error fetching available prediction months:", error);
+        } else if (data) {
+            const months = [...new Set(data.map(item => item.prediction_for_month))].filter(Boolean) as string[];
+            setAvailablePredictionMonths(months);
+        }
+    }
+    fetchAvailableMonths();
+}, []);
+
+  useEffect(() => {
+    async function fetchPastPredictionData() {
+        if (!selectedPredictionMonth) {
+             setPastSupplyPrediction([]);
+             setPastDemandPrediction([]);
+             return;
+        };
+        setLoadingPastPrediction(true);
+        try {
+            const { data: supplyData, error: supplyErr } = await supabase
+                .from('predicted_supply_history')
+                .select('blood_type, predicted_units')
+                .eq('prediction_for_month', selectedPredictionMonth)
+                .order('blood_type');
+            if (supplyErr) throw new Error(`Error fetching past supply prediction: ${supplyErr.message}`);
+            setPastSupplyPrediction(supplyData || []);
+
+            const { data: demandData, error: demandErr } = await supabase
+                .from('predicted_demand_history')
+                .select('component_type, predicted_units')
+                .eq('prediction_for_month', selectedPredictionMonth)
+                .order('predicted_units', { ascending: false });
+            if (demandErr) throw new Error(`Error fetching past demand prediction: ${demandErr.message}`);
+            setPastDemandPrediction(demandData || []);
+        } catch (err: any) {
+            console.error("Error fetching past prediction data:", err);
+            setError(err); // Show error in main display
+            setPastSupplyPrediction([]);
+            setPastDemandPrediction([]);
+        } finally {
+            setLoadingPastPrediction(false);
+        }
+    }
+    fetchPastPredictionData();
+  }, [selectedPredictionMonth]);
+
   const handleExportPDF = () => {
     setIsExporting(true);
     setError(null);
     if (loading || supplyForecast.length === 0 || demandForecast.length === 0 || monthlyTrendData.length === 0) {
-        setError({ message: "Data is still loading or unavailable for export." });
-        setIsExporting(false); 
-        return;
+        setError({ message: "Current prediction data is still loading or unavailable for export." });
+        setIsExporting(false); return;
     }
-
-
     try {
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pageHeight = pdf.internal.pageSize.getHeight();
         const pageWidth = pdf.internal.pageSize.getWidth();
-        const margin = 15;
-        let currentY = margin;
+        const margin = 15; let currentY = margin;
 
-        pdf.setFontSize(18);
-        pdf.text(`DUGO Predictive Report`, pageWidth / 2, currentY, { align: 'center' });
-        currentY += 8;
-        pdf.setFontSize(14);
-        pdf.text(`Forecast for ${nextMonthName}`, pageWidth / 2, currentY, { align: 'center' });
-        currentY += 12;
-        pdf.setFontSize(12);
-        pdf.text("Key Insights:", margin, currentY);
-        currentY += 6;
+        pdf.setFontSize(18); pdf.text(`DUGO Predictive Report`, pageWidth / 2, currentY, { align: 'center' }); currentY += 8;
+        pdf.setFontSize(14); pdf.text(`Forecast for ${nextMonthName}`, pageWidth / 2, currentY, { align: 'center' }); currentY += 12;
+        pdf.setFontSize(12); pdf.text("Key Insights:", margin, currentY); currentY += 6;
         pdf.setFontSize(10);
         pdf.text(`- Predicted Supply Shortfall: ${totalShortfall} Units (vs. Target for ${nextMonthName})`, margin + 5, currentY); currentY += 5;
         pdf.text(`- Top Priority Collection: Type ${mostNeeded.type} (${mostNeeded.shortfall > 0 ? `Need ${mostNeeded.shortfall} more units` : "Sufficient"})`, margin + 5, currentY); currentY += 5;
         const highestDemand = demandForecast.length > 0 ? demandForecast[0] : null;
         pdf.text(`- Highest Predicted Demand: ${highestDemand ? highestDemand.type : 'N/A'} (Est: ${highestDemand ? highestDemand.predicted_demand : 0} units)`, margin + 5, currentY); currentY += 10;
-         const addTable = (title: string, head: any[], body: any[], addTotalRow: boolean = false, totalColumns: number[] = []) => {
-            let finalY = currentY;
-            const titleSpace = 6;
-            const tableHeaderSpace = 10;
-             if (currentY + titleSpace + tableHeaderSpace > pageHeight - margin) {
-                 pdf.addPage();
-                 currentY = margin;
-             }
-             pdf.setFontSize(12);
-             pdf.text(title, margin, currentY);
-             currentY += titleSpace;
-             let totalRow: any[] | null = null;
-             if (addTotalRow && body.length > 0) {
-                 totalRow = ['Total', ...Array(head[0].length - 1).fill(0)]; 
-                 body.forEach(row => {
-                     totalColumns.forEach(colIndex => {
-                         if (colIndex > 0 && colIndex < head[0].length) { 
-                             totalRow![colIndex] += row[colIndex] || 0; 
-                         }
-                     });
-                 });
-             }
 
-             autoTable(pdf, {
-                 startY: currentY,
-                 head: head,
-                 body: body,
-                 foot: totalRow ? [totalRow] : undefined, 
-                 footStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold' }, 
-                 theme: 'grid',
-                 headStyles: { fillColor: [239, 68, 68] }, 
-                 margin: { left: margin, right: margin },
-                 didDrawPage: (data) => {
-                     finalY = data.cursor?.y ?? currentY; 
-                 }
-             });
-             currentY = finalY + 10;
-         };
-         addTable(
-             `Supply Forecast Data for ${nextMonthName}`,
-             [['Blood Type', 'Predicted Target', 'Currently Available', 'Shortfall']],
-             supplyForecast.map(item => [item.type, item.needed, item.available, item.shortfall]),
-             true, 
-             [1, 2, 3] 
-         );
-         addTable(
-             `Demand Forecast Data for ${nextMonthName}`,
-             [['Component', 'Predicted Demand']],
-             demandForecast.map(item => [item.type, item.predicted_demand]),
-             true, 
-             [1]
-         );
+        const addTable = (title: string, head: any[], body: any[], addTotalRow: boolean = false, totalColumns: number[] = []) => {
+           let finalY = currentY; const titleSpace = 6; const tableHeaderSpace = 10;
+           if (currentY + titleSpace + tableHeaderSpace > pageHeight - margin) { pdf.addPage(); currentY = margin; }
+           pdf.setFontSize(12); pdf.text(title, margin, currentY); currentY += titleSpace;
+           let totalRow: any[] | null = null;
+           if (addTotalRow && body.length > 0) {
+               totalRow = ['Total', ...Array(head[0].length - 1).fill(0)];
+               body.forEach(row => { totalColumns.forEach(colIndex => { if (colIndex > 0 && colIndex < head[0].length) { totalRow![colIndex] += row[colIndex] || 0; } }); });
+           }
+           autoTable(pdf, { startY: currentY, head, body, foot: totalRow ? [totalRow] : undefined, footStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold' }, theme: 'grid', headStyles: { fillColor: [239, 68, 68] }, margin: { left: margin, right: margin }, didDrawPage: (data) => { finalY = data.cursor?.y ?? currentY; } });
+           currentY = finalY + 10;
+        };
 
-         addTable(
-             `Historical Trend Data (Last 12 Months)`,
-             [['Month', 'Demand', 'Supply']],
-             monthlyTrendData.map(item => [item.month, item.demand, item.supply])
-         );
+        addTable(`Supply Forecast Data for ${nextMonthName}`, [['Blood Type', 'Predicted Target', 'Currently Available', 'Shortfall']], supplyForecast.map(item => [item.type, item.needed, item.available, item.shortfall]), true, [1, 2, 3]);
+        addTable(`Demand Forecast Data for ${nextMonthName}`, [['Component', 'Predicted Demand']], demandForecast.map(item => [item.type, item.predicted_demand]), true, [1]);
+        addTable(`Historical Trend Data (Last 12 Months)`, [['Month', 'Demand', 'Supply']], monthlyTrendData.map(item => [item.month, item.demand, item.supply]));
 
         const rec1 = `- ${mostNeeded.shortfall > 0 ? `Focus collection efforts on Type ${mostNeeded.type} donors. You are predicted to be ${mostNeeded.shortfall} units short of the target.` : "All blood types are predicted to be at or above the supply target. Maintain regular collection drives."}`;
         const rec2 = `- ${demandForecast.length > 0 ? `Prepare for high demand of ${demandForecast[0].type}. Ensure component preparation is prioritized, as it's predicted to be the most requested item.` : ''}`;
         const rec3 = `- Review the 12-month trend to identify seasonal peaks in demand and plan major campaigns around those months.`;
-        const maxWidth = pageWidth - 2 * margin - 5; 
-        const splitText = (text: string) => pdf.splitTextToSize(text, maxWidth);
-        const estimateLines = (text: string) => text ? splitText(text).length : 0;
-        const lineHeight = 4; 
-        const headerHeight = 6;
-        const spacing = 2; 
-        const estimatedRecHeight = headerHeight +
-                                   (estimateLines(rec1) * lineHeight) + spacing +
-                                   (estimateLines(rec2) * lineHeight) + spacing +
-                                   (estimateLines(rec3) * lineHeight);
-
-        // Check if recommendations fit on the current page
-        if (currentY + estimatedRecHeight > pageHeight - margin) {
-            pdf.addPage();
-            currentY = margin;
-        }
-
-        pdf.setFontSize(12);
-        pdf.text(`Actionable Recommendations for ${nextMonthName}:`, margin, currentY);
-        currentY += headerHeight;
-        pdf.setFontSize(10);
-
-        // Add recommendation text line by line
-        splitText(rec1).forEach((line: string) => { pdf.text(line, margin + 5, currentY); currentY += lineHeight; });
-        currentY += spacing;
-        if (rec2.length > 2) { // Only add if rec2 has content
-            splitText(rec2).forEach((line: string) => { pdf.text(line, margin + 5, currentY); currentY += lineHeight; });
-            currentY += spacing;
-        }
+        const maxWidth = pageWidth - 2 * margin - 5; const splitText = (text: string) => pdf.splitTextToSize(text, maxWidth); const estimateLines = (text: string) => text ? splitText(text).length : 0;
+        const lineHeight = 4; const headerHeight = 6; const spacing = 2; const estimatedRecHeight = headerHeight + (estimateLines(rec1) * lineHeight) + spacing + (estimateLines(rec2) * lineHeight) + spacing + (estimateLines(rec3) * lineHeight);
+        if (currentY + estimatedRecHeight > pageHeight - margin) { pdf.addPage(); currentY = margin; }
+        pdf.setFontSize(12); pdf.text(`Actionable Recommendations for ${nextMonthName}:`, margin, currentY); currentY += headerHeight; pdf.setFontSize(10);
+        splitText(rec1).forEach((line: string) => { pdf.text(line, margin + 5, currentY); currentY += lineHeight; }); currentY += spacing;
+        if (rec2.length > 2) { splitText(rec2).forEach((line: string) => { pdf.text(line, margin + 5, currentY); currentY += lineHeight; }); currentY += spacing; }
         splitText(rec3).forEach((line: string) => { pdf.text(line, margin + 5, currentY); currentY += lineHeight; });
 
-        // --- Save PDF ---
         pdf.save(`DUGO_Predictive_Report_${nextMonthName.replace(/ /g, '_')}.pdf`);
-
-    } catch (exportError) {
-        console.error("Error exporting simplified PDF:", exportError);
-        if (exportError instanceof Error) {
-            setError({ message: `PDF Export Failed: ${exportError.message}. Check browser console for details.` });
-        } else {
-             setError({ message: "An unknown error occurred during PDF export." });
-        }
-    } finally {
-        setIsExporting(false);
-    }
+    } catch (exportError) { console.error("Error exporting current prediction PDF:", exportError); /* ... Error handling ... */ }
+    finally { setIsExporting(false); }
   };
+
+  const handleExportPastPDF = () => {
+    if (!selectedPredictionMonth || pastSupplyPrediction.length === 0 || pastDemandPrediction.length === 0) {
+        setError({ message: "No past prediction data selected or available to export." });
+        return;
+    }
+    setIsExporting(true);
+    setError(null);
+    const date = new Date(selectedPredictionMonth + 'T00:00:00');
+    const formatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }); // Use UTC
+    const formattedMonth = formatter.format(date);
+    try {
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const margin = 15; let currentY = margin;
+
+        pdf.setFontSize(18); pdf.text(`DUGO Past Predictive Report`, pageWidth / 2, currentY, { align: 'center' }); currentY += 8;
+        pdf.setFontSize(14); pdf.text(`Prediction Made For ${formattedMonth}`, pageWidth / 2, currentY, { align: 'center' }); currentY += 12;
+
+        const addTable = (title: string, head: any[], body: any[]) => {
+            let finalY = currentY; const titleSpace = 6; const tableHeaderSpace = 10;
+            if (currentY + titleSpace + tableHeaderSpace > pageHeight - margin) { pdf.addPage(); currentY = margin; }
+            pdf.setFontSize(12); pdf.text(title, margin, currentY); currentY += titleSpace;
+            let totalRow: any[] | null = null;
+            if (body.length > 0 && head[0].length > 1) {
+                totalRow = ['Total', ...Array(head[0].length - 1).fill(0)];
+                body.forEach(row => { totalRow![head[0].length - 1] += row[head[0].length - 1] || 0; });
+            }
+            autoTable(pdf, { startY: currentY, head, body, foot: totalRow ? [totalRow] : undefined, footStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold' }, theme: 'grid', headStyles: { fillColor: [239, 68, 68] }, margin: { left: margin, right: margin }, didDrawPage: (data) => { finalY = data.cursor?.y ?? currentY; } });
+            currentY = finalY + 10;
+        };
+        addTable(`Past Supply Prediction for ${formattedMonth}`, [['Blood Type', 'Predicted Units']], pastSupplyPrediction.map(item => [item.blood_type, item.predicted_units]));
+        addTable(`Past Demand Prediction for ${formattedMonth}`, [['Component', 'Predicted Units']], pastDemandPrediction.map(item => [item.component_type, item.predicted_units]));
+
+        pdf.save(`DUGO_Past_Prediction_${formattedMonth.replace(/ /g, '_')}.pdf`);
+    } catch (exportError) { console.error("Error exporting past prediction PDF:", exportError); /* ... Error handling ... */ }
+    finally { setIsExporting(false); }
+  };
+
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <BloodbankSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 w-full transition-all duration-300 md:ml-72">
         <BloodbankHeader toggleSidebar={toggleSidebar} />
-        {/* Main element - No ref needed */}
         <main id="report-content-area" className="mt-20 p-4 md:p-8">
-
-          {/* --- Export Button Section --- */}
           {!loading && !error && (
             <div className="mb-6 flex justify-end">
               <button
                 onClick={handleExportPDF}
-                disabled={isExporting || loading} // Disable if exporting or still loading initial data
+                disabled={isExporting || loading}
                 className={`bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-semibold transition shadow-sm flex items-center gap-2 ${(isExporting || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {isExporting ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Exporting...
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm5 1a1 1 0 00-1 1v6a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    Export as PDF (Data Only)
-                  </>
-                )}
+                {isExporting ? ( <><LoadingIcon/> Exporting... </> ) : ( <><ExportIcon/> Export Current Report</> )}
               </button>
             </div>
           )}
-          {/* --- End of Export Button Section --- */}
-
-
-          {/* --- Loading and Error States --- */}
           {loading && (
             <div className="flex justify-center items-center h-64 p-6 bg-white rounded-2xl shadow-lg">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
                 <p className="text-lg font-semibold text-gray-600 ml-4">Loading Predictive Data...</p>
             </div>
           )}
-          {error && (
-            <Card className="bg-red-50 border border-red-200">
-                <h2 className="text-xl font-bold text-red-700 mb-2">Failed to Load or Export Data</h2>
+          {!loading && error && (
+            <Card className="bg-red-50 border border-red-200 mb-6"> {/* Added margin-bottom */}
+                <h2 className="text-xl font-bold text-red-700 mb-2">Error</h2>
                 <p className="text-red-600 font-mono bg-red-100 p-2 rounded">{error.message}</p>
                  <p className="text-gray-600 mt-2 text-sm">
-                    Please check your Supabase setup (tables, functions, RLS) and browser console for more details if exporting failed.
+                    Please check your Supabase setup and browser console for more details.
                 </p>
             </Card>
           )}
 
-          {/* --- Main Content --- */}
           {!loading && !error && (
             <>
-              {/* Key Insights Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                  <StatCard title="Predicted Supply Shortfall" value={`${totalShortfall} Units`} change={`vs. Target for ${nextMonthName}`} icon={<UsersIcon/>} />
                  <StatCard title="Top Priority Collection" value={mostNeeded.type} change={mostNeeded.shortfall > 0 ? `Need ${mostNeeded.shortfall} more units` : "Sufficient"} icon={<InventoryIcon/>} />
                  <StatCard title="Highest Predicted Demand" value={demandForecast.length > 0 ? demandForecast[0].type : "N/A"} change={`Est: ${demandForecast.length > 0 ? demandForecast[0].predicted_demand : 0} units for ${nextMonthName}`} icon={<ReportIcon/>} />
               </div>
 
-              {/* Charts Row - Displayed on page, not exported */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 dark:text-gray-700">
                 <Card>
-                  <div className="bg-white p-2 dark:text-gray-700">
+                  <div className="bg-white p-2">
                     <h2 className="text-xl font-bold text-gray-800 mb-1">Supply Forecast (Collection)</h2>
                     <p className="text-sm text-gray-500 mb-4">Predicted Supply Target vs. Current Inventory for <strong>{nextMonthName}</strong></p>
                     <ResponsiveContainer width="100%" height={300}>
@@ -396,7 +397,7 @@ export default function PredictiveReportsPage() {
                   </div>
                 </Card>
                 <Card>
-                  <div className="bg-white p-2 dark:text-gray-700">
+                  <div className="bg-white p-2">
                     <h2 className="text-xl font-bold text-gray-800 mb-1">Demand Forecast (Issuance)</h2>
                     <p className="text-sm text-gray-500 mb-4">Predicted demand by component for <strong>{nextMonthName}</strong>.</p>
                     <ResponsiveContainer width="100%" height={300}>
@@ -409,7 +410,6 @@ export default function PredictiveReportsPage() {
                 </Card>
               </div>
 
-              {/* Historical Trend Line Chart - Displayed on page, not exported */}
               <Card className="mb-8">
                 <div className="bg-white p-2">
                   <h2 className="text-xl font-bold text-gray-800 mb-1">12-Month Historical Trend</h2>
@@ -423,7 +423,6 @@ export default function PredictiveReportsPage() {
                 </div>
               </Card>
 
-              {/* Recommendations Card */}
               <Card>
                  <h2 className="text-xl font-bold text-gray-800 mb-4">Actionable Recommendations for {nextMonthName}</h2>
                  <ul className="space-y-3 list-disc list-inside text-gray-700">
@@ -441,6 +440,88 @@ export default function PredictiveReportsPage() {
                    <li>Review the 12-month trend to identify seasonal peaks in demand (e.g., months where the red line is highest) and plan major campaigns around those months.</li>
                  </ul>
               </Card>
+
+              {availablePredictionMonths.length > 0 && (
+                <Card className="mt-8 border-t-4 border-blue-600">
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">View Past Predictions</h2>
+                    <div className="mb-4 flex flex-col sm:flex-row gap-4 items-center">
+                        <label htmlFor="pastMonthSelect" className="block text-sm font-medium text-gray-700 whitespace-nowrap">Select Month:</label>
+                        <select
+                            id="pastMonthSelect"
+                            value={selectedPredictionMonth}
+                            onChange={(e) => setSelectedPredictionMonth(e.target.value)}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full sm:w-auto p-2.5 dark:text-gray-700"
+                        >
+                            <option value="">-- Select a Month --</option>
+                            {availablePredictionMonths.map(month => {
+                                const date = new Date(month + 'T00:00:00'); // Treat as local
+                                const formatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }); // Use UTC to prevent timezone shifts
+                                return ( <option key={month} value={month}>{formatter.format(date)}</option> );
+                            })}
+                        </select>
+                        {/* Export Button for Past Prediction */}
+                        {selectedPredictionMonth && (pastSupplyPrediction.length > 0 || pastDemandPrediction.length > 0) && (
+                             <button
+                                onClick={handleExportPastPDF}
+                                disabled={isExporting || loadingPastPrediction}
+                                className={`ml-0 sm:ml-auto mt-2 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-sm flex items-center gap-2 ${(isExporting || loadingPastPrediction) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                             >
+                                 {isExporting || loadingPastPrediction ? ( <><LoadingIcon/> Exporting... </> ) : ( <><ExportIcon/> Export Selected Prediction </>)}
+                             </button>
+                        )}
+                    </div>
+
+                    {loadingPastPrediction && (
+                         <div className="flex justify-center items-center py-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div><p className="ml-3 text-gray-500">Loading prediction...</p></div>
+                    )}
+
+                    {!loadingPastPrediction && selectedPredictionMonth && (pastSupplyPrediction.length > 0 || pastDemandPrediction.length > 0) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                            {/* Past Supply Table */}
+                            <div>
+                                <h3 className="text-md font-semibold text-gray-700 mb-2">Supply Prediction</h3>
+                                <div className="overflow-x-auto border rounded-lg">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50"><tr className="text-xs font-medium text-gray-500 uppercase tracking-wider"><th className="px-4 py-2 text-left">Blood Type</th><th className="px-4 py-2 text-right">Predicted Units</th></tr></thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {pastSupplyPrediction.map((item, index) => (<tr key={`supply-${index}`}><td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{item.blood_type}</td><td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-right">{item.predicted_units}</td></tr>))}
+                                             <tr className="bg-gray-50 font-bold"><td className="px-4 py-2 text-left text-sm text-gray-700">Total</td><td className="px-4 py-2 text-right text-sm text-gray-700">{pastSupplyPrediction.reduce((sum, item) => sum + item.predicted_units, 0)}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            {/* Past Demand Table */}
+                             <div>
+                                <h3 className="text-md font-semibold text-gray-700 mb-2">Demand Prediction</h3>
+                                 <div className="overflow-x-auto border rounded-lg">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50"><tr className="text-xs font-medium text-gray-500 uppercase tracking-wider"><th className="px-4 py-2 text-left">Component</th><th className="px-4 py-2 text-right">Predicted Units</th></tr></thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {pastDemandPrediction.map((item, index) => (<tr key={`demand-${index}`}><td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{item.component_type}</td><td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-right">{item.predicted_units}</td></tr>))}
+                                             <tr className="bg-gray-50 font-bold"><td className="px-4 py-2 text-left text-sm text-gray-700">Total</td><td className="px-4 py-2 text-right text-sm text-gray-700">{pastDemandPrediction.reduce((sum, item) => sum + item.predicted_units, 0)}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                     {/* Message when a month is selected but no data found */}
+                     {!loadingPastPrediction && selectedPredictionMonth && pastSupplyPrediction.length === 0 && pastDemandPrediction.length === 0 && (
+                         <p className="text-center text-gray-500 py-4">No prediction data found for the selected month.</p>
+                     )}
+                     {/* Initial message when no month is selected */}
+                     {!loadingPastPrediction && !selectedPredictionMonth && (
+                         <p className="text-center text-gray-400 py-4 italic">Select a month above to view its prediction history.</p>
+                     )}
+                </Card>
+             )}
+             {/* Show message if no past predictions are available at all */}
+             {!loading && availablePredictionMonths.length === 0 && (
+                <Card className="mt-8 border-t-4 border-blue-600">
+                     <h2 className="text-xl font-bold text-gray-800 mb-4">View Past Predictions</h2>
+                     <p className="text-center text-gray-500 py-4">No past prediction data has been recorded yet. The system will start saving predictions next month.</p>
+                </Card>
+             )}
             </>
           )}
 

@@ -115,6 +115,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 function CampaignFormModal({ isOpen, onClose, onSave, editingCampaign }: { isOpen: boolean; onClose: () => void; onSave: () => void; editingCampaign: any | null }) {
     const [form, setForm] = useState({ title: "", description: "", location: "", date: "", time: "", photo: null as File | null });
+    const [isSaving, setIsSaving] = useState(false); // <-- 1. IDUGANG KINI NGA STATE
 
     useEffect(() => {
         if (editingCampaign) {
@@ -131,30 +132,50 @@ function CampaignFormModal({ isOpen, onClose, onSave, editingCampaign }: { isOpe
         }
     }, [editingCampaign]);
 
+    // <-- 2. I-UPDATE ANG handleSave FUNCTION -->
     const handleSave = async () => {
+        // I-check kung gipangayo ba tanan
         if (!form.title || !form.description || !form.location || !form.date || !form.time) {
-            Swal.fire("Error", "All fields are required!", "error"); return;
+            Swal.fire("Error", "All fields are required!", "error"); 
+            return; // Ayaw i-set ang isSaving kung validation pa lang gani, palpak na
         }
 
-        let photoUrl = editingCampaign?.photo_url || null;
-        if (form.photo) {
-            const filePath = `public/${Date.now()}_${form.photo.name}`;
-            const { error: uploadError } = await supabase.storage.from("campaigns").upload(filePath, form.photo);
-            if (uploadError) { Swal.fire("Error", `Photo upload failed: ${uploadError.message}`, "error"); return; }
-            const { data } = supabase.storage.from("campaigns").getPublicUrl(filePath);
-            photoUrl = data.publicUrl;
-        }
+        // I-check kung ga-save na ba
+        if (isSaving) return; // Kung ga-save na, ayaw na padayona
+        setIsSaving(true);      // I-set ang saving state sa true
 
-        const payload = { title: form.title, description: form.description, location: form.location, date: form.date, time: form.time, photo_url: photoUrl };
-        const { error } = editingCampaign
-            ? await supabase.from("blood_campaigns").update(payload).eq("id", editingCampaign.id)
-            : await supabase.from("blood_campaigns").insert([payload]);
+        try {
+            let photoUrl = editingCampaign?.photo_url || null;
+            if (form.photo) {
+                const filePath = `public/${Date.now()}_${form.photo.name}`;
+                const { error: uploadError } = await supabase.storage.from("campaigns").upload(filePath, form.photo);
+                
+                if (uploadError) { 
+                    Swal.fire("Error", `Photo upload failed: ${uploadError.message}`, "error"); 
+                    // Dili na need mu-setIsSaving(false) kay naa na sa 'finally'
+                    return; 
+                }
 
-        if (error) {
-            Swal.fire("Error", `Failed to save campaign: ${error.message}`, "error");
-        } else {
-            Swal.fire("Success", `Campaign ${editingCampaign ? 'updated' : 'added'} successfully!`, "success");
-            onSave();
+                const { data } = supabase.storage.from("campaigns").getPublicUrl(filePath);
+                photoUrl = data.publicUrl;
+            }
+
+            const payload = { title: form.title, description: form.description, location: form.location, date: form.date, time: form.time, photo_url: photoUrl };
+            const { error } = editingCampaign
+                ? await supabase.from("blood_campaigns").update(payload).eq("id", editingCampaign.id)
+                : await supabase.from("blood_campaigns").insert([payload]);
+
+            if (error) {
+                Swal.fire("Error", `Failed to save campaign: ${error.message}`, "error");
+            } else {
+                Swal.fire("Success", `Campaign ${editingCampaign ? 'updated' : 'added'} successfully!`, "success");
+                onSave();
+            }
+        } catch (err) {
+            console.error("An unexpected error occurred:", err);
+            Swal.fire("Error", "An unexpected error occurred. Please try again.", "error");
+        } finally {
+            setIsSaving(false); // <-- 3. I-set balik sa false bisag unsa pay mahitabo (error or success)
         }
     };
 
@@ -184,7 +205,20 @@ function CampaignFormModal({ isOpen, onClose, onSave, editingCampaign }: { isOpe
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
                                 <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
-                                <button type="button" onClick={handleSave} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 font-semibold text-white transition">{editingCampaign ? "Update Campaign" : "Add Campaign"}</button>
+                                
+                                {/* <-- 4. I-UPDATE ANG BUTTON --> */}
+                                <button 
+                                    type="button" 
+                                    onClick={handleSave} 
+                                    disabled={isSaving} // I-disable kung ga-save
+                                    className={`px-4 py-2 rounded-lg font-semibold text-white transition ${
+                                        isSaving 
+                                            ? 'bg-gray-400 cursor-not-allowed' 
+                                            : 'bg-red-600 hover:bg-red-700'
+                                    }`}
+                                >
+                                    {isSaving ? 'Saving...' : (editingCampaign ? "Update Campaign" : "Add Campaign")}
+                                </button>
                             </div>
                         </div>
                     </div>

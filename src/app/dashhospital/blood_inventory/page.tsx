@@ -103,7 +103,15 @@ const InputField = ({ label, children, ...props }: any) => (
 function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, search, setSearch }: any) {
     if (!isOpen) return null;
     const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
-    const components = ["Red Blood Cells", "Plasma", "Platelets", "White Blood Cells"];
+    const components = [
+    { value: "WB", label: "Whole Blood (WB)" },
+    { value: "PRBC", label: "Packed Red Blood Cells (PRBC)" },
+    { value: "PC", label: "Platelet Concentrate (PC)" },
+    { value: "FFP", label: "Fresh Frozen Plasma (FFP)" },
+    { value: "PRP", label: "Platelet-Rich Plasma (PRP)" },
+    { value: "CRYO", label: "Cryoprecipitate (CRYO)" },
+    { value: "APH", label: "Apheresis (APH)" }
+  ];
     
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -138,11 +146,15 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, sea
                                 </select>
                             </InputField>
                             <InputField label="Component" name="component">
-                                <select value={form.component} onChange={(e) => setForm({ ...form, component: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
-                                    <option value="">Select...</option>
-                                    {components.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                            </InputField>
+                            <select 
+                                value={form.component} 
+                                onChange={(e) => setForm({ ...form, component: e.target.value })} 
+                                className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                            >
+                                <option value="">Select...</option>
+                                {components.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                        </InputField>
                         </div>
                         <div className="grid grid-cols-2 gap-4 dark:text-gray-700">
                             <InputField label="Units" placeholder="0" name="units"><input type="number" value={form.units} onChange={(e) => setForm({ ...form, units: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
@@ -340,45 +352,45 @@ export default function ManageInventory() {
     }, []);
 
     useEffect(() => {
-        // Check kung naa bay sulod ang duha ka fields
-        if (form.date_received && form.component) {
-            const receivedDate = new Date(form.date_received);
-            let expirationDate = new Date(receivedDate);
-    
-            // I-calculate ang expiration base sa component type
-            switch (form.component) {
-                case "Red Blood Cells":
-                    expirationDate.setDate(receivedDate.getDate() + 42); // Standard 42 days
-                    break;
-                case "Platelets":
-                    expirationDate.setDate(receivedDate.getDate() + 5); // Standard 5 days
-                    break;
-                case "Plasma":
-                    expirationDate.setFullYear(receivedDate.getFullYear() + 1); // Standard 1 year (if frozen)
-                    break;
-                case "White Blood Cells":
-                    expirationDate.setDate(receivedDate.getDate() + 1); // Standard 1 day
-                    break;
-                default:
-                    // Kung "Select..." pa, ayaw sa usba
-                    return; 
-            }
-    
-            // I-format ang date balik sa 'YYYY-MM-DD' para sa input field
-            const formattedExpiration = expirationDate.toISOString().split('T')[0];
-    
-            // I-update ang form state
-            setForm(prevForm => ({
-                ...prevForm,
-                date_expired: formattedExpiration
-            }));
-        }
-    }, [form.date_received, form.component]);
+    if (form.date_received && form.component) {
+        const receivedDate = new Date(form.date_received);
+        let expirationDate = new Date(receivedDate);
 
-    // Logic to filter blood stocks based on the main search query
+        switch (form.component) {
+            case 'WB': 
+                expirationDate.setDate(receivedDate.getDate() + 35); 
+                break;
+            case 'PRBC': 
+                expirationDate.setDate(receivedDate.getDate() + 42); 
+                break;
+            case 'PC': 
+            case 'PRP': 
+            case 'APH': 
+                expirationDate.setDate(receivedDate.getDate() + 5); 
+                break;
+            case 'FFP': 
+            case 'CRYO': 
+                expirationDate.setFullYear(receivedDate.getFullYear() + 1); // 1 year
+                break;
+            default:
+                setForm(prevForm => ({ ...prevForm, date_expired: "" }));
+                return; 
+        }
+
+        const formattedExpiration = expirationDate.toISOString().split('T')[0];
+
+        setForm(prevForm => ({
+            ...prevForm,
+            date_expired: formattedExpiration
+        }));
+    } else {
+        setForm(prevForm => ({ ...prevForm, date_expired: "" }));
+    }
+}, [form.date_received, form.component]);
+
     const filteredBloodStocks = bloodStocks.filter((stock) => {
         const query = mainSearchQuery.toLowerCase();
-        if (!query) return true; // Show all if search is empty
+        if (!query) return true; 
 
         return (
             stock.blood_bag_id.toLowerCase().includes(query) ||
