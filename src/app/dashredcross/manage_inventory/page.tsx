@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect,} from "react";
+import { useState, useEffect } from "react"; // Removed unused FC, ReactNode
 import Swal from "sweetalert2";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -92,8 +92,9 @@ function BloodbankHeader({ toggleSidebar }: { toggleSidebar: () => void }) {
 
 const StatusBadge = ({ status, expiration_date }: { status: string, expiration_date: string }) => {
     const isExpired = new Date(expiration_date) < new Date();
-    let effectiveStatus = isExpired ? "Expired" : status;
-    
+    // Use const for variables that are not reassigned
+    const effectiveStatus = isExpired ? "Expired" : status;
+
     const statusMap: Record<string, string> = {
         Available: "bg-green-100 text-green-800",
         Expired: "bg-red-100 text-red-800",
@@ -110,203 +111,187 @@ const InputField = ({ label, children, ...props }: any) => (
     </div>
 );
 
-// <--- GI-UPDATE NGA AddInventoryModal FUNCTION --->
-function AddInventoryModal({ 
-    isOpen, 
-    onClose, 
-    onSave, 
-    form, 
-    setForm, 
-    donors, 
-    campaigns, 
-    search, 
-    setSearch, 
-    campaignSearch, 
-    setCampaignSearch, 
-    isSaving // <--- 1. DAWWATA ANG isSaving PROP
+// --- CORRECTED AddInventoryModal FUNCTION ---
+function AddInventoryModal({
+    isOpen,
+    onClose,
+    onSave,
+    form,
+    setForm,
+    donors,
+    campaigns,
+    search,
+    setSearch,
+    campaignSearch,
+    setCampaignSearch,
+    isSaving
 }: any) {
-  if (!isOpen) return null;
 
-  // State to control dropdown visibility
-  const [isDonorDropdownOpen, setIsDonorDropdownOpen] = useState(false);
-  const [isCampaignDropdownOpen, setIsCampaignDropdownOpen] = useState(false);
+    // ✅ MOVED useState HOOKS TO THE TOP LEVEL
+    const [isDonorDropdownOpen, setIsDonorDropdownOpen] = useState(false);
+    const [isCampaignDropdownOpen, setIsCampaignDropdownOpen] = useState(false);
 
-  const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
-  const components = [
-  { value: "WB", label: "Whole Blood (WB)" },
-  { value: "PRBC", label: "Packed Red Blood Cells (PRBC)" },
-  { value: "PC", label: "Platelet Concentrate (PC)" },
-  { value: "FFP", label: "Fresh Frozen Plasma (FFP)" },
-  { value: "PRP", label: "Platelet-Rich Plasma (PRP)" },
-  { value: "CRYO", label: "Cryoprecipitate (CRYO)" },
-  { value: "APH", label: "Apheresis (APH)" }
-];
+    // Early return AFTER hooks
+    if (!isOpen) return null;
 
-  // Wrapper for onClose to reset local dropdown state
-  const handleClose = () => {
-    setIsDonorDropdownOpen(false);
-    setIsCampaignDropdownOpen(false);
-    onClose();
-  };
+    const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
+    const components = [
+      { value: "WB", label: "Whole Blood (WB)" },
+      { value: "PRBC", label: "Packed Red Blood Cells (PRBC)" },
+      { value: "PC", label: "Platelet Concentrate (PC)" },
+      { value: "FFP", label: "Fresh Frozen Plasma (FFP)" },
+      { value: "PRP", label: "Platelet-Rich Plasma (PRP)" },
+      { value: "CRYO", label: "Cryoprecipitate (CRYO)" },
+      { value: "APH", label: "Apheresis (APH)" }
+    ];
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
-        <div className="hidden md:flex flex-col justify-center p-12 bg-red-600 text-white">
-          <h2 className="text-3xl font-bold">Add New Blood Stock</h2>
-          <p className="mt-4 text-red-100">Ensure all details are accurate to maintain a reliable inventory for life-saving transfusions.</p>
-        </div>
-        <div className="relative p-8 md:p-10 overflow-y-auto max-h-[90vh]">
-          <button onClick={handleClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon/></button>
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Stock Details</h2>
-          <div className="space-y-4">
-            
-            <div 
-              className="relative"
-              onBlur={() => {
-                setTimeout(() => {
-                  setIsDonorDropdownOpen(false);
-                }, 150); 
-              }}
-            >
-              <InputField label="Donor" name="donor-search">
-                <input 
-                  type="text" 
-                  placeholder="Search donor by ID or name..." 
-                  value={search} 
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setIsDonorDropdownOpen(true);
-                  }} 
-                  onFocus={() => setIsDonorDropdownOpen(true)}
-                  className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </InputField>
-              {isDonorDropdownOpen && (
-                <div className="absolute z-10 dark:text-gray-700 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
-                  {donors.filter((d: any) => d.user_id?.toLowerCase().includes(search.toLowerCase()) || d.name.toLowerCase().includes(search.toLowerCase())).map((d: any) => (
-                    <div 
-                      key={d.user_id} 
-                      className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer" 
-                      onMouseDown={() => { 
-                        setForm({ ...form, user_id: d.user_id, type: d.blood_type });
-                        setSearch(`${d.user_id} - ${d.name}`); 
-                        setIsDonorDropdownOpen(false);
-                      }}>
-                      {d.user_id} - {d.name}
-                    </div>
-                  ))}
+    const handleClose = () => {
+        setIsDonorDropdownOpen(false);
+        setIsCampaignDropdownOpen(false);
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
+                {/* Left Pane */}
+                <div className="hidden md:flex flex-col justify-center p-12 bg-red-600 text-white">
+                    <h2 className="text-3xl font-bold">Add New Blood Stock</h2>
+                    <p className="mt-4 text-red-100">Ensure all details are accurate to maintain a reliable inventory for life-saving transfusions.</p>
                 </div>
-              )}
-            </div>
-
-            <div 
-              className="relative"
-              onBlur={() => {
-                setTimeout(() => {
-                  setIsCampaignDropdownOpen(false);
-                }, 150);
-              }}
-            >
-              <InputField label="Source Campaign (Optional)" name="campaign-search">
-                <input 
-                  type="text" 
-                  placeholder="Search campaign or select Walk-in..." 
-                  value={campaignSearch} 
-                  onChange={(e) => {
-                    setCampaignSearch(e.target.value);
-                    setIsCampaignDropdownOpen(true);
-                    if (form.campaign_id) {
-                      setForm({ ...form, campaign_id: "" });
-                    }
-                  }} 
-                  onFocus={() => setIsCampaignDropdownOpen(true)}
-                  className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </InputField>
-              {isCampaignDropdownOpen && (
-                <div className="absolute z-10 dark:text-gray-700 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
-                  {"walk-in / not from a campaign".includes(campaignSearch.toLowerCase()) && (
-                    <div 
-                      className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer"
-                      onMouseDown={() => {
-                        setForm({ ...form, campaign_id: "" }); 
-                        setCampaignSearch("Walk-in / Not from a campaign"); 
-                        setIsCampaignDropdownOpen(false);
-                      }}
-                    >
-                      Walk-in / Not from a campaign
+                {/* Right Pane (Form) */}
+                <div className="relative p-8 md:p-10 overflow-y-auto max-h-[90vh]">
+                    <button onClick={handleClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"><XIcon/></button>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Stock Details</h2>
+                    <div className="space-y-4">
+                        {/* Donor Search */}
+                        <div
+                            className="relative"
+                            onBlur={() => { setTimeout(() => setIsDonorDropdownOpen(false), 150); }}
+                        >
+                            <InputField label="Donor" name="donor-search">
+                                <input
+                                    type="text"
+                                    placeholder="Search donor by ID or name..."
+                                    value={search}
+                                    onChange={(e) => { setSearch(e.target.value); setIsDonorDropdownOpen(true); }}
+                                    onFocus={() => setIsDonorDropdownOpen(true)}
+                                    className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                                />
+                            </InputField>
+                            {isDonorDropdownOpen && (
+                                <div className="absolute z-10 dark:text-gray-700 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
+                                    {donors.filter((d: any) => d.user_id?.toLowerCase().includes(search.toLowerCase()) || d.name.toLowerCase().includes(search.toLowerCase())).map((d: any) => (
+                                        <div
+                                            key={d.user_id}
+                                            className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer"
+                                            onMouseDown={() => {
+                                                setForm({ ...form, user_id: d.user_id, type: d.blood_type });
+                                                setSearch(`${d.user_id} - ${d.name}`);
+                                                setIsDonorDropdownOpen(false);
+                                            }}>
+                                            {d.user_id} - {d.name}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        {/* Campaign Search */}
+                        <div
+                            className="relative"
+                            onBlur={() => { setTimeout(() => setIsCampaignDropdownOpen(false), 150); }}
+                        >
+                            <InputField label="Source Campaign (Optional)" name="campaign-search">
+                                <input
+                                    type="text"
+                                    placeholder="Search campaign or select Walk-in..."
+                                    value={campaignSearch}
+                                    onChange={(e) => {
+                                        setCampaignSearch(e.target.value);
+                                        setIsCampaignDropdownOpen(true);
+                                        if (form.campaign_id) { setForm({ ...form, campaign_id: "" }); }
+                                    }}
+                                    onFocus={() => setIsCampaignDropdownOpen(true)}
+                                    className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                                />
+                            </InputField>
+                            {isCampaignDropdownOpen && (
+                                <div className="absolute z-10 dark:text-gray-700 bg-white border mt-1 rounded w-full max-h-40 overflow-y-auto shadow-lg">
+                                    {"walk-in / not from a campaign".includes(campaignSearch.toLowerCase()) && (
+                                        <div
+                                            className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer"
+                                            onMouseDown={() => {
+                                                setForm({ ...form, campaign_id: "" });
+                                                setCampaignSearch("Walk-in / Not from a campaign");
+                                                setIsCampaignDropdownOpen(false);
+                                            }}
+                                        >
+                                            Walk-in / Not from a campaign
+                                        </div>
+                                    )}
+                                    {campaigns
+                                        .filter((c: any) => c.title.toLowerCase().includes(campaignSearch.toLowerCase()))
+                                        .map((c: any) => (
+                                        <div
+                                            key={c.id}
+                                            className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer"
+                                            onMouseDown={() => {
+                                                setForm({ ...form, campaign_id: c.id });
+                                                setCampaignSearch(`${c.title} - ${c.title}`); // Assuming c.title is correct, adjust if needed
+                                                setIsCampaignDropdownOpen(false);
+                                            }}>
+                                            {c.title} {/* Adjust if needed */}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        {/* Other Form Fields */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <InputField label="Blood Type" name="type">
+                                <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                    <option value="">Select...</option>
+                                    {bloodTypes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
+                            </InputField>
+                            <InputField label="Component" name="component">
+                                <select value={form.component} onChange={(e) => setForm({ ...form, component: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                                    <option value="">Select...</option>
+                                    {components.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                </select>
+                            </InputField>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <InputField label="Units" name="units"><input type="number" placeholder="0" value={form.units} onChange={(e) => setForm({ ...form, units: e.target.value })} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                            <InputField label="Volume (mL)" name="volume_ml"><input type="number" placeholder="0" value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <InputField label="Date Received" name="date_received"><input type="date" value={form.date_received} onChange={(e) => setForm({ ...form, date_received: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
+                            <InputField label="Date Expired" name="date_expired">
+                                <input
+                                    type="date"
+                                    value={form.date_expired}
+                                    readOnly
+                                    disabled
+                                    className="bg-gray-200 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"
+                                />
+                            </InputField>
+                        </div>
+                        <div className="flex justify-end gap-3 pt-4">
+                            <button onClick={handleClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
+                            <button
+                                onClick={onSave}
+                                disabled={isSaving}
+                                className={`px-4 py-2 rounded-lg font-semibold text-white transition ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+                            >
+                                {isSaving ? "Adding..." : "Add Stock"}
+                            </button>
+                        </div>
                     </div>
-                  )}
-                  {campaigns
-                    .filter((c: any) => c.title.toLowerCase().includes(campaignSearch.toLowerCase()))
-                    .map((c: any) => (
-                    <div 
-                      key={c.id} 
-                      className="px-3 py-2 dark:text-gray-700 hover:bg-red-50 cursor-pointer" 
-                      onMouseDown={() => { 
-                        setForm({ ...form, campaign_id: c.id }); 
-                        setCampaignSearch(`${c.title} - ${c.title}`);
-                        setIsCampaignDropdownOpen(false);
-                      }}>
-                      {c.title} - {c.title}
-                    </div>
-                  ))}
                 </div>
-              )}
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <InputField label="Blood Type" name="type">
-                <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
-                  <option value="">Select...</option>
-                  {bloodTypes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-              </InputField>
-              <InputField label="Component" name="component">
-                <select value={form.component} onChange={(e) => setForm({ ...form, component: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
-                  <option value="">Select...</option>
-                  {components.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
-              </InputField>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <InputField label="Units" name="units"><input type="number" placeholder="0" value={form.units} onChange={(e) => setForm({ ...form, units: e.target.value })} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
-              <InputField label="Volume (mL)" name="volume_ml"><input type="number" placeholder="0" value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} className="bg-gray-50 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <InputField label="Date Received" name="date_received"><input type="date" value={form.date_received} onChange={(e) => setForm({ ...form, date_received: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"/></InputField>
-              <InputField label="Date Expired" name="date_expired">
-                <input 
-                  type="date" 
-                  value={form.date_expired} 
-                  readOnly 
-                  disabled 
-                  className="bg-gray-200 border dark:text-gray-700 border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"
-                />
-              </InputField>
-            </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <button onClick={handleClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
-              
-              {/* <--- 2. I-UPDATE ANG ADD STOCK BUTTON ---> */}
-              <button 
-                onClick={onSave} 
-                disabled={isSaving} // I-disable kung ga-save
-                className={`px-4 py-2 rounded-lg font-semibold text-white transition ${
-                    isSaving 
-                        ? 'bg-gray-400 cursor-not-allowed' 
-                        : 'bg-red-600 hover:bg-red-700'
-                }`}
-              >
-                {isSaving ? "Adding..." : "Add Stock"}
-              </button>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
 
 function QrModal({ qrData, onClose, onPrint }: { qrData: string, onClose: () => void, onPrint: () => void }) {
@@ -349,7 +334,7 @@ export default function ManageInventory() {
   const [campaignSearch, setCampaignSearch] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
-  const [isSavingStock, setIsSavingStock] = useState(false); // <--- 3. IDUGANG ANG SAVING STATE
+  const [isSavingStock, setIsSavingStock] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const fetchInventory = async (currentUser: any) => {
@@ -363,7 +348,7 @@ export default function ManageInventory() {
       .from("blood_inventory")
       .select("*")
       .eq("added_by", staffUserId)
-      .in("status", ["Red Cross","Added to Inventory", "Undergoing Testing"]) 
+      .in("status", ["Red Cross","Added to Inventory", "Undergoing Testing"])
       .order("inserted_at", { ascending: false });
 
     if (error) { console.error(error); } else { setBloodStocks(data || []); }
@@ -383,42 +368,37 @@ export default function ManageInventory() {
     fetchUserAndData();
   }, []);
 
-  // <--- 4. I-UPDATE ANG addInventory FUNCTION --->
   const addInventory = async () => {
-    // Validation
     if (!form.user_id || !form.type || !form.component || !form.units || !form.volume_ml || !form.date_received || !form.date_expired) {
-        Swal.fire("Error", "Please fill in all fields including donor.", "error"); 
+        Swal.fire("Error", "Please fill in all fields including donor.", "error");
         return;
     }
-
-    // Check kung ga-save na
     if (isSavingStock) return;
-    setIsSavingStock(true); // I-set sa true para i-disable ang button
+    setIsSavingStock(true);
 
     try {
         const bloodBagId = generateBloodBagId();
         let addedByUserId = null;
         if (currentUser) {
             const { data: profile } = await supabase.from("users").select("user_id").eq("email", currentUser.email).single();
-            if (!profile) { 
-                Swal.fire("Error", "Current user not found.", "error"); 
-                return; // Ang 'finally' block mu-dagan gihapon
+            if (!profile) {
+                Swal.fire("Error", "Current user not found.", "error");
+                return;
             }
             addedByUserId = profile.user_id;
         }
-        
+
         const qrPayload = `Blood Bag ID: ${bloodBagId}\nDonor ID: ${form.user_id}\nBlood Type: ${form.type}\nComponent: ${form.component}\nUnits: ${form.units}\nVolume: ${form.volume_ml}ml\nDate Received: ${form.date_received}\nExpiration: ${form.date_expired}\nLocation: Red Cross`;
-        
+
         const { data: newStock, error: stockError } = await supabase.from("blood_inventory").insert([{ blood_bag_id: bloodBagId, user_id: form.user_id, type: form.type, component: form.component, units: parseInt(form.units), volume_ml: parseInt(form.volume_ml), date_received: form.date_received, expiration_date: form.date_expired, qr_data: qrPayload, added_by: addedByUserId, status: "Available", campaign_id: form.campaign_id || null }]).select().single();
-        
-        if (stockError) { 
-            Swal.fire("Error", stockError.message, "error"); 
-            return; // Ang 'finally' block mu-dagan gihapon
+
+        if (stockError) {
+            Swal.fire("Error", stockError.message, "error");
+            return;
         }
 
         await supabase.from("blood_journey").insert([{ user_id: form.user_id, donation_id: newStock.id, stage: 1, location: "Red Cross" }]);
-        
-        // Kung success, i-reset ang tanan
+
         setSelectedQr(qrPayload);
         setQrModalOpen(true);
         setForm({ user_id: "",campaign_id: "", type: "", component: "", units: "", volume_ml: "", date_received: "", date_expired: "" });
@@ -431,12 +411,12 @@ export default function ManageInventory() {
         console.error("Error adding inventory:", error);
         Swal.fire("Error", "An unexpected error occurred while adding stock.", "error");
     } finally {
-        setIsSavingStock(false); // I-set balik sa false bisag success o error
+        setIsSavingStock(false);
     }
   };
 
   const generateBloodBagId = () => Math.floor(1000000000 + Math.random() * 9000000000).toString();
-  
+
   const deleteInventory = async (id: string) => {
     const result = await Swal.fire({ title: "Are you sure?", text: "This record will be permanently deleted.", icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", confirmButtonText: "Yes, delete it!" });
     if (result.isConfirmed) {
@@ -457,7 +437,7 @@ export default function ManageInventory() {
         const currentMonthName = today.toLocaleString('default', { month: 'long' });
         const currentYear = today.getFullYear();
         const totalUnits = bloodStocks.reduce((sum, stock) => sum + stock.units, 0);
-        
+
         const unitsByType = bloodTypes.map(type => {
             const total = bloodStocks
                 .filter(stock => stock.type === type)
@@ -465,7 +445,8 @@ export default function ManageInventory() {
             return { type, total };
         });
 
-        const componentLabels = ["RBC", "Plasma", "Platelets", "WBCs"];
+        // Use correct component list for report
+        const componentLabels = ["WB", "PRBC", "PC", "FFP", "PRP", "CRYO", "APH"];
         const unitsByComponent = componentLabels.map(comp => {
             const total = bloodStocks
                 .filter(stock => stock.component === comp)
@@ -477,53 +458,38 @@ export default function ManageInventory() {
             const receivedDate = new Date(stock.date_received);
             return receivedDate.getMonth() === today.getMonth() && receivedDate.getFullYear() === today.getFullYear();
         }).length;
-        
+
         let mostDonated = { type: 'N/A', total: 0 };
         let leastDonated = { type: 'N/A', total: Infinity };
         unitsByType.forEach(item => {
-            if (item.total > mostDonated.total) {
-                mostDonated = item;
-            }
-            if (item.total < leastDonated.total) {
-                leastDonated = item;
-            }
+            if (item.total > mostDonated.total) { mostDonated = item; }
+            if (item.total < leastDonated.total) { leastDonated = item; }
         });
+        if (leastDonated.total === Infinity) { leastDonated = { type: 'N/A', total: 0 }; }
 
-        if (leastDonated.total === Infinity) {
-            leastDonated = { type: 'N/A', total: 0 };
-        }
-
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18); doc.setFont('helvetica', 'bold');
         doc.text('Blood Inventory Report', pageWidth / 2, 20, { align: 'center' });
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12); doc.setFont('helvetica', 'normal');
         doc.text(`Date: ${today.toLocaleDateString()}`, pageWidth / 2, 28, { align: 'center' });
+
         autoTable(doc, {
-            startY: 40,
-            head: [['Overall Summary', 'Value']],
+            startY: 40, head: [['Overall Summary', 'Value']],
             body: [
                 ['Total Blood Units Available', totalUnits],
                 [`Donations This Month (${currentMonthName})`, donationsThisMonth],
                 ['Most Common Blood Type', `${mostDonated.type} (${mostDonated.total} units)`],
                 ['Least Common Blood Type', `${leastDonated.type} (${leastDonated.total} units)`],
-            ],
-            theme: 'grid',
-            headStyles: { fillColor: [209, 36, 42] }
+            ], theme: 'grid', headStyles: { fillColor: [209, 36, 42] }
         });
         autoTable(doc, {
-            startY: (doc as any).lastAutoTable.finalY + 10,
-            head: [['Blood Type', 'Total Units']],
+            startY: (doc as any).lastAutoTable.finalY + 10, head: [['Blood Type', 'Total Units']],
             body: unitsByType.map(item => [item.type, item.total]),
-            theme: 'striped',
-            headStyles: { fillColor: [209, 36, 42] }
+            theme: 'striped', headStyles: { fillColor: [209, 36, 42] }
         });
         autoTable(doc, {
-            startY: (doc as any).lastAutoTable.finalY + 10,
-            head: [['Blood Component', 'Total Units']],
-            body: unitsByComponent.map(item => [item.component, item.total]),
-            theme: 'striped',
-            headStyles: { fillColor: [209, 36, 42] }
+            startY: (doc as any).lastAutoTable.finalY + 10, head: [['Blood Component', 'Total Units']],
+            body: unitsByComponent.map(item => [item.component, item.total]), // Use updated list
+            theme: 'striped', headStyles: { fillColor: [209, 36, 42] }
         });
         doc.save(`Inventory_Report_${currentMonthName}_${currentYear}.pdf`);
     };
@@ -531,68 +497,41 @@ export default function ManageInventory() {
   useEffect(() => {
     if (form.component && form.date_received) {
         const startDate = new Date(form.date_received);
-        // Important: Create a new Date object to avoid modifying the original startDate
-        const expirationDate = new Date(startDate); 
-
+        const expirationDate = new Date(startDate);
         switch (form.component) {
-            case 'WB':
-                expirationDate.setDate(startDate.getDate() + 35); 
-                break;
-            case 'PRBC': 
-                expirationDate.setDate(startDate.getDate() + 42); 
-                break;
-            case 'PC': 
-            case 'PRP': 
-            case 'APH': 
-                expirationDate.setDate(startDate.getDate() + 5); 
-                break;
-            case 'FFP': 
-            case 'CRYO': 
-                expirationDate.setFullYear(startDate.getFullYear() + 1); 
-                break;
-            default:
-                setForm((prevForm: any) => ({ ...prevForm, date_expired: "" }));
-                return; 
+            case 'WB': expirationDate.setDate(startDate.getDate() + 35); break;
+            case 'PRBC': expirationDate.setDate(startDate.getDate() + 42); break;
+            case 'PC': case 'PRP': case 'APH': expirationDate.setDate(startDate.getDate() + 5); break;
+            case 'FFP': case 'CRYO': expirationDate.setFullYear(startDate.getFullYear() + 1); break;
+            default: setForm((prevForm: any) => ({ ...prevForm, date_expired: "" })); return;
         }
-
         const formattedDate = expirationDate.toISOString().split('T')[0];
-        
-        setForm((prevForm: any) => ({
-            ...prevForm,
-            date_expired: formattedDate
-        }));
-        
+        setForm((prevForm: any) => ({ ...prevForm, date_expired: formattedDate }));
     } else {
-      // Clear expiration date if component or received date is missing
       setForm((prevForm: any) => ({ ...prevForm, date_expired: "" }));
     }
-}, [form.component, form.date_received]);
+  }, [form.component, form.date_received]);
 
-const [campaigns, setCampaigns] = useState<any[]>([]); 
+  const [campaigns, setCampaigns] = useState<any[]>([]);
 
-useEffect(() => {
+  useEffect(() => {
     const fetchDonorsAndCampaigns = async () => {
-      const { data: donorData, error: donorError } = await supabase
-          .from("users")
-          .select("user_id, name, email, blood_type") 
-          .eq("role", "Donor");
+      const { data: donorData, error: donorError } = await supabase.from("users").select("user_id, name, email, blood_type").eq("role", "Donor");
       if (donorError) { console.error(donorError); } else { setDonors(donorData || []); }
-      
       const { data: campaignData, error: campaignError } = await supabase.from("blood_campaigns").select("id, title").order('date', { ascending: false });
       if (campaignError) { console.error(campaignError); } else { setCampaigns(campaignData || []); }
     };
     fetchDonorsAndCampaigns();
-}, []);
+  }, []);
 
   const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
-  const components = ["RBC", "Plasma", "Platelets", "WBCs"]; 
+  // Removed unused 'components' variable here
   const summaryData = bloodTypes.map((type) => ({ type, totalUnits: bloodStocks.filter((b) => b.type === type).reduce((sum, b) => sum + b.units, 0) }));
   const openQrModal = (stock: any) => { setSelectedQr(stock.qr_data); setQrModalOpen(true); };
   const closeQrModal = () => { setQrModalOpen(false); setSelectedQr(""); };
   const printQr = () => {
     const qrElement = document.getElementById("qr-code-to-print");
     if (!qrElement) return;
-
     html2canvas(qrElement).then(canvas => {
         const qrDataUrl = canvas.toDataURL("image/png");
         const printWindow = window.open("", "_blank");
@@ -605,9 +544,7 @@ useEffect(() => {
 
   const filteredBloodStocks = bloodStocks.filter((stock) => {
     if (!globalSearch) return true;
-
     const searchTerm = globalSearch.toLowerCase();
-    
     return (
         stock.blood_bag_id.toLowerCase().includes(searchTerm) ||
         stock.user_id.toLowerCase().includes(searchTerm) ||
@@ -681,24 +618,23 @@ useEffect(() => {
       </div>
       {qrModalOpen && <QrModal qrData={selectedQr} onClose={closeQrModal} onPrint={printQr} />}
       
-      {/* <--- 5. I-PASA ANG isSavingStock STATE SA MODAL ---> */}
-      {addModalOpen && <AddInventoryModal 
-        isOpen={addModalOpen} 
-        onClose={() => { 
-          setAddModalOpen(false); 
-          setSearch(""); 
-          setCampaignSearch(""); 
-        }} 
-        onSave={addInventory} 
-        form={form} 
-        setForm={setForm} 
-        donors={donors} 
-        search={search} 
-        setSearch={setSearch} 
+      {addModalOpen && <AddInventoryModal
+        isOpen={addModalOpen}
+        onClose={() => {
+          setAddModalOpen(false);
+          setSearch("");
+          setCampaignSearch("");
+        }}
+        onSave={addInventory}
+        form={form}
+        setForm={setForm}
+        donors={donors}
+        search={search}
+        setSearch={setSearch}
         campaigns={campaigns}
         campaignSearch={campaignSearch}
         setCampaignSearch={setCampaignSearch}
-        isSaving={isSavingStock} // <--- I-pasa ang state diri
+        isSaving={isSavingStock}
       />}
     </div>
   );

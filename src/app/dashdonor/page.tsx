@@ -839,7 +839,9 @@ const BloodSearch = () => {
     const [searchResults, setSearchResults] = useState<BloodBag[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [searchPerformed, setSearchPerformed] = useState(false);
+
     const handleSearch = async () => {
+        // ... (handleSearch logic remains the same)
         if (!selectedBloodType || !selectedComponent) {
             Swal.fire("Info", "Please select a blood type AND a component to search.", "info");
             return;
@@ -850,11 +852,11 @@ const BloodSearch = () => {
         try {
             const { data, error } = await supabase
                 .from('blood_inventory')
-                .select('blood_bag_id, type, component, name, date_received')
+                .select('blood_bag_id, type, component, name, date_received') // Assuming 'name' is the location/origin
                 .eq('type', selectedBloodType)
-                .eq('component', selectedComponent) 
-                .eq('status', 'Added to Inventory');
-            
+                .eq('component', selectedComponent)
+                .eq('status', 'Added to Inventory'); // Or 'Available'? Check your status logic
+
             if (error) throw error;
             setSearchResults(data as BloodBag[] || []);
         } catch (error: any) {
@@ -863,15 +865,16 @@ const BloodSearch = () => {
             setIsSearching(false);
         }
     };
-    
+
     return (
         <Card className="p-6 min-h-[400px] flex flex-col">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Find Available Blood</h3>
             <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
-                <select 
-                    value={selectedBloodType} 
+                <select
+                    value={selectedBloodType}
                     onChange={(e) => setSelectedBloodType(e.target.value)}
-                    className="w-full flex-grow px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500">
+                    className="w-full flex-grow px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
                     <option value="">-- Select Blood Type --</option>
                     <option value="A+">A+</option>
                     <option value="A-">A-</option>
@@ -882,18 +885,25 @@ const BloodSearch = () => {
                     <option value="O+">O+</option>
                     <option value="O-">O-</option>
                 </select>
-                <select 
-                    value={selectedComponent} 
+
+                {/* --- GI-UPDATE NGA COMPONENT SELECT --- */}
+                <select
+                    value={selectedComponent}
                     onChange={(e) => setSelectedComponent(e.target.value)}
-                    className="w-full flex-grow px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500">
+                    className="w-full flex-grow px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
                     <option value="">-- Select Component --</option>
-                    <option value="Whole Blood">Whole Blood</option>
-                    <option value="Red Blood Cells">Red Blood Cells</option>
-                    <option value="Platelets">Platelets</option>
-                    <option value="Plasma">Plasma</option>
+                    <option value="WB">Whole Blood (WB)</option>
+                    <option value="PRBC">Packed Red Blood Cells (PRBC)</option>
+                    <option value="PC">Platelet Concentrate (PC)</option>
+                    <option value="FFP">Fresh Frozen Plasma (FFP)</option>
+                    <option value="PRP">Platelet-Rich Plasma (PRP)</option>
+                    <option value="CRYO">Cryoprecipitate (CRYO)</option>
+                    <option value="APH">Apheresis (APH)</option>
                 </select>
-                
-                <button 
+                 {/* --- END SA UPDATE --- */}
+
+                <button
                     onClick={handleSearch}
                     disabled={isSearching || !selectedBloodType || !selectedComponent}
                     className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-3 rounded-xl text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -902,39 +912,40 @@ const BloodSearch = () => {
                     <span>{isSearching ? "Searching..." : "Search"}</span>
                 </button>
             </div>
+            {/* ... (rest of BloodSearch component remains the same) ... */}
             <div className="space-y-4 overflow-y-auto h-64 pr-2">
-                {isSearching ? (
-                    <p className="text-center text-gray-500 py-8">Searching for available blood...</p>
-                ) : !searchPerformed ? (
-                    <div className="text-center py-12 text-gray-500">
-                        <InfoIcon className="mx-auto"/>
-                        <p className="mt-4 font-semibold">Select a blood type and component to begin.</p>
-                    </div>
-                ) : searchResults.length > 0 ? (
-                    searchResults.map((bag) => (
-                        <Card key={bag.blood_bag_id} className="p-5 border border-gray-200">
-                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                                <div>
-                                    <p className="font-bold text-lg text-red-700">Blood Bag ID: #{bag.blood_bag_id}</p>
-                                    <p className="text-sm text-gray-600 font-semibold">{bag.name || 'Unknown Location'}</p>
-                                </div>
-                                <div className="text-left sm:text-right">
-                                    <p className="text-md font-bold text-gray-800">{bag.type} - {bag.component}</p>
-                                    <p className="text-xs text-gray-500">
-                                        Received on {new Date(bag.date_received).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                    </p>
-                                </div>
-                            </div>
-                        </Card>
-                    ))
-                ) : (
-                    <div className="text-center py-12 text-gray-500">
-                        <InfoIcon className="mx-auto"/>
-                        <p className="mt-4 font-semibold">No available '{selectedBloodType} - {selectedComponent}' blood found.</p>
-                        <p className="text-sm">Please try another combination or check back later.</p>
-                    </div>
-                )}
-            </div>
+                 {isSearching ? (
+                     <p className="text-center text-gray-500 py-8">Searching for available blood...</p>
+                 ) : !searchPerformed ? (
+                     <div className="text-center py-12 text-gray-500">
+                         <InfoIcon className="mx-auto"/>
+                         <p className="mt-4 font-semibold">Select a blood type and component to begin.</p>
+                     </div>
+                 ) : searchResults.length > 0 ? (
+                     searchResults.map((bag) => (
+                         <Card key={bag.blood_bag_id} className="p-5 border border-gray-200">
+                             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                 <div>
+                                     <p className="font-bold text-lg text-red-700">Blood Bag ID: #{bag.blood_bag_id}</p>
+                                     <p className="text-sm text-gray-600 font-semibold">{bag.name || 'Unknown Location'}</p>
+                                 </div>
+                                 <div className="text-left sm:text-right">
+                                     <p className="text-md font-bold text-gray-800">{bag.type} - {bag.component}</p>
+                                     <p className="text-xs text-gray-500">
+                                         Received on {new Date(bag.date_received).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                     </p>
+                                 </div>
+                             </div>
+                         </Card>
+                     ))
+                 ) : (
+                     <div className="text-center py-12 text-gray-500">
+                         <InfoIcon className="mx-auto"/>
+                         <p className="mt-4 font-semibold">No available '{selectedBloodType} - {selectedComponent}' blood found.</p>
+                         <p className="text-sm">Please try another combination or check back later.</p>
+                     </div>
+                 )}
+             </div>
         </Card>
     );
 };
