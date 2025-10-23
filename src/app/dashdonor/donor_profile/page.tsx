@@ -461,7 +461,7 @@ function EditProfileModal({ isOpen, user, onClose, onSave }: {
         setIsSaving(true);
         setAuthMessage(null); // Clear previous messages
 
-        let authUpdates: { password?: string } = {}; // Only password
+        const authUpdates: { password?: string } = {}; // Only password
         let profileUpdates: { name: string; contact: string; address: string; profile_image_url?: string } = {
              name,
              contact: phone,
@@ -1049,7 +1049,6 @@ export default function ProfilePage() {
     const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
     const [latestAppointment, setLatestAppointment] = useState<any | null>(null);
     const [daysLeft, setDaysLeft] = useState(84); // Default eligibility
-    const router = useRouter();
 
     const fetchUserData = async () => {
         const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -1174,7 +1173,7 @@ export default function ProfilePage() {
                 async (payload: RealtimePostgresChangesPayload<any>) => {
                     console.log('Profile page: Inventory change received!', payload);
                     // Check if the change is for the current user
-                    let relevantUserId = payload.new?.user_id || payload.old?.user_id;
+                    const relevantUserId = payload.new?.user_id || payload.old?.user_id;
                     if (relevantUserId === userId) {
                          console.log("-> Inventory change IS relevant to current user.");
                          await fetchUserData(); // Refetch stats
@@ -1188,7 +1187,7 @@ export default function ProfilePage() {
                  async (payload: RealtimePostgresChangesPayload<any>) => {
                      console.log('Profile page: Journey change received!', payload);
                      // Need to query inventory to see if the journey change belongs to this user
-                     let relevantBloodBagId = payload.new?.blood_bag_id || payload.old?.blood_bag_id;
+                     const relevantBloodBagId = payload.new?.blood_bag_id || payload.old?.blood_bag_id;
                      if (relevantBloodBagId) {
                          const { data: inventoryItem, error } = await supabase
                              .from('blood_inventory')

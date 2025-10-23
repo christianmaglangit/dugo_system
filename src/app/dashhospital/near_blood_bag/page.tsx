@@ -95,13 +95,6 @@ const StatCard = ({ title, value, icon, color }: {title: string, value: string |
     </Card>
 );
 
-const StatusBadge = ({ expiration_date }: { expiration_date: string }) => {
-    const isExpired = new Date(expiration_date) < new Date();
-    const statusText = isExpired ? "Expired" : "Available";
-    const color = isExpired ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800";
-    return <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${color}`}>{statusText}</span>;
-};
-
 
 //========================================================//
 // 3. MAIN PAGE COMPONENT                                 //
