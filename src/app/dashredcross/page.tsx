@@ -302,10 +302,27 @@ export default function RedCrossDashboard() {
                 setBloodData(allTypes.map(type => ({ type, ...aggregation[type] })));
                  // --- END OF UPDATED AGGREGATION ---
             } else {
-                // If no inventory data, set bloodData to empty structure for each type
-                const emptyData = Object.fromEntries(["WB", "PRBC", "PC", "FFP", "PRP", "CRYO", "APH"].map(comp => [comp, 0]));
-                setBloodData(["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"].map(type => ({ type, ...emptyData })));
-            }
+                    // If no inventory data, set bloodData to empty structure for each type
+
+                    // Define the expected structure for one item in bloodData
+                    type BloodDataItem = { type: string; WB: number; PRBC: number; PC: number; FFP: number; PRP: number; CRYO: number; APH: number };
+
+                    // Define the component keys explicitly matching the type
+                    const componentKeys: (keyof Omit<BloodDataItem, 'type'>)[] = ["WB", "PRBC", "PC", "FFP", "PRP", "CRYO", "APH"];
+                    
+                    // Create the initial zero values for components
+                    const emptyComponentData: Omit<BloodDataItem, 'type'> = Object.fromEntries(
+                        componentKeys.map(comp => [comp, 0])
+                    ) as Omit<BloodDataItem, 'type'>; // Assert type here
+
+                    // Map blood types and explicitly create the full object structure
+                    const initialBloodData: BloodDataItem[] = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"].map(type => ({
+                        type: type,
+                        ...emptyComponentData // Spread the component data
+                    }));
+
+                    setBloodData(initialBloodData); // Set the correctly typed array
+                }
 
             // Set other states
             setBloodRequests(requestsData || []);
