@@ -498,7 +498,8 @@ const Chatbot = () => {
 
     return (
         <>
-            <div className={`fixed bottom-35 sm:bottom-24 right-4 sm:right-6 w-80 h-[28rem] bg-white rounded-2xl shadow-xl flex flex-col z-50 transition-all duration-300 ${isOpen? 'opacity-100 translate-y-0': 'opacity-0 translate-y-4 pointer-events-none'}`}>            <div className="bg-red-600 text-white p-3 rounded-t-2xl flex justify-between items-center">
+            <div className={`fixed bottom-35 sm:bottom-24 right-4 sm:right-6 w-80 h-[28rem] bg-white rounded-2xl shadow-xl flex flex-col z-50 transition-all duration-300 ${isOpen? 'opacity-100 translate-y-0': 'opacity-0 translate-y-4 pointer-events-none'}`}>           
+                <div className="bg-red-600 text-white p-3 rounded-t-2xl flex justify-between items-center">
                     <h3 className="font-bold text-lg">Chat with Haima</h3>
                     <button onClick={() => setIsOpen(false)} className="text-2xl leading-none">&times;</button>
                 </div>
