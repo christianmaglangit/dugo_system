@@ -70,7 +70,7 @@ const InputField: FC<{ label: string, name: string, children: ReactNode }> = ({ 
 const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void }) => {
     const router = useRouter();
     return (
-        <div className="p-4 mt-4 mb-4 flex justify-between items-center">
+        <div className="p-4 mb-4 flex justify-between items-center">
             <div>
                 <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-red-600">DUGO</h1>
             </div>
@@ -1173,7 +1173,7 @@ export default function ProfilePage() {
                 async (payload: RealtimePostgresChangesPayload<any>) => {
                     console.log('Profile page: Inventory change received!', payload);
                     // Check if the change is for the current user
-                    const relevantUserId = payload.new?.user_id || payload.old?.user_id;
+                    const relevantUserId = (payload.new as any)?.user_id || (payload.old as any)?.user_id;
                     if (relevantUserId === userId) {
                          console.log("-> Inventory change IS relevant to current user.");
                          await fetchUserData(); // Refetch stats
