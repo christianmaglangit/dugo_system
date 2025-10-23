@@ -710,29 +710,37 @@ function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isO
 const CampaignListItem = ({ campaign }: { campaign: Campaign }) => {
     return (
         <Card className="flex flex-col md:flex-row gap-6 p-4">
-            {campaign.photo_url && (
-                 <Image
-                    src={campaign.photo_url}
-                    width={200}
-                    height={200}
-                    alt={campaign.title}
-                    className="rounded-xl object-cover w-full md:w-48 h-48 md:h-auto"
-                />
+            {campaign.photo_url ? ( 
+                 <div className="relative w-full md:w-48 h-64 md:h-auto flex-shrink-0"> {/* <--- Container for aspect ratio/height */}
+                    <Image
+                        src={campaign.photo_url}
+                        fill 
+                        alt={campaign.title}
+                        className="rounded-xl object-cover" 
+                        sizes="(max-width: 768px) 100vw, 33vw" // Optional: for optimization
+                    />
+                 </div>
+            ) : (
+                // Optional: Placeholder kung walay image
+                <div className="w-full md:w-48 h-48 bg-gray-200 rounded-xl flex items-center justify-center text-gray-500 flex-shrink-0">
+                    <span>No Image</span>
+                </div>
             )}
             <div className="flex flex-col justify-between flex-1">
-                <div>
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="font-bold text-xl text-red-700 pr-4">{campaign.title}</p>
-                        <StatusBadge status={getCampaignStatus(campaign)} />
-                    </div>
-                   <p className="text-sm text-gray-600">{campaign.description}</p>
+                {/* ... (rest of the card content remains the same) ... */}
+                 <div>
+                     <div className="flex justify-between items-start mb-2">
+                         <p className="font-bold text-xl text-red-700 pr-4">{campaign.title}</p>
+                         <StatusBadge status={getCampaignStatus(campaign)} />
+                     </div>
+                    <p className="text-sm text-gray-600">{campaign.description}</p>
                 </div>
                 <div className="border-t my-4"></div>
-                    <div className="space-y-2 text-sm text-gray-700">
-                        <p className="flex items-center gap-2"><CalendarIconSvg /> <span>{new Date(campaign.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} | {campaign.time}</span></p>
-                        <p className="flex items-center gap-2"><LocationMarkerIcon /> <span>{campaign.location}</span></p>
-                    </div>
-                </div>
+                 <div className="space-y-2 text-sm text-gray-700">
+                     <p className="flex items-center gap-2"><CalendarIconSvg /> <span>{new Date(campaign.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} | {campaign.time}</span></p>
+                     <p className="flex items-center gap-2"><LocationMarkerIcon /> <span>{campaign.location}</span></p>
+                 </div>
+             </div>
         </Card>
     );
 };

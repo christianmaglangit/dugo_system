@@ -17,10 +17,10 @@ interface User {
 }
 
 interface Donation {
-  id: string;
-  location: string;
-  date: string;
-  donationId: string;
+  id: string; // Keep Supabase ID for key prop
+  location: string; // Corresponds to blood_inventory.name
+  date: string; // Formatted date_received
+  donationId: string; // Formatted blood_bag_id
 }
 
 // Gemini Chat Message Type
@@ -60,6 +60,32 @@ const InputField: FC<{ label: string, name: string, children: ReactNode }> = ({ 
         {children}
     </div>
 );
+
+// --- BAG-ONG DONATION CARD COMPONENT ---
+const DonationCard: FC<{ donation: Donation }> = ({ donation }) => (
+    <Card className="p-4 flex flex-col gap-2">
+        {/* Optional: Add an image placeholder if you want */}
+        {/* <div className="h-32 bg-gray-200 rounded-lg mb-3"></div> */}
+        
+        <div className="flex justify-between items-start">
+            <h3 className="font-bold text-lg text-gray-800 capitalize">{donation.location}</h3>
+            {/* Optional: Add status badge if needed later */}
+            {/* <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Completed</span> */}
+        </div>
+        <p className="text-sm text-gray-500">
+            {donation.date}
+        </p>
+        <p className="text-sm text-gray-600 mt-1 flex-grow">
+            Donation ID: <span className="font-mono">{donation.donationId}</span>
+        </p>
+        {/* Optional: Add action buttons if needed */}
+        {/* <div className="border-t mt-3 pt-3 flex gap-2">
+            <button className="p-1 text-blue-600 hover:bg-blue-100 rounded-md">Edit</button>
+            <button className="p-1 text-red-600 hover:bg-red-100 rounded-md">Delete</button>
+        </div> */}
+    </Card>
+);
+// --- END SA BAG-ONG COMPONENT ---
 
 const Header = ({ user, onOpenRequest }: { user: User, onOpenRequest: () => void }) => {
     const router = useRouter();
@@ -258,7 +284,7 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                     <h2 className="text-2xl font-bold text-gray-800 mb-6">New Blood Request</h2>
                     <div className="space-y-4">
                         <InputField label="Requester Name" name="hospital_name">
-                            <input type="text" value={form.hospital_name} readOnly disabled className="bg-gray-200 border border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"/>
+                           <input type="text" value={form.hospital_name} readOnly disabled className="bg-gray-200 border border-gray-300 px-3 h-11 rounded-lg w-full cursor-not-allowed"/>
                         </InputField>
 
                         <InputField label="Request Type" name="request_type">
@@ -267,10 +293,10 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                                 required
                                 className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
                             >
-                                 <option value="">Select Request Type...</option>
-                                 <option value="No">Standard Request</option>
-                                 <option value="Yes">Indigency / Low-Income Request</option>
-                             </select>
+                                <option value="">Select Request Type...</option>
+                                <option value="No">Standard Request</option>
+                                <option value="Yes">Indigency / Low-Income Request</option>
+                            </select>
                        </InputField>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -472,7 +498,7 @@ const Chatbot = () => {
 
     return (
         <>
-            <div className={`fixed bottom-35 sm:bottom-24 right-4 sm:right-6 w-80 h-[28rem] bg-white rounded-2xl shadow-xl flex flex-col z-50 transition-all duration-300 ${isOpen? 'opacity-100 translate-y-0': 'opacity-0 translate-y-4 pointer-events-none'}`}>                 <div className="bg-red-600 text-white p-3 rounded-t-2xl flex justify-between items-center">
+            <div className={`fixed bottom-35 sm:bottom-24 right-4 sm:right-6 w-80 h-[28rem] bg-white rounded-2xl shadow-xl flex flex-col z-50 transition-all duration-300 ${isOpen? 'opacity-100 translate-y-0': 'opacity-0 translate-y-4 pointer-events-none'}`}>            <div className="bg-red-600 text-white p-3 rounded-t-2xl flex justify-between items-center">
                     <h3 className="font-bold text-lg">Chat with Haima</h3>
                     <button onClick={() => setIsOpen(false)} className="text-2xl leading-none">&times;</button>
                 </div>
@@ -675,7 +701,6 @@ function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isO
     );
 }
 
-
 //========================================================//
 // 5. SKELETON LOADER
 //========================================================//
@@ -702,12 +727,15 @@ const HistoryPageSkeleton = () => (
                     <div className="h-8 w-48 bg-gray-300 rounded-md"></div>
                 </div>
                  <div className="my-4 h-12 w-full bg-gray-200 rounded-xl"></div>
-                 <div className="rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden p-6 space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-full"></div>
-                    <div className="h-12 bg-gray-300 rounded w-full"></div>
-                    <div className="h-12 bg-gray-300 rounded w-full"></div>
-                    <div className="h-12 bg-gray-300 rounded w-full"></div>
-                    <div className="h-12 bg-gray-300 rounded w-full"></div>
+                 {/* Card Skeleton Grid */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="bg-gray-200 rounded-2xl h-40 p-4 space-y-3">
+                            <div className="h-5 bg-gray-300 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                            <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+                        </div>
+                    ))}
                 </div>
             </main>
         </div>
@@ -799,7 +827,7 @@ export default function DonationHistoryPage() {
              setDaysLeft(0);
         }
 
-        if (appointmentError && appointmentError.code !== 'PGRST116') {
+        if (appointmentError && appointmentError.code !== 'PGRST116') { // Ignore 'No rows found' error
             console.error("Error fetching appointment:", appointmentError);
         } else {
             setLatestAppointment(appointmentData);
@@ -811,22 +839,47 @@ export default function DonationHistoryPage() {
     useEffect(() => {
         fetchData(); // Call fetchData on mount
 
-        const appointmentChannel = supabase.channel('public:appointments_history') // Use a unique channel name
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `user_id=eq.${user?.user_id}` }, // Filter by user_id if possible, requires RLS setup or careful handling
-            (payload) => {
-              // Re-fetch data when appointments change for this user
-              fetchData();
-            }
-          )
-          .subscribe();
+        // --- Realtime subscription setup ---
+        let appointmentChannel: any = null; // Initialize channel variable
 
-        // Cleanup
-        return () => {
-            supabase.removeChannel(appointmentChannel);
+        const setupSubscription = async () => {
+            // Fetch user ID again inside useEffect if needed, or ensure user state is set
+            if (user?.user_id) {
+                appointmentChannel = supabase.channel(`public:appointments_history:${user.user_id}`) // Unique channel per user
+                  .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'appointments', filter: `user_id=eq.${user.user_id}` },
+                    (payload) => {
+                      console.log('Appointment change received!', payload);
+                      fetchData(); // Re-fetch data on change
+                    }
+                  )
+                  .subscribe((status, err) => {
+                      if (status === 'SUBSCRIBED') {
+                          console.log('Subscribed to appointment changes for user:', user.user_id);
+                      }
+                      if (status === 'CHANNEL_ERROR') {
+                          console.error('Subscription error:', err);
+                      }
+                      if (status === 'TIMED_OUT') {
+                           console.warn('Subscription timed out.');
+                      }
+                  });
+            }
         };
 
-    // Add user?.user_id to dependency array if you filter by it in the subscription
-    }, [router, user?.user_id]);
+        setupSubscription(); // Call the setup function
+
+        // Cleanup: remove channel on component unmount or when user changes
+        return () => {
+            if (appointmentChannel) {
+                supabase.removeChannel(appointmentChannel);
+                console.log('Unsubscribed from appointment changes');
+            }
+        };
+
+    // Re-run useEffect if the user object (specifically user_id) changes
+    }, [user?.user_id]); // Dependency on user.user_id
+
 
     const addRequest = async (payload: any) => {
         if (!user) {
@@ -844,6 +897,8 @@ export default function DonationHistoryPage() {
             if (error) throw error;
             Swal.fire("Success", "Your blood request has been submitted successfully!", "success");
             setIsRequestModalOpen(false);
+            // Optionally re-fetch data or rely on realtime if you have a subscription for requests
+            // fetchData();
         } catch (err: any) {
             Swal.fire("Submission Error", err.message, "error");
         }
@@ -890,8 +945,8 @@ export default function DonationHistoryPage() {
 
             Swal.fire({ icon: "success", title: title, text: `Your appointment has been ${title === 'Booked!' ? 'booked' : 'updated'}.`, timer: 2000, showConfirmButton: false });
             setIsAppointmentModalOpen(false);
-            // Re-fetch data after saving to update the UI (or rely on realtime)
-            // fetchData();
+            // Re-fetch data after saving to update the UI
+            fetchData(); // Explicitly re-fetch here
 
         } catch (err: any) {
              Swal.fire({ icon: "error", title: "Error", text: err.message || "Failed to save appointment." });
@@ -922,7 +977,7 @@ export default function DonationHistoryPage() {
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 <Header user={user} onOpenRequest={() => setIsRequestModalOpen(true)} />
-                <PageHeader title="Donor History" />
+                <PageHeader title="Donation History" />
                 <main className="pb-24 md:pb-8">
 
                     <div className="my-4">
@@ -931,46 +986,30 @@ export default function DonationHistoryPage() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Search by location, date, or ID..."
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-gray-700"
                         />
                     </div>
 
-                    <div className="rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left text-gray-800">
-                                <thead className="bg-gray-100 text-xs text-gray-500 uppercase font-semibold">
-                                    <tr>
-                                        <th scope="col" className="px-6 py-3">Location</th>
-                                        <th scope="col" className="px-6 py-3">Date</th>
-                                        <th scope="col" className="px-6 py-3">Donation ID</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {filteredDonations.length > 0 ? (
-                                        filteredDonations.map((donation) => (
-                                            <tr key={donation.id} className="bg-white hover:bg-gray-50">
-                                                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                                    {donation.location}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    {donation.date}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap font-mono">
-                                                    {donation.donationId}
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={3} className="text-center text-gray-500 py-8">
-                                                {searchTerm ? `No donations found matching "${searchTerm}".` : "No donation history found."}
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                    {/* --- UPDATED DISPLAY LOGIC --- */}
+                    {loading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="bg-gray-200 rounded-2xl h-40"></div>
+                            ))}
                         </div>
-                    </div>
+                    ) : filteredDonations.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredDonations.map((donation) => (
+                                <DonationCard key={donation.id} donation={donation} />
+                            ))}
+                        </div>
+                    ) : (
+                        <Card className="text-center text-gray-500 py-12">
+                             {searchTerm ? `No donations found matching "${searchTerm}".` : "No donation history found."}
+                        </Card>
+                    )}
+                     {/* --- END OF UPDATED DISPLAY --- */}
+
                 </main>
             </div>
 
@@ -978,7 +1017,7 @@ export default function DonationHistoryPage() {
                  user={user}
                  onOpenAppointmentModal={handleOpenAppointmentModal}
                  appointment={latestAppointment} // Pass latest appointment data
-             />
+            />
              {isRequestModalOpen && user && (
                 <AddRequestForm
                     user={user}

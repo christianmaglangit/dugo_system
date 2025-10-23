@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } fro
 import Swal from "sweetalert2";
 
 //========================================================//
-// 1. ICONS                                               //
+// 1. ICONS
 //========================================================//
 const DashboardIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>;
 const InventoryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>;
@@ -28,7 +28,7 @@ const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className=
 const XCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 
 //========================================================//
-// 2. CHILD COMPONENTS                                    //
+// 2. CHILD COMPONENTS
 //========================================================//
 // --- Notification Type ---
 type Notification = {
@@ -210,10 +210,11 @@ function NotificationModal({ isOpen, onClose, notifications, markAsRead }: { isO
 }
 
 //========================================================//
-// 3. MAIN DASHBOARD COMPONENT                            //
+// 3. MAIN DASHBOARD COMPONENT
 //========================================================//
 export default function RedCrossDashboard() {
-    const [bloodData, setBloodData] = useState<{ type: string; RBC: number; Plasma: number; Platelets: number; WBC: number }[]>([]);
+    // --- State Variables ---
+    const [bloodData, setBloodData] = useState<{ type: string; WB: number; PRBC: number; PC: number; FFP: number; PRP: number; CRYO: number; APH: number }[]>([]); // <-- Updated State Structure
     const [loading, setLoading] = useState(true);
     const [userName, setUserName] = useState("");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -226,6 +227,7 @@ export default function RedCrossDashboard() {
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
+    // --- Data Fetching Effect ---
     useEffect(() => {
         const loadDashboardData = async () => {
             setLoading(true);
@@ -239,6 +241,7 @@ export default function RedCrossDashboard() {
 
             setCurrentUserId(authUser.id); 
             
+            // Fetch user profile
             const { data: profile, error: profileError } = await supabase
                 .from("users")
                 .select("name, user_id")
@@ -252,6 +255,8 @@ export default function RedCrossDashboard() {
             }
             setUserName(profile.name);
             const staffUserId = profile.user_id;
+
+            // Fetch all data concurrently
             const [
                 { data: inventoryData },
                 { data: requestsData },
@@ -259,26 +264,50 @@ export default function RedCrossDashboard() {
                 { data: campaignsData },
                 { data: initialNotifications }
             ] = await Promise.all([
-                supabase.from("blood_inventory").select("*").eq("added_by", staffUserId),
+                supabase.from("blood_inventory").select("*").eq("added_by", staffUserId), // Only inventory added by this user
                 supabase.from("blood_requests").select("*"),
-                supabase.from("donor_appointments").select("*"),
+                supabase.from("donor_appointments").select("*"), // Assuming this is the correct table
                 supabase.from("blood_campaigns").select("*"),
                 supabase.from("notifications").select("*").eq("user_id", authUser.id).order('created_at', { ascending: false })
             ]);
+
+            // Process Inventory Data
             if (inventoryData) {
-                type BloodComponent = "RBC" | "Plasma" | "Platelets" | "WBC";
+                // --- UPDATED AGGREGATION LOGIC ---
+                type BloodComponent = "WB" | "PRBC" | "PC" | "FFP" | "PRP" | "CRYO" | "APH"; // <-- New components
                 const allTypes: string[] = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
-                const allComponents: BloodComponent[] = ["RBC", "Plasma", "Platelets", "WBC"];
-                const aggregation = Object.fromEntries(allTypes.map(type => [type, Object.fromEntries(allComponents.map(comp => [comp, 0]))])) as Record<string, Record<BloodComponent, number>>;
+                const allComponents: BloodComponent[] = ["WB", "PRBC", "PC", "FFP", "PRP", "CRYO", "APH"]; // <-- New components
+
+                // Initialize aggregation object with all new components
+                const aggregation = Object.fromEntries(
+                    allTypes.map(type => [
+                        type, 
+                        Object.fromEntries(allComponents.map(comp => [comp, 0]))
+                    ])
+                ) as Record<string, Record<BloodComponent, number>>; 
                 
                 inventoryData.forEach((item: any) => {
                     const component = item.component as BloodComponent;
-                    if (allTypes.includes(item.type) && allComponents.includes(component)) {
-                        aggregation[item.type][component] += item.units;
+                    // Validate type and component against the new lists
+                    if (allTypes.includes(item.type) && allComponents.includes(component)) { 
+                        if (aggregation[item.type] && aggregation[item.type].hasOwnProperty(component)) {
+                            aggregation[item.type][component] += item.units;
+                        } else {
+                            // Optional warning for debugging
+                            console.warn(`Component '${component}' not found in aggregation for type '${item.type}'. Item ID: ${item.id}`); 
+                        }
                     }
                 });
+                // Map the aggregated data, ensuring all component keys are present
                 setBloodData(allTypes.map(type => ({ type, ...aggregation[type] })));
+                 // --- END OF UPDATED AGGREGATION ---
+            } else {
+                // If no inventory data, set bloodData to empty structure for each type
+                const emptyData = Object.fromEntries(["WB", "PRBC", "PC", "FFP", "PRP", "CRYO", "APH"].map(comp => [comp, 0]));
+                setBloodData(["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"].map(type => ({ type, ...emptyData })));
             }
+
+            // Set other states
             setBloodRequests(requestsData || []);
             setAppointments(appointmentsData || []);
             setCampaigns(campaignsData || []);
@@ -288,10 +317,14 @@ export default function RedCrossDashboard() {
             }
             setLoading(false);
         };
+
         loadDashboardData();
-    }, []);
+    }, []); // Only run once on mount
+
+    // --- Realtime Notification Effect ---
     useEffect(() => {
         if (!currentUserId) return;
+
         const channel = supabase.channel('public:notifications')
             .on('postgres_changes', 
                 { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${currentUserId}` }, 
@@ -313,26 +346,39 @@ export default function RedCrossDashboard() {
             )
             .subscribe();
 
+        // Cleanup function to remove the channel subscription
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [currentUserId]);
+    }, [currentUserId]); // Re-run if currentUserId changes
 
+    // --- Function to Mark Notifications as Read ---
     const markNotificationsAsRead = async () => {
         if (unreadCount > 0 && currentUserId) {
             const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
-            if (unreadIds.length === 0) return;
-            await supabase.from('notifications').update({ is_read: true }).in('id', unreadIds);
-            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-            setUnreadCount(0);
+            if (unreadIds.length === 0) return; // No unread messages to mark
+            
+            const { error } = await supabase.from('notifications').update({ is_read: true }).in('id', unreadIds);
+            
+            if (error) {
+                console.error("Error marking notifications as read:", error);
+            } else {
+                // Update local state immediately
+                setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                setUnreadCount(0);
+            }
         }
     };
 
+    // --- Handler for Notification Bell Click ---
     const handleNotificationClick = () => {
         setIsNotificationModalOpen(true); 
     };
 
-const totalUnits = bloodData.reduce((acc, cur) => acc + cur.RBC + cur.Plasma + cur.Platelets + cur.WBC, 0);
+    // Calculate total units (adjusting for new component names)
+    const totalUnits = bloodData.reduce((acc, cur) => acc + cur.WB + cur.PRBC + cur.PC + cur.FFP + cur.PRP + cur.CRYO + cur.APH, 0);
+
+    // --- Render Component ---
     return (
         <div className="flex bg-gray-50 min-h-screen">
             <BloodbankSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
@@ -344,13 +390,16 @@ const totalUnits = bloodData.reduce((acc, cur) => acc + cur.RBC + cur.Plasma + c
                     onNotificationClick={handleNotificationClick} 
                 />
                 <main className="mt-20 p-4 md:p-8">
+                    {/* Stat Cards */}
                     <div className=" grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <StatCard title="Total Units" value={totalUnits} icon={<InventoryIcon />} color="bg-red-500" />
                         <StatCard title="Pending Requests" value={bloodRequests.filter(r => r.status === 'Pending').length} icon={<RequestIcon />} color="bg-yellow-500" />
                         <StatCard title="Approved Appointments" value={appointments.filter(a => a.status === 'Approved').length} icon={<AppointmentIcon />} color="bg-blue-500" />
                         <StatCard title="Upcoming Campaigns" value={campaigns.filter(c => new Date(c.date) > new Date()).length} icon={<CampaignIcon />} color="bg-green-500" />
                     </div>
+                    {/* Main Content Grid */}
                     <div className="grid lg:grid-cols-5 gap-6">
+                        {/* Blood Units Chart */}
                         <div className="lg:col-span-3">
                             <Card>
                                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Blood Units by Type</h2>
@@ -358,32 +407,37 @@ const totalUnits = bloodData.reduce((acc, cur) => acc + cur.RBC + cur.Plasma + c
                                     {loading ? <p className="text-center text-gray-500">Loading chart...</p> : (
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={bloodData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                                <XAxis dataKey="type" stroke="#6b7280" fontSize={12} tick={{ dy: 5 }}/> {/* Added dy for slight bottom margin */}
+                                                <XAxis dataKey="type" stroke="#6b7280" fontSize={12} tick={{ dy: 5 }}/>
                                                 <YAxis stroke="#6b7280" fontSize={12} />
                                                 <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.5rem" }} />
-                                                {/* --- GI-UPDATE NGA LEGEND --- */}
                                                 <Legend 
-                                                    align="center"          // Centers the legend items horizontally
-                                                    verticalAlign="bottom"  // Positions the legend below the chart
-                                                    wrapperStyle={{ paddingTop: '10px' }} // Adds some space above the legend
+                                                    align="center" 
+                                                    verticalAlign="bottom" 
+                                                    wrapperStyle={{ paddingTop: '10px' }} 
                                                 />
-                                                <Bar dataKey="RBC" name="RBC" stackId="a" fill="#ef4444" />
-                                                <Bar dataKey="Plasma" name="Plasma" stackId="a" fill="#3b82f6" />
-                                                <Bar dataKey="Platelets" name="Platelets" stackId="a" fill="#facc15" />
-                                                <Bar dataKey="WBC" name="WBC" stackId="a" fill="#10b981" />
+                                                {/* --- UPDATED BARS --- */}
+                                                <Bar dataKey="WB" name="WB" stackId="a" fill="#ef4444" /> {/* Red */}
+                                                <Bar dataKey="PRBC" name="PRBC" stackId="a" fill="#f97316" /> {/* Orange */}
+                                                <Bar dataKey="PC" name="PC" stackId="a" fill="#eab308" /> {/* Yellow */}
+                                                <Bar dataKey="FFP" name="FFP" stackId="a" fill="#22c55e" /> {/* Green */}
+                                                <Bar dataKey="PRP" name="PRP" stackId="a" fill="#0ea5e9" /> {/* Sky Blue */}
+                                                <Bar dataKey="CRYO" name="CRYO" stackId="a" fill="#6366f1" /> {/* Indigo */}
+                                                <Bar dataKey="APH" name="APH" stackId="a" fill="#a855f7" /> {/* Purple */}
+                                                 {/* --- END OF UPDATED BARS --- */}
                                             </BarChart>
                                         </ResponsiveContainer>
                                     )}
                                 </div>
                             </Card>
                         </div>
+                        {/* Predictive Report & Quick Actions */}
                         <div className="lg:col-span-2 space-y-6">
                             <Card>
-                              <h2 className="text-lg font-semibold text-gray-800 mb-4">Predictive Report</h2>
-                              <p className="text-sm text-gray-600 mb-4">Based on historical data, we predict a higher demand for O+ blood in the next 30 days.</p>
-                              <button onClick={() => router.push("/dashredcross/manage_predictive_reports")} className="w-full py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">
-                                View Full Report
-                              </button>
+                                <h2 className="text-lg font-semibold text-gray-800 mb-4">Predictive Report</h2>
+                                <p className="text-sm text-gray-600 mb-4">Based on historical data, we predict a higher demand for O+ blood in the next 30 days.</p>
+                                <button onClick={() => router.push("/dashredcross/manage_predictive_reports")} className="w-full py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">
+                                    View Full Report
+                                </button>
                             </Card>
                             <Card>
                                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
@@ -396,6 +450,7 @@ const totalUnits = bloodData.reduce((acc, cur) => acc + cur.RBC + cur.Plasma + c
                     </div>
                 </main>
             </div>
+            {/* --- Notification Modal --- */}
             <NotificationModal 
                 isOpen={isNotificationModalOpen}
                 onClose={() => setIsNotificationModalOpen(false)}
