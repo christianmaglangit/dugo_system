@@ -220,7 +220,16 @@ export default function DashHospital() {
   const [user, setUser] = useState<any>(null);
   const [requests, setRequests] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
-  const [bloodData, setBloodData] = useState<{ type: string; RBC: number; Plasma: number; Platelets: number; WBC: number }[]>([]);
+  const [bloodData, setBloodData] = useState<{
+    type: string;
+    WB: number;
+    PRBC: number;
+    PC: number;
+    FFP: number;
+    PRP: number;
+    CRYO: number;
+    APH: number;
+  }>[]([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const router = useRouter(); // Gitanggal sa useEffect dependency
