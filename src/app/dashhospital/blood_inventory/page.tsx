@@ -100,8 +100,7 @@ const InputField = ({ label, children, ...props }: any) => (
     </div>
 );
 
-function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, search, setSearch }: any) {
-    if (!isOpen) return null;
+    function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, search, setSearch, isSaving }: any) {    if (!isOpen) return null;
     const bloodTypes = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
     const components = [
     { value: "WB", label: "Whole Blood (WB)" },
@@ -173,8 +172,14 @@ function AddInventoryModal({ isOpen, onClose, onSave, form, setForm, donors, sea
                             </InputField>
                         </div>
                         <div className="flex justify-end gap-3 pt-4">
-                            <button onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
-                            <button onClick={onSave} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 font-semibold text-white transition">Add Stock</button>
+                            <button onClick={onClose} disabled={isSaving} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+                            <button 
+                                onClick={onSave} 
+                                disabled={isSaving} 
+                                className={`px-4 py-2 rounded-lg font-semibold text-white transition ${isSaving ? 'bg-red-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+                            >
+                                {isSaving ? 'Adding...' : 'Add Stock'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -221,7 +226,7 @@ export default function ManageInventory() {
     const [search, setSearch] = useState("");
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [mainSearchQuery, setMainSearchQuery] = useState("");
-
+    const [isSaving, setIsSaving] = useState(false);
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
     const fetchInventory = async (currentUser: any) => {
@@ -249,53 +254,74 @@ export default function ManageInventory() {
     }, []);
 
     const addInventory = async () => {
-    if (!form.user_id || !form.type || !form.component || !form.units || !form.volume_ml || !form.date_received || !form.date_expired) {
-        Swal.fire("Error", "Please fill in all fields including donor.", "error"); return;
-    }
-    const bloodBagId = generateBloodBagId();
-    let addedByUserId = null;
+        if (isSaving) return; // <-- 1. IDUGANG NI
+        setIsSaving(true);    // <-- 2. IDUGANG NI
 
-    if (currentUser) {
-        const { data: profile } = await supabase.from("users").select("user_id").eq("email", currentUser.email).single();
-        if (!profile) { Swal.fire("Error", "Current user not found.", "error"); return; }
-        addedByUserId = profile.user_id;
-    }
+        try { // <-- 3. IDUGANG NI (WRAPPER)
 
-    // --- GI-USAB NGA BAHIN ---
-    // I-define ang status base sa kung kinsa ang nag-add
-    let inventoryStatus = "Available"; // Kini ang default kung walay logged-in user
-    if (addedByUserId) {
-        inventoryStatus = "Received at Hospital"; // Kini kung ang staff (logged-in user) ang nag-add
-    }
-    // --- END SA GI-USAB ---
+            // --- IMONG ORIGINAL CODE NAGSUGOD DIRI ---
+            if (!form.user_id || !form.type || !form.component || !form.units || !form.volume_ml || !form.date_received || !form.date_expired) {
+                Swal.fire("Error", "Please fill in all fields including donor.", "error"); 
+                return; // GI-MODIFY NI (para mu-agi sa 'finally' block)
+            }
+            const bloodBagId = generateBloodBagId();
+            let addedByUserId = null;
 
-    const qrPayload = `Blood Bag ID: ${bloodBagId}\nDonor ID: ${form.user_id}\nBlood Type: ${form.type}\nComponent: ${form.component}\nUnits: ${form.units}\nVolume: ${form.volume_ml}ml\nDate Received: ${form.date_received}\nExpiration: ${form.date_expired}\nLocation: Red Cross`;
-    
-    const { data: newStock, error: stockError } = await supabase.from("blood_inventory").insert([{ 
-        blood_bag_id: bloodBagId, 
-        user_id: form.user_id, 
-        type: form.type, 
-        component: form.component, 
-        units: parseInt(form.units), 
-        volume_ml: parseInt(form.volume_ml), 
-        date_received: form.date_received, 
-        expiration_date: form.date_expired, 
-        qr_data: qrPayload, 
-        added_by: addedByUserId, 
-        status: inventoryStatus // --- GIGAMIT ANG BAG-O NGA VARIABLE ---
-    }]).select().single();
+            if (currentUser) {
+                const { data: profile } = await supabase.from("users").select("user_id").eq("email", currentUser.email).single();
+                if (!profile) { 
+                    Swal.fire("Error", "Current user not found.", "error"); 
+                    return; // GI-MODIFY NI (para mu-agi sa 'finally' block)
+                }
+                addedByUserId = profile.user_id;
+            }
 
-    if (stockError) { Swal.fire("Error", stockError.message, "error"); return; }
-    
-    await supabase.from("blood_journey").insert([{ user_id: form.user_id, donation_id: newStock.id, stage: 4, location: "Received at Hospital" }]);
-    
-    setSelectedQr(qrPayload);
-    setQrModalOpen(true);
-    setForm({ user_id: "", type: "", component: "", units: "", volume_ml: "", date_received: "", date_expired: "" });
-    setSearch("");
-    setAddModalOpen(false);
-    fetchInventory(currentUser);
-};
+            // --- GI-USAB NGA BAHIN ---
+            // I-define ang status base sa kung kinsa ang nag-add
+            let inventoryStatus = "Available"; // Kini ang default kung walay logged-in user
+            if (addedByUserId) {
+                inventoryStatus = "Received at Hospital"; // Kini kung ang staff (logged-in user) ang nag-add
+            }
+            // --- END SA GI-USAB ---
+
+            const qrPayload = `Blood Bag ID: ${bloodBagId}\nDonor ID: ${form.user_id}\nBlood Type: ${form.type}\nComponent: ${form.component}\nUnits: ${form.units}\nVolume: ${form.volume_ml}ml\nDate Received: ${form.date_received}\nExpiration: ${form.date_expired}\nLocation: Red Cross`;
+            
+            const { data: newStock, error: stockError } = await supabase.from("blood_inventory").insert([{ 
+                blood_bag_id: bloodBagId, 
+                user_id: form.user_id, 
+                type: form.type, 
+                component: form.component, 
+                units: parseInt(form.units), 
+                volume_ml: parseInt(form.volume_ml), 
+                date_received: form.date_received, 
+                expiration_date: form.date_expired, 
+                qr_data: qrPayload, 
+                added_by: addedByUserId, 
+                status: inventoryStatus // --- GIGAMIT ANG BAG-O NGA VARIABLE ---
+            }]).select().single();
+
+            if (stockError) { 
+                Swal.fire("Error", stockError.message, "error"); 
+                return; // GI-MODIFY NI (para mu-agi sa 'finally' block)
+            }
+            
+            await supabase.from("blood_journey").insert([{ user_id: form.user_id, donation_id: newStock.id, stage: 4, location: "Received at Hospital" }]);
+            
+            setSelectedQr(qrPayload);
+            setQrModalOpen(true);
+            setForm({ user_id: "", type: "", component: "", units: "", volume_ml: "", date_received: "", date_expired: "" });
+            setSearch("");
+            setAddModalOpen(false);
+            fetchInventory(currentUser);
+            // --- IMONG ORIGINAL CODE NAHUMAN DIRI ---
+
+        } catch (error: any) { // <-- 4. IDUGANG NI
+            console.error("Unexpected error in addInventory:", error);
+            Swal.fire("Error", error.message || "An unexpected error occurred.", "error");
+        } finally { // <-- 5. IDUGANG NI
+            setIsSaving(false); // <-- I-set balik sa FALSE bisag unsa pa mahitabo
+        }
+    };
 
     const generateBloodBagId = () => Math.floor(1000000000 + Math.random() * 9000000000).toString();
     
@@ -484,7 +510,7 @@ export default function ManageInventory() {
                 </main>
             </div>
             {qrModalOpen && <QrModal qrData={selectedQr} onClose={closeQrModal} onPrint={printQr} />}
-            {addModalOpen && <AddInventoryModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} onSave={addInventory} form={form} setForm={setForm} donors={donors} search={search} setSearch={setSearch} />}
+            {addModalOpen && <AddInventoryModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} onSave={addInventory} form={form} setForm={setForm} donors={donors} search={search} setSearch={setSearch} isSaving={isSaving} />}
         </div>
     );
 }

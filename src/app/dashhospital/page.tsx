@@ -150,11 +150,14 @@ function InventoryChart({ data, loading }: { data: any[], loading: boolean }) {
               <YAxis stroke="#6b7280" fontSize={12} />
               <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.5rem" }} />
               <Legend />
-              <Bar dataKey="RBC" name="RBC" stackId="a" fill="#ef4444" />
-              <Bar dataKey="Plasma" name="Plasma" stackId="a" fill="#3b82f6" />
-              <Bar dataKey="Platelets" name="Platelets" stackId="a" fill="#facc15" />
-              <Bar dataKey="WBC" name="WBC" stackId="a" fill="#10b981" />
-            </BarChart>
+              <Bar dataKey="WB" name="WB" stackId="a" fill="#ef4444" /> {/* Red */}
+              <Bar dataKey="PRBC" name="PRBC" stackId="a" fill="#f97316" /> {/* Orange */}
+              <Bar dataKey="PC" name="PC" stackId="a" fill="#eab308" /> {/* Yellow */}
+              <Bar dataKey="FFP" name="FFP" stackId="a" fill="#22c55e" /> {/* Green */}
+              <Bar dataKey="PRP" name="PRP" stackId="a" fill="#0ea5e9" /> {/* Sky Blue */}
+              <Bar dataKey="CRYO" name="CRYO" stackId="a" fill="#6366f1" /> {/* Indigo */}
+              <Bar dataKey="APH" name="APH" stackId="a" fill="#a855f7" /> {/* Purple */}
+          </BarChart>
           </ResponsiveContainer>
         )}
       </div>
@@ -243,27 +246,43 @@ export default function DashHospital() {
         const staffUserId = profile.user_id;
     
         const [invData, reqData, patData] = await Promise.all([
-            supabase.from("blood_inventory").select("type, component, units").eq("added_by", staffUserId),
-            // ✅ ILISI ANG "user_id" SA IMONG SAKTONG COLUMN NAME
+            supabase.from("blood_inventory")
+              .select("type, component, units, status, expiration_date") // Gidugang nato ang status/expiration
+              .eq("added_by", staffUserId)
+              .neq('status', 'Used') // 1. Dili i-apil ang "Used"
+              .gte('expiration_date', new Date().toISOString()),
             supabase.from("blood_requests").select("status").eq("user_id", staffUserId), 
-            supabase.from("patients").select("id") 
+            supabase.from("patients").select("id").eq("added_by_hospital_id", staffUserId)
         ]);
         
         // ✅ GIDUGANG ANG DATA PROCESSING NGA NAWALA
         const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-        const summary = new Map(bloodTypes.map(type => [type, { type, RBC: 0, Plasma: 0, Platelets: 0, WBC: 0 }]));
-
-        if(invData.data) {
-          for (const item of invData.data) {
-            const entry = summary.get(item.type);
-            if (entry) {
-              if (item.component === 'Red Blood Cells') entry.RBC += item.units;
-              else if (item.component === 'Plasma') entry.Plasma += item.units;
-              else if (item.component === 'Platelets') entry.Platelets += item.units;
-              else if (item.component === 'White Blood Cells') entry.WBC += item.units;
-            }
+        const summary = new Map(bloodTypes.map(type => [type, {
+          type,
+          WB: 0,
+          PRBC: 0,
+          PC: 0,
+          FFP: 0,
+          PRP: 0,
+          CRYO: 0,
+          APH: 0
+        }]));
+        if (invData.data) {
+        for (const item of invData.data) {
+          const entry = summary.get(item.type);
+          if (entry) {
+            // ✅ ILISDI KINI NGA MGA STRING ARON MO-MATCH SA IMONG DATABASE
+            if (item.component === 'WB') entry.WB += item.units;
+            else if (item.component === 'PRBC') entry.PRBC += item.units;
+            else if (item.component === 'PC') entry.PC += item.units;
+            else if (item.component === 'FFP') entry.FFP += item.units;
+            else if (item.component === 'PRP') entry.PRP += item.units;
+            else if (item.component === 'CRYO') entry.CRYO += item.units;
+            else if (item.component === 'APH') entry.APH += item.units;
+            // Pwede ka magdugang pa ug 'else if' kung naa pay ubang components
           }
         }
+      }
         
         setBloodData(Array.from(summary.values()));
         setRequests(reqData.data || []);
@@ -280,7 +299,10 @@ export default function DashHospital() {
   }, [router]); // Ibalik ang router or pwede ra wala, pero mas safe naa
   
   // Kalkulaha ang props para sa child components
-  const totalUnits = loading ? 0 : bloodData.reduce((acc, cur) => acc + (cur.RBC || 0) + (cur.Plasma || 0) + (cur.Platelets || 0) + (cur.WBC || 0), 0);
+  const totalUnits = loading ? 0 : bloodData.reduce((acc, cur) => 
+    acc + (cur.WB || 0) + (cur.PRBC || 0) + (cur.PC || 0) + (cur.FFP || 0) + 
+    (cur.PRP || 0) + (cur.CRYO || 0) + (cur.APH || 0), 
+  0);
   const pendingRequestsCount = loading ? 0 : requests.filter(r => r.status === 'Pending').length;
   const totalPatientsCount = loading ? 0 : patients.length;
 

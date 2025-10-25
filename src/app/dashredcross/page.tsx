@@ -432,7 +432,6 @@ export default function RedCrossDashboard() {
                                                     verticalAlign="bottom" 
                                                     wrapperStyle={{ paddingTop: '10px' }} 
                                                 />
-                                                {/* --- UPDATED BARS --- */}
                                                 <Bar dataKey="WB" name="WB" stackId="a" fill="#ef4444" /> {/* Red */}
                                                 <Bar dataKey="PRBC" name="PRBC" stackId="a" fill="#f97316" /> {/* Orange */}
                                                 <Bar dataKey="PC" name="PC" stackId="a" fill="#eab308" /> {/* Yellow */}
@@ -440,7 +439,6 @@ export default function RedCrossDashboard() {
                                                 <Bar dataKey="PRP" name="PRP" stackId="a" fill="#0ea5e9" /> {/* Sky Blue */}
                                                 <Bar dataKey="CRYO" name="CRYO" stackId="a" fill="#6366f1" /> {/* Indigo */}
                                                 <Bar dataKey="APH" name="APH" stackId="a" fill="#a855f7" /> {/* Purple */}
-                                                 {/* --- END OF UPDATED BARS --- */}
                                             </BarChart>
                                         </ResponsiveContainer>
                                     )}
