@@ -6,10 +6,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 //========================================================//
-// 1. ICONS                                               //
+// 1. ICONS (No changes)                                  //
 //========================================================//
 const DashboardIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>;
-const InventoryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>;
+const InventoryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>;
 const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zm-1.558 4.078a.75.75 0 00-1.06 1.06 5.25 5.25 0 007.238 0 .75.75 0 00-1.06-1.06 3.75 3.75 0 01-5.117 0zM15.625 9a2.375 2.375 0 100-4.75 2.375 2.375 0 000 4.75zM12.5 10.75a.75.75 0 00-1.06 1.06 5.25 5.25 0 007.238 0 .75.75 0 00-1.06-1.06 3.75 3.75 0 01-5.117 0z" /></svg>;
 const AppointmentIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>;
 const ReportIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.25 2a.75.75 0 00-1.5 0v1.361A8.96 8.96 0 002.57 6.38a.75.75 0 001.362.614A7.46 7.46 0 0110 4.5c2.993 0 5.542 1.72 6.822 4.108a.75.75 0 001.362-.614A8.96 8.96 0 0011.25 3.361V2zM2.5 10a.75.75 0 01.75-.75h14a.75.75 0 010 1.5h-14a.75.75 0 01-.75-.75zm0 4.25a.75.75 0 001.362.614 7.46 7.46 0 0112.276 0 .75.75 0 101.362-.614A8.96 8.96 0 0010 12.5a8.96 8.96 0 00-7.43 3.138z" clipRule="evenodd" /></svg>;
@@ -23,7 +23,7 @@ const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w
 const BuildingIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 2a1 1 0 011 1v12a1 1 0 11-2 0V3a1 1 0 011-1zm3 1a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 11-2 0V4H8a1 1 0 01-1-1z" clipRule="evenodd" /></svg>;
 
 //========================================================//
-// 2. CHILD COMPONENTS                                    //
+// 2. CHILD COMPONENTS                                    //
 //========================================================//
 
 function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -86,7 +86,6 @@ const Card: FC<{ children: ReactNode; className?: string }> = ({ children, class
     <div className={`bg-white rounded-2xl shadow-lg p-6 ${className || ""}`}>{children}</div>
 );
 
-// --- UPDATED StatCard Component ---
 const StatCard = ({ title, value, icon, color }: { title: string, value: string | number, icon: ReactNode, color: string }) => (
     <Card className={`relative overflow-hidden`}>
         <div className={`absolute -top-4 -right-4 h-16 w-16 ${color} opacity-20 rounded-full`}></div>
@@ -130,6 +129,17 @@ interface BloodInventory {
   name: string | null;
 }
 
+// NEW: Data structures for aggregation
+interface AggregatedHospitalData {
+    total: number;
+    types: Record<string, number>;
+    components: Record<string, number>;
+}
+
+// CONSTANTS for consistent table columns
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
+const COMPONENTS = ["WB", "PRBC", "PC", "FFP", "PRP", "CRYO", "APH"];
+
 export default function HospitalBloodInventoryPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bloodData, setBloodData] = useState<BloodInventory[]>([]);
@@ -150,14 +160,14 @@ export default function HospitalBloodInventoryPage() {
   }, []);
   
   const filteredData = bloodData.filter((blood) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      blood.type.toLowerCase().includes(term) ||
-      (blood.added_by && blood.added_by.toLowerCase().includes(term)) ||
-      (blood.blood_bag_id && blood.blood_bag_id.toLowerCase().includes(term)) ||
+    const term = searchTerm.toLowerCase();
+    return (
+      blood.type.toLowerCase().includes(term) ||
+      (blood.added_by && blood.added_by.toLowerCase().includes(term)) ||
+      (blood.blood_bag_id && blood.blood_bag_id.toLowerCase().includes(term)) ||
       (blood.name && blood.name && blood.name.toLowerCase().includes(term))
-    );
-  });
+    );
+  });
   
   // --- Calculate stats for cards ---
   const totalUnits = filteredData.reduce((sum, item) => sum + item.units, 0);
@@ -170,6 +180,30 @@ export default function HospitalBloodInventoryPage() {
       return expDate > today && expDate <= sevenDaysFromNow && item.status !== 'Used';
   }).length;
 
+  // --- NEW: Group Data by Hospital ---
+  const hospitalInventory = filteredData.reduce((acc, item) => {
+    // Use hospital name if available, otherwise fallback to ID (added_by)
+    const hospitalName = item.name || item.added_by || "Unknown Hospital";
+    
+    if (!acc[hospitalName]) {
+        acc[hospitalName] = { total: 0, types: {}, components: {} };
+    }
+
+    // Count by Blood Type
+    acc[hospitalName].types[item.type] = (acc[hospitalName].types[item.type] || 0) + item.units;
+    
+    // Count by Component
+    acc[hospitalName].components[item.component] = (acc[hospitalName].components[item.component] || 0) + item.units;
+    
+    // Total Count
+    acc[hospitalName].total += item.units;
+
+    return acc;
+  }, {} as Record<string, AggregatedHospitalData>);
+
+  const hospitalNames = Object.keys(hospitalInventory).sort();
+
+
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <BloodbankSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -177,23 +211,100 @@ export default function HospitalBloodInventoryPage() {
         <BloodbankHeader toggleSidebar={toggleSidebar} />
         <main className="mt-20 p-4 md:p-8">
 
-            {/* --- Stat Cards --- UPDATED with color prop */}
+            {/* --- Stat Cards --- */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <StatCard title="Total Hospital Units" value={totalUnits} icon={<InventoryIcon />} color="bg-blue-500" />
                 <StatCard title="Hospitals Reporting" value={uniqueHospitals} icon={<BuildingIcon />} color="bg-purple-500" />
                 <StatCard title="Units Expiring in 7 Days" value={expiringSoon} icon={<ClockIcon />} color="bg-yellow-500" />
             </div>
-
-            <Card>
+            
+            <Card className="mb-8">
               <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                <div className="w-full md:w-auto md:flex-grow">
+                <div className="w-full">
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z" /></svg></span>
-                    <input type="text" placeholder="Search by Hospital, Bag ID, Donor ID, or Type..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full dark:text-gray-700 pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400"/>
+                    <input type="text" placeholder="Search by Hospital Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full dark:text-gray-700 pl-10 pr-4 py-2.5 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-red-400"/>
                   </div>
                 </div>
               </div>
+            </Card>
 
+            {/* --- NEW: HOSPITAL INVENTORY BREAKDOWN (PIVOT TABLES) --- */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+                
+                {/* Table 1: Hospital vs Blood Type */}
+                <Card>
+                    <h2 className="text-lg font-bold text-gray-800 mb-4">Breakdown by Blood Type</h2>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs text-left">
+                            <thead className="text-gray-500 uppercase bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-4 py-3 font-semibold">Hospital</th>
+                                    {BLOOD_TYPES.map(type => <th key={type} className="px-2 py-3 text-center text-red-600">{type}</th>)}
+                                    <th className="px-4 py-3 text-right font-bold">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {hospitalNames.length > 0 ? (
+                                    hospitalNames.map(name => (
+                                        <tr key={name} className="hover:bg-gray-50">
+                                            <td className="px-4 py-3 font-medium text-gray-900">{name}</td>
+                                            {BLOOD_TYPES.map(type => (
+                                                <td key={type} className="px-2 py-3 text-center text-gray-600">
+                                                    {hospitalInventory[name].types[type] || "-"}
+                                                </td>
+                                            ))}
+                                            <td className="px-4 py-3 text-right font-bold text-gray-800">
+                                                {hospitalInventory[name].total}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr><td colSpan={BLOOD_TYPES.length + 2} className="text-center py-6 text-gray-500">No hospital data found.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
+
+                {/* Table 2: Hospital vs Component */}
+                <Card>
+                    <h2 className="text-lg font-bold text-gray-800 mb-4">Breakdown by Component</h2>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs text-left">
+                            <thead className="text-gray-500 uppercase bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-4 py-3 font-semibold">Hospital</th>
+                                    {COMPONENTS.map(comp => <th key={comp} className="px-2 py-3 text-center">{comp}</th>)}
+                                    <th className="px-4 py-3 text-right font-bold">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {hospitalNames.length > 0 ? (
+                                    hospitalNames.map(name => (
+                                        <tr key={name} className="hover:bg-gray-50">
+                                            <td className="px-4 py-3 font-medium text-gray-900">{name}</td>
+                                            {COMPONENTS.map(comp => (
+                                                <td key={comp} className="px-2 py-3 text-center text-gray-600">
+                                                    {hospitalInventory[name].components[comp] || "-"}
+                                                </td>
+                                            ))}
+                                            <td className="px-4 py-3 text-right font-bold text-gray-800">
+                                                {hospitalInventory[name].total}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr><td colSpan={COMPONENTS.length + 2} className="text-center py-6 text-gray-500">No hospital data found.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
+            </div>
+
+            <Card>
+              <h2 className="text-lg font-bold text-gray-800 mb-4">All Inventory Items</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm min-w-[1000px]">
                   <thead className="bg-gray-50">

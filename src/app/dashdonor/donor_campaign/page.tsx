@@ -205,11 +205,15 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => void; onSave: (payload: any) => void; }) {
     const [isIndigency, setIsIndigency] = useState<boolean>(false);
+    // 1. State para sa loading (prevent double submit)
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const [form, setForm] = useState({
         hospital_name: user.name,
         blood_type: "",
         blood_component: "",
         units: 1,
+        request_reason: "", // 2. Added Reason field
         request_form_file: null as File | null,
         indigency_file: null as File | null,
         senior_id_file: null as File | null,
@@ -219,13 +223,17 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // 3. Prevent multiple clicks
+        if (isSubmitting) return;
+
         let requiredFieldsMissing = false;
-        if (!user.user_id || !form.hospital_name || !form.blood_type || !form.blood_component || !form.request_form_file) {
+        // 4. Validation update
+        if (!user.user_id || !form.hospital_name || !form.blood_type || !form.blood_component || !form.request_form_file || !form.request_reason) {
              requiredFieldsMissing = true;
         }
 
         if (requiredFieldsMissing) {
-            Swal.fire("Error", "Please fill all main required fields (Blood Type, Component, Units, and Request Form).", "error");
+            Swal.fire("Error", "Please fill all main required fields including Reason for Request.", "error");
             return;
         }
 
@@ -233,6 +241,9 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
             Swal.fire("Error", "For Indigency requests, the Indigency Certificate and Referral Note are required.", "error");
             return;
         }
+
+        // 5. Start Loading
+        setIsSubmitting(true);
 
         try {
             const uploadFile = async (file: File | null) => {
@@ -258,9 +269,10 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                 senior_id_file: seniorIdUrl,
                 referral_note_file: referralNoteUrl
             };
-            onSave(payload);
+            await onSave(payload);
         } catch (err: any) {
             Swal.fire("Upload Error", err.message, "error");
+            setIsSubmitting(false); // Stop loading only on error
         }
     };
 
@@ -299,7 +311,7 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                                  <option value="No">Standard Request</option>
                                  <option value="Yes">Indigency / Low-Income Request</option>
                              </select>
-                       </InputField>
+                        </InputField>
 
                         <div className="grid grid-cols-2 gap-4">
                             <InputField label="Blood Type" name="blood_type">
@@ -323,6 +335,18 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                                 <option value="CRYO">Cryoprecipitate (CRYO)</option>
                                 <option value="APH">Apheresis (APH)</option>
                             </select>
+                        </InputField>
+
+                        {/* 6. Added New Input Field UI */}
+                        <InputField label="Reason for Request" name="request_reason">
+                            <input 
+                                type="text" 
+                                required
+                                placeholder="e.g., Dengue, Operation, Dialysis, Accidental Trauma"
+                                value={form.request_reason} 
+                                onChange={(e) => setForm({ ...form, request_reason: e.target.value })} 
+                                className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                            />
                         </InputField>
 
                         <InputField label="Request Form (Required)" name="request_form_file">
@@ -351,8 +375,15 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                         )}
 
                         <div className="flex justify-end gap-3 pt-4">
-                            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
-                            <button type="submit" className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 font-semibold text-white transition">Add Request</button>
+                            <button type="button" onClick={onClose} disabled={isSubmitting} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
+                            {/* 7. Button disabled state and text change */}
+                            <button 
+                                type="submit" 
+                                disabled={isSubmitting} 
+                                className={`px-4 py-2 rounded-lg font-semibold text-white transition ${isSubmitting ? 'bg-red-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+                            >
+                                {isSubmitting ? 'Submitting...' : 'Add Request'}
+                            </button>
                         </div>
                     </div>
                 </form>

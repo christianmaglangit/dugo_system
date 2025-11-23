@@ -606,6 +606,7 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
         blood_type: "", 
         blood_component: "", 
         units: 1,
+        request_reason: "",
         request_form_file: null as File | null, 
         indigency_file: null as File | null,
         senior_id_file: null as File | null, 
@@ -615,13 +616,18 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         let requiredFieldsMissing = false;
-        if (!user.user_id || !form.hospital_name || !form.blood_type || !form.blood_component || !form.request_form_file) {
+        if (!user.user_id || !form.hospital_name || !form.blood_type || !form.blood_component || !form.request_form_file || !form.request_reason) {
              requiredFieldsMissing = true;
         }
         if (requiredFieldsMissing) {
             Swal.fire("Error", "Please fill all main required fields (Blood Type, Component, Units, and Request Form).", "error"); 
             return;
         }
+        if (requiredFieldsMissing) {
+        // Update error message
+        Swal.fire("Error", "Please fill all main required fields including Reason for Request.", "error"); 
+        return;
+    }
         if (isIndigency && (!form.indigency_file || !form.referral_note_file)) {
             Swal.fire("Error", "For Indigency requests, the Indigency Certificate and Referral Note are required.", "error");
             return;
@@ -711,6 +717,16 @@ function AddRequestForm({ user, onClose, onSave }: { user: User; onClose: () => 
                                 <option value="CRYO">Cryoprecipitate (CRYO)</option>
                                 <option value="APH">Apheresis (APH)</option>
                             </select>
+                        </InputField>
+                        <InputField label="Reason for Request" name="request_reason">
+                            <input 
+                                type="text" 
+                                required
+                                placeholder="e.g., Dengue, Operation, Dialysis, Accidental Trauma"
+                                value={form.request_reason} 
+                                onChange={(e) => setForm({ ...form, request_reason: e.target.value })} 
+                                className="bg-gray-50 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                            />
                         </InputField>
                         <InputField label="Request Form (Required)" name="request_form_file">
                             <input 

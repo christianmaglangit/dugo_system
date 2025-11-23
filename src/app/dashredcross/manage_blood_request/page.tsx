@@ -32,7 +32,25 @@ const NoteIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-
 //========================================================//
 // 2. TYPES & CHILD COMPONENTS                            //
 //========================================================//
-type BloodRequest = { id: string; user_id?: string; hospital_name: string; users: { name: string } | null; blood_type: string; blood_component: string; units: number; status: "Pending" | "Approved" | "Rejected" | "Fulfilled"; requested_at?: string | null; updated_at?: string | null; notes?: string | null; request_form_file?: string | null; indigency_file?: string | null; senior_id_file?: string | null; referral_note_file?: string | null; proof_url?: string | null; };
+type BloodRequest = { 
+    id: string; 
+    user_id?: string; 
+    hospital_name: string; 
+    users: { name: string } | null; 
+    blood_type: string; 
+    blood_component: string; 
+    units: number; 
+    request_reason?: string | null;
+    status: "Pending" | "Approved" | "Rejected" | "Fulfilled"; 
+    requested_at?: string | null; 
+    updated_at?: string | null; 
+    notes?: string | null; 
+    request_form_file?: string | null; 
+    indigency_file?: string | null; 
+    senior_id_file?: string | null; 
+    referral_note_file?: string | null; 
+    proof_url?: string | null; 
+};
 
 function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const pathname = usePathname();
@@ -128,10 +146,13 @@ const InputField = ({ label, children, ...props }: any) => (
     </div>
 );
 
+// 2. UPDATED FORM WITH REQUEST TYPE TOGGLE (Standard / Indigency)
 function AddRequestForm({ onClose, onSave, }: { onClose: () => void; onSave: (payload: any) => void; }) {
     const [users, setUsers] = useState<{ user_id: string }[]>([]);
+    const [isIndigency, setIsIndigency] = useState<boolean>(false); // State for toggle
     const [form, setForm] = useState({
         user_id: "", hospital_name: "", blood_type: "", blood_component: "", units: 1,
+        request_reason: "", 
         request_form_file: null as File | null, indigency_file: null as File | null,
         senior_id_file: null as File | null, referral_note_file: null as File | null,
     });
@@ -146,8 +167,16 @@ function AddRequestForm({ onClose, onSave, }: { onClose: () => void; onSave: (pa
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.user_id || !form.hospital_name || !form.blood_type || !form.blood_component || !form.request_form_file) {
-            Swal.fire("Error", "All required fields must be filled!", "error"); return;
+        
+        // Basic Validation
+        if (!form.user_id || !form.hospital_name || !form.blood_type || !form.blood_component || !form.request_form_file || !form.request_reason) {
+            Swal.fire("Error", "All required fields (including Reason) must be filled!", "error"); return;
+        }
+
+        // Indigency Validation
+        if (isIndigency && (!form.indigency_file || !form.referral_note_file)) {
+            Swal.fire("Error", "For Indigency requests, the Indigency Certificate and Referral Note are required.", "error");
+            return;
         }
 
         try {
@@ -161,15 +190,24 @@ function AddRequestForm({ onClose, onSave, }: { onClose: () => void; onSave: (pa
 
             const [requestFormUrl, indigencyUrl, seniorIdUrl, referralNoteUrl] = await Promise.all([
                 uploadFile(form.request_form_file),
-                uploadFile(form.indigency_file),
-                uploadFile(form.senior_id_file),
-                uploadFile(form.referral_note_file),
+                isIndigency ? uploadFile(form.indigency_file) : Promise.resolve(null),
+                isIndigency ? uploadFile(form.senior_id_file) : Promise.resolve(null),
+                isIndigency ? uploadFile(form.referral_note_file) : Promise.resolve(null),
             ]);
 
             const payload = { ...form, request_form_file: requestFormUrl, indigency_file: indigencyUrl, senior_id_file: seniorIdUrl, referral_note_file: referralNoteUrl };
             onSave(payload);
         } catch (err: any) {
             Swal.fire("Error", err.message, "error");
+        }
+    };
+
+    const handleRequestTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+        setIsIndigency(val === 'Yes');
+        if (val === 'No') {
+            // Reset indigency files if switching back to standard
+            setForm(prev => ({ ...prev, indigency_file: null, senior_id_file: null, referral_note_file: null }));
         }
     };
 
@@ -189,6 +227,27 @@ function AddRequestForm({ onClose, onSave, }: { onClose: () => void; onSave: (pa
                                 <select value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <option value="">Select Donor</option>
                                     {users.map(u => <option key={u.user_id} value={u.user_id}>{u.user_id}</option>)}
+                                </select>
+                            </InputField>
+
+                            <InputField label="Hospital Name" name="hospital_name">
+                                <input 
+                                    type="text" 
+                                    value={form.hospital_name} 
+                                    onChange={(e) => setForm({ ...form, hospital_name: e.target.value })} 
+                                    className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    placeholder="Enter Hospital Name"
+                                />
+                            </InputField>
+
+                            {/* Request Type Toggle */}
+                            <InputField label="Request Type" name="request_type">
+                                <select 
+                                    onChange={handleRequestTypeChange} 
+                                    className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                                >
+                                    <option value="No">Standard Request</option>
+                                    <option value="Yes">Indigency / Low-Income Request</option>
                                 </select>
                             </InputField>
 
@@ -212,13 +271,29 @@ function AddRequestForm({ onClose, onSave, }: { onClose: () => void; onSave: (pa
                             </InputField>
                         </div>
                         <InputField label="Units" name="units"><input type="number" min={1} value={form.units} onChange={(e) => setForm({ ...form, units: Number(e.target.value) })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                        
+                        <InputField label="Reason for Request" name="request_reason">
+                            <input 
+                                type="text" 
+                                required 
+                                placeholder="e.g., Operation, Dengue, Accident" 
+                                value={form.request_reason} 
+                                onChange={(e) => setForm({ ...form, request_reason: e.target.value })} 
+                                className="bg-gray-50 dark:text-gray-700 border border-gray-300 px-3 h-11 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" 
+                            />
+                        </InputField>
+
                         <InputField label="Request Form (Required)" name="request_form_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, request_form_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
-                        <div className="border-t pt-4 space-y-4">
-                            <label className="dark:text-gray-600">For Indigency (Optional)</label>
-                            <InputField label="Indigency Certificate" name="indigency_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, indigency_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
-                            <InputField label="Senior Citizen ID" name="senior_id_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, senior_id_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
-                            <InputField label="Referral Note" name="referral_note_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, referral_note_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
-                        </div>
+                        
+                        {/* Conditionally render Indigency fields */}
+                        {isIndigency && (
+                            <div className="border-t pt-4 space-y-4">
+                                <label className="font-semibold text-gray-700">Indigency Document Uploads (All Required)</label>
+                                <InputField label="Indigency Certificate (Required)" name="indigency_file"><input type="file" required={isIndigency} accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, indigency_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                                <InputField label="Senior Citizen ID (Optional)" name="senior_id_file"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, senior_id_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                                <InputField label="Referral Note (Required)" name="referral_note_file"><input type="file" required={isIndigency} accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setForm({ ...form, referral_note_file: e.target.files?.[0] || null })} className="bg-gray-50 dark:text-gray-700 border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500" /></InputField>
+                            </div>
+                        )}
 
                         <div className="flex justify-end gap-3 pt-4">
                             <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold text-gray-700 transition">Cancel</button>
@@ -381,148 +456,146 @@ export default function BloodRequestsPage() {
         }
     };
 
-    // --- NEW FUNCTION TO EXPORT PDF ---
-    // --- REPLACE your old handleExportPDF with this corrected version ---
-const handleExportPDF = async () => {
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    const handleExportPDF = async () => {
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
 
-    // 1. Prompt for month and year
-    const { value: formValues, isConfirmed } = await Swal.fire({
-        title: 'Select Month and Year for Report',
-        html: `
-            <select id="swal-month" class="swal2-select">
-                ${months.map((m, i) => `<option value="${i}" ${i === currentMonth ? 'selected' : ''}>${m}</option>`).join('')}
-            </select>
-            <input id="swal-year" type="number" value="${currentYear}" class="swal2-input">
-        `,
-        focusConfirm: false,
-        preConfirm: () => {
-            return {
-                month: (document.getElementById('swal-month') as HTMLSelectElement).value,
-                year: (document.getElementById('swal-year') as HTMLInputElement).value
+        // 1. Prompt for month and year
+        const { value: formValues, isConfirmed } = await Swal.fire({
+            title: 'Select Month and Year for Report',
+            html: `
+                <select id="swal-month" class="swal2-select">
+                    ${months.map((m, i) => `<option value="${i}" ${i === currentMonth ? 'selected' : ''}>${m}</option>`).join('')}
+                </select>
+                <input id="swal-year" type="number" value="${currentYear}" class="swal2-input">
+            `,
+            focusConfirm: false,
+            preConfirm: () => {
+                return {
+                    month: (document.getElementById('swal-month') as HTMLSelectElement).value,
+                    year: (document.getElementById('swal-year') as HTMLInputElement).value
+                }
             }
+        });
+
+        if (!isConfirmed || !formValues) return;
+
+        const selectedMonth = parseInt(formValues.month, 10);
+        const selectedYear = parseInt(formValues.year, 10);
+
+        // 2. Filter requests for the selected period
+        const filtered = requests.filter(r => {
+            const reqDate = new Date(r.requested_at!);
+            return reqDate.getMonth() === selectedMonth && reqDate.getFullYear() === selectedYear;
+        });
+
+        if (filtered.length === 0) {
+            Swal.fire('No Data', `No requests found for ${months[selectedMonth]} ${selectedYear}.`, 'info');
+            return;
         }
-    });
 
-    if (!isConfirmed || !formValues) return;
+        // 3. Calculate stats
+        const stats = {
+            total: filtered.length,
+            approved: filtered.filter(r => r.status === 'Approved').length,
+            rejected: filtered.filter(r => r.status === 'Rejected').length,
+            pending: filtered.filter(r => r.status === 'Pending').length,
+            indigency: filtered.filter(r => r.indigency_file).length,
+            standard: filtered.filter(r => !r.indigency_file).length,
+        };
 
-    const selectedMonth = parseInt(formValues.month, 10);
-    const selectedYear = parseInt(formValues.year, 10);
+        const indigencyRequests = filtered.filter(r => r.indigency_file);
+        const standardRequests = filtered.filter(r => !r.indigency_file);
 
-    // 2. Filter requests for the selected period
-    const filtered = requests.filter(r => {
-        const reqDate = new Date(r.requested_at!);
-        return reqDate.getMonth() === selectedMonth && reqDate.getFullYear() === selectedYear;
-    });
+        // 4. Generate PDF
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        let startY = 40; // This will track the vertical position on the page
 
-    if (filtered.length === 0) {
-        Swal.fire('No Data', `No requests found for ${months[selectedMonth]} ${selectedYear}.`, 'info');
-        return;
-    }
+        // Header
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Monthly Blood Request Report', pageWidth / 2, 20, { align: 'center' });
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${months[selectedMonth]} ${selectedYear}`, pageWidth / 2, 28, { align: 'center' });
 
-    // 3. Calculate stats
-    const stats = {
-        total: filtered.length,
-        approved: filtered.filter(r => r.status === 'Approved').length,
-        rejected: filtered.filter(r => r.status === 'Rejected').length,
-        pending: filtered.filter(r => r.status === 'Pending').length,
-        indigency: filtered.filter(r => r.indigency_file).length,
-        standard: filtered.filter(r => !r.indigency_file).length,
+        // Summary Table
+        autoTable(doc, {
+            startY: startY,
+            head: [['Summary', 'Total']],
+            body: [
+                ['Total Requests', stats.total],
+                ['Approved Requests', stats.approved],
+                ['Rejected Requests', stats.rejected],
+                ['Pending Requests', stats.pending],
+                ['Indigency Requests', stats.indigency],
+                ['Standard Requests', stats.standard],
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [209, 36, 42] }
+        });
+        startY = (doc as any).lastAutoTable.finalY; // Update the startY to be after the summary table
+
+        const tableHeaders = ['Name', 'Blood Type', 'Component', 'Units', 'Request Type', 'Status'];
+
+        // Indigency Table
+        if (indigencyRequests.length > 0) {
+            startY += 15; // Add space before the next section
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Indigency Requests', 14, startY); // Draw the title manually
+            
+            autoTable(doc, {
+                startY: startY + 5, // Start table just below the title
+                head: [tableHeaders],
+                body: indigencyRequests.map(r => [
+                    r.users?.name || r.hospital_name,
+                    r.blood_type,
+                    r.blood_component,
+                    r.units,
+                    'INDIGENCY',
+                    r.status,
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [209, 36, 42] }
+            });
+            startY = (doc as any).lastAutoTable.finalY;
+        }
+
+        // Standard Table
+        if (standardRequests.length > 0) {
+            startY += 15; // Add space
+            
+            // Check if there's enough space for the next table, otherwise add a new page
+            if (startY > doc.internal.pageSize.getHeight() - 50) {
+                doc.addPage();
+                startY = 20; // Reset Y position on the new page
+            }
+
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Standard Requests', 14, startY); // Draw the title manually
+            
+            autoTable(doc, {
+                startY: startY + 5, // Start table just below the title
+                head: [tableHeaders],
+                body: standardRequests.map(r => [
+                    r.users?.name || r.hospital_name,
+                    r.blood_type,
+                    r.blood_component,
+                    r.units,
+                    'STANDARD',
+                    r.status,
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [209, 36, 42] }
+            });
+        }
+
+        doc.save(`Blood_Request_Report_${months[selectedMonth]}_${selectedYear}.pdf`);
     };
-
-    const indigencyRequests = filtered.filter(r => r.indigency_file);
-    const standardRequests = filtered.filter(r => !r.indigency_file);
-
-    // 4. Generate PDF
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    let startY = 40; // This will track the vertical position on the page
-
-    // Header
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Monthly Blood Request Report', pageWidth / 2, 20, { align: 'center' });
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${months[selectedMonth]} ${selectedYear}`, pageWidth / 2, 28, { align: 'center' });
-
-    // Summary Table
-    autoTable(doc, {
-        startY: startY,
-        head: [['Summary', 'Total']],
-        body: [
-            ['Total Requests', stats.total],
-            ['Approved Requests', stats.approved],
-            ['Rejected Requests', stats.rejected],
-            ['Pending Requests', stats.pending],
-            ['Indigency Requests', stats.indigency],
-            ['Standard Requests', stats.standard],
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [209, 36, 42] }
-    });
-    startY = (doc as any).lastAutoTable.finalY; // Update the startY to be after the summary table
-
-    const tableHeaders = ['Name', 'Blood Type', 'Component', 'Units', 'Request Type', 'Status'];
-
-    // Indigency Table
-    if (indigencyRequests.length > 0) {
-        startY += 15; // Add space before the next section
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Indigency Requests', 14, startY); // Draw the title manually
-        
-        autoTable(doc, {
-            startY: startY + 5, // Start table just below the title
-            head: [tableHeaders],
-            body: indigencyRequests.map(r => [
-                r.users?.name || r.hospital_name,
-                r.blood_type,
-                r.blood_component,
-                r.units,
-                'INDIGENCY',
-                r.status,
-            ]),
-            theme: 'striped',
-            headStyles: { fillColor: [209, 36, 42] }
-        });
-        startY = (doc as any).lastAutoTable.finalY;
-    }
-
-    // Standard Table
-    if (standardRequests.length > 0) {
-        startY += 15; // Add space
-        
-        // Check if there's enough space for the next table, otherwise add a new page
-        if (startY > doc.internal.pageSize.getHeight() - 50) {
-            doc.addPage();
-            startY = 20; // Reset Y position on the new page
-        }
-
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Standard Requests', 14, startY); // Draw the title manually
-        
-        autoTable(doc, {
-            startY: startY + 5, // Start table just below the title
-            head: [tableHeaders],
-            body: standardRequests.map(r => [
-                r.users?.name || r.hospital_name,
-                r.blood_type,
-                r.blood_component,
-                r.units,
-                'STANDARD',
-                r.status,
-            ]),
-            theme: 'striped',
-            headStyles: { fillColor: [209, 36, 42] }
-        });
-    }
-
-    doc.save(`Blood_Request_Report_${months[selectedMonth]}_${selectedYear}.pdf`);
-};
 
     const filteredRequests = requests.filter((r) =>
         (r.users?.name?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
@@ -573,6 +646,7 @@ const handleExportPDF = async () => {
                                         <th className="p-4 text-center">Blood Type</th>
                                         <th className="p-4 text-center">Component</th>
                                         <th className="p-4 text-center">Units</th>
+                                        <th className="p-4 text-center">Reason</th> 
                                         <th className="p-4 text-center">Request Type</th>
                                         <th className="p-4">Requested At</th>
                                         <th className="p-4 text-center">Status</th>
@@ -581,14 +655,17 @@ const handleExportPDF = async () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {loading ? (<tr><td colSpan={9} className="text-center p-8 text-gray-500">Loading...</td></tr>) :
-                                        filteredRequests.length === 0 ? (<tr><td colSpan={9} className="text-center p-8 text-gray-500">No requests found.</td></tr>) :
+                                    {loading ? (<tr><td colSpan={10} className="text-center p-8 text-gray-500">Loading...</td></tr>) :
+                                        filteredRequests.length === 0 ? (<tr><td colSpan={10} className="text-center p-8 text-gray-500">No requests found.</td></tr>) :
                                             (filteredRequests.map((r) => (
                                                 <tr key={r.id} className="hover:bg-gray-50">
                                                     <td className="p-4"><div className="font-semibold text-gray-800">{r.users?.name || r.hospital_name}</div><div className="text-gray-500 font-mono text-xs">{r.user_id || 'N/A'}</div></td>
                                                     <td className="p-4 text-center"><div className="font-bold text-red-600">{r.blood_type}</div></td>
                                                     <td className="p-4 text-center"><div className="text-gray-500 text-xs">{r.blood_component}</div></td>
                                                     <td className="p-4 text-gray-600 text-center font-semibold">{r.units}</td>
+                                                    
+                                                    <td className="p-4 text-center"><div className="text-gray-600 italic text-xs max-w-[150px] truncate" title={r.request_reason || "N/A"}>{r.request_reason || "N/A"}</div></td>
+
                                                     <td className="p-4 text-center">
                                                         {r.indigency_file ? (
                                                             <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700">INDIGENCY</span>
