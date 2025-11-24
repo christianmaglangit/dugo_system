@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FC, ReactNode } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/lib/supabaseClient";
 // 1. Updated Imports from Recharts (added Pie, PieChart, Cell)
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
@@ -13,7 +13,7 @@ import autoTable from 'jspdf-autotable';
 // 1. ICONS                                               //
 //========================================================//
 const DashboardIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>;
-const InventoryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>;
+const InventoryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>;
 const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zm-1.558 4.078a.75.75 0 00-1.06 1.06 5.25 5.25 0 007.238 0 .75.75 0 00-1.06-1.06 3.75 3.75 0 01-5.117 0zM15.625 9a2.375 2.375 0 100-4.75 2.375 2.375 0 000 4.75zM12.5 10.75a.75.75 0 00-1.06 1.06 5.25 5.25 0 007.238 0 .75.75 0 00-1.06-1.06 3.75 3.75 0 01-5.117 0z" /></svg>;
 const AppointmentIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>;
 const ReportIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.25 2a.75.75 0 00-1.5 0v1.361A8.96 8.96 0 002.57 6.38a.75.75 0 001.362.614A7.46 7.46 0 0110 4.5c2.993 0 5.542 1.72 6.822 4.108a.75.75 0 001.362-.614A8.96 8.96 0 0011.25 3.361V2zM2.5 10a.75.75 0 01.75-.75h14a.75.75 0 010 1.5h-14a.75.75 0 01-.75-.75zm0 4.25a.75.75 0 001.362.614 7.46 7.46 0 0112.276 0 .75.75 0 101.362-.614A8.96 8.96 0 0010 12.5a8.96 8.96 0 00-7.43 3.138z" clipRule="evenodd" /></svg>;
@@ -51,7 +51,12 @@ function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           <div>
             <h2 className="text-3xl font-extrabold text-red-600">DUGO</h2>
           </div>
-          <button onClick={onClose} className="md:hidden p-2 rounded-full hover:bg-gray-100"><XIcon /></button>
+          <button
+            onClick={onClose}
+            className="md:hidden p-2 rounded-full hover:bg-gray-100"
+          >
+            <XIcon />
+          </button>
         </div>
         <nav className="flex flex-col space-y-2">
           {links.map((link) => (
@@ -108,10 +113,14 @@ interface SupplyForecastData { type: string; needed: number; available: number; 
 interface DemandForecastData { type: string; predicted_demand: number; }
 interface PastSupplyPrediction { blood_type: string; predicted_units: number; }
 interface PastDemandPrediction { component_type: string; predicted_units: number; }
-// 2. NEW Type for Reason Analytics
-interface RequestReasonData { reason: string; count: number; }
+// NEW: Updated Type for Reason Analytics with index signature for Recharts
+interface RequestReasonData { 
+  reason: string; 
+  count: number; 
+  [key: string]: any; // FIX: Allows dynamic keys for Recharts
+}
 
-// 3. Colors for Pie Chart
+// Colors for Pie Chart
 const COLORS = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#6B7280'];
 
 //========================================================//
@@ -461,7 +470,7 @@ export default function PredictiveReportsPage() {
                                         fill="#8884d8"
                                         dataKey="count"
                                         nameKey="reason"
-                                        label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                                     >
                                         {reasonStats.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -528,8 +537,8 @@ export default function PredictiveReportsPage() {
                         >
                             <option value="">-- Select a Month --</option>
                             {availablePredictionMonths.map(month => {
-                                const date = new Date(month + 'T00:00:00');
-                                const formatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+                                const date = new Date(month + 'T00:00:00'); // Treat as local
+                                const formatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }); // Use UTC to prevent timezone shifts
                                 return ( <option key={month} value={month}>{formatter.format(date)}</option> );
                             })}
                         </select>
@@ -551,6 +560,7 @@ export default function PredictiveReportsPage() {
 
                     {!loadingPastPrediction && selectedPredictionMonth && (pastSupplyPrediction.length > 0 || pastDemandPrediction.length > 0) && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                            {/* Past Supply Table */}
                             <div>
                                 <h3 className="text-md font-semibold text-gray-700 mb-2">Supply Prediction</h3>
                                 <div className="overflow-x-auto border rounded-lg">
@@ -577,14 +587,18 @@ export default function PredictiveReportsPage() {
                             </div>
                         </div>
                     )}
+                     {/* Message when a month is selected but no data found */}
                      {!loadingPastPrediction && selectedPredictionMonth && pastSupplyPrediction.length === 0 && pastDemandPrediction.length === 0 && (
                          <p className="text-center text-gray-500 py-4">No prediction data found for the selected month.</p>
                      )}
+                     {/* Initial message when no month is selected */}
                      {!loadingPastPrediction && !selectedPredictionMonth && (
                          <p className="text-center text-gray-400 py-4 italic">Select a month above to view its prediction history.</p>
                      )}
                 </Card>
              )}
+           
+            
             </>
           )}
 
