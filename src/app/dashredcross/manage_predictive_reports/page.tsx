@@ -50,7 +50,12 @@ function BloodbankSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           <div>
             <h2 className="text-3xl font-extrabold text-red-600">DUGO</h2>
           </div>
-          <button onClick={onClose} className="md:hidden p-2 rounded-full hover:bg-gray-100"><XIcon /></button>
+          <button
+            onClick={onClose}
+            className="md:hidden p-2 rounded-full hover:bg-gray-100"
+          >
+            <XIcon />
+          </button>
         </div>
         <nav className="flex flex-col space-y-2">
           {links.map((link) => (
@@ -464,7 +469,7 @@ export default function PredictiveReportsPage() {
                                         fill="#8884d8"
                                         dataKey="count"
                                         nameKey="reason"
-                                        label={({ percent }: { percent: number }) => `${(percent * 100).toFixed(0)}%`}
+                                        label={({ percent }: any) => `${(percent * 100).toFixed(0)}%`}
                                     >
                                         {reasonStats.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
