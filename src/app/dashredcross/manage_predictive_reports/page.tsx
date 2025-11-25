@@ -596,13 +596,6 @@ export default function PredictiveReportsPage() {
                      )}
                 </Card>
              )}
-           
-             {!loading && availablePredictionMonths.length === 0 && (
-                <Card className="mt-8 border-t-4 border-blue-600">
-                     <h2 className="text-xl font-bold text-gray-800 mb-4">View Past Predictions</h2>
-                     <p className="text-center text-gray-500 py-4">No past prediction data has been recorded yet. The system will start saving predictions next month.</p>
-                </Card>
-             )}
             </>
           )}
 
